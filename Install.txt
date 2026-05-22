@@ -1,0 +1,71 @@
+╔══════════════════════════════════════════════════════╗
+║   🌌 AEON v3.0 — УСТАНОВКА И ЗАПУСК                 ║
+╚══════════════════════════════════════════════════════╝
+
+ТРЕБОВАНИЯ
+  Python 3.8+
+  Windows 10/11, Linux, macOS
+  ~3 ГБ места (MiniLM 384D + Whisper + Torch)
+
+БЫСТРЫЙ СТАРТ (Windows)
+
+  1. Запустите установщик:
+     PowerShell: .\install.ps1
+
+     Или вручную:
+     pip install -r requirements.txt
+     copy .env.example .env
+
+  2. Добавьте API-ключи в .env (DeepSeek, Flux)
+
+  3. Запустите:
+     run_web.bat                 — веб-интерфейс
+     python -m aeon.cli           — CLI
+     python aeon/demo.py          — демонстрация
+
+ПРОВЕРКА УСТАНОВКИ
+
+  python -c "from aeon import AeonTranslator; t=AeonTranslator()"
+
+  Ожидаемый вывод:
+  ============================================================
+  🌌 AEON v3.0 — СТАТУС МОДУЛЕЙ
+  ============================================================
+    LLM (DeepSeek):  ✅ ONLINE
+    Embeddings:      ✅ 384D
+    Verification:    ✅ ACTIVE
+    Whisper STT:     ✅ AVAILABLE
+    TTS (ru/en/zh):  ✅ AVAILABLE
+    Flux 2 Images:   ✅ AVAILABLE
+    .aeon Format:    ✅ READY
+  ============================================================
+
+БЕЗ API-КЛЮЧЕЙ
+
+  Система работает в rule-based режиме:
+  - Перевод по шаблонам (базовый)
+  - 16D примитивные координаты
+  - Без верификации и изображений
+
+НОВОЕ В v3.0
+
+  • Реальные эмбеддинги (MiniLM 384D, 50+ языков)
+  • Явная семантическая структура (сущности, роли, evidence)
+  • Интерпретируемость (цепочки рассуждений, декомпозиция уверенности)
+  • Защита от галлюцинаций (consistency check + fact grounding)
+  • Кросс-языковой мост (LaBSE cosine + LLM verification)
+  • .aeon бинарный формат (2.2 КБ/атом)
+  • Семантический поиск (cosine similarity)
+
+ГОЛОС (опционально)
+
+  pip install openai-whisper     — распознавание (STT)
+  pip install edge-tts           — синтез (TTS, нейро)
+  pip install sounddevice        — запись/воспроизведение
+
+  Поддерживаются: русский, английский, китайский
+
+ТЕСТИРОВАНИЕ
+
+  Пройдено: 23/23 тестов всех команд
+  Последняя проверка: май 2026
