@@ -17,7 +17,7 @@ param(
     [string]$PythonPath = "python",
     [switch]$SkipPythonCheck = $false,
     [string]$Branch = "main",
-    [string]$RepoUrl = "https://github.com/abonent0007/aeon_translator/archive/refs/heads/main.zip",
+    [string]$RepoUrl = "https://github.com/abonent0007/aeon_translator/releases/download/AEON/main.zip",
     [switch]$LocalOnly = $false
 )
 
