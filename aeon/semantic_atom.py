@@ -75,6 +75,10 @@ class SemanticAtom:
 
     # ── Кросс-языковой мост ──
     language_origin: str = "unknown"
+    # 2b (contract v1): метаданные контракта извлечения (см. docs/contracts/)
+    chain_language: str = "en"              # chain — английский рабочий анализ
+    anchor_language: Optional[str] = None   # primary язык якорей (из pack.iso_code)
+    extractor_contract: str = "v1"          # "v1" | "v3.0-legacy" (старые файлы)
     cross_lingual_confidence: float = 0.0
     aligned_versions: Dict[str, str] = field(default_factory=dict)
 

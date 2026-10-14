@@ -122,6 +122,13 @@
   система «не видит» гнев Ахилла как entity by design, но видит в lexical/
   semantic layers.
 
+## Worked example: anchor⊆evidence поймал диакритику (2026-10-14)
+При драфте Example C якорь `τῷ Διὶ` (grave — как в evidence) разошёлся с
+`Διί` (acute) в chain: правило «anchor ⊆ evidence» выявило рассинхрон **до**
+коммита промпта. Правило не декоративно — оно **исполняемо** и сработало на
+собственном few-shot (этот случай — мета-доказательство необходимости
+валидации якорей в коммите 3).
+
 ## Совместимость и реализация
 - Коммит 2: `fix: extractor produces semantic claims only (contract v1)` —
   переписанный промпт + расширенный domain-словарь + language enforcement +

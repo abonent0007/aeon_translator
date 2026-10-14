@@ -212,6 +212,58 @@ def test_mock_false_allowed_with_key(monkeypatch):
     assert doc["metadata"]["mock"] is False
 
 
+# ── 2b: контрактные метаданные (chain_language/anchor_language/extractor_contract) ──
+
+
+def test_v2_records_extractor_contract():
+    """2b: metadata несёт контрактные поля; anchor_language из атома."""
+    atom = make_atom()
+    atom.anchor_language = "grc"
+    doc = dump_v2(atom, source={"content": "t", "form": "text", "language": "grc"},
+                  traces={})
+
+    meta = doc["metadata"]
+    assert meta["extractor_contract"] == "v1"
+    assert meta["chain_language"] == "en"
+    assert meta["anchor_language"] == "grc"
+
+
+def test_v2_roundtrip_with_contract_metadata(tmp_path):
+    doc = dump_v2(make_atom(), source={"content": "t", "form": "text",
+                                       "language": "x"}, traces={})
+    path = write_v2(tmp_path / "c.aeon.json", doc)
+
+    loaded = load_v2(path)
+
+    assert loaded["metadata"]["extractor_contract"] == "v1"
+    assert loaded["metadata"]["chain_language"] == "en"
+    assert loaded["metadata"]["anchor_language"] is None
+
+
+def test_reader_migration_defaults_legacy_for_old_v2(tmp_path):
+    """Старые v2 (2.7.x) без полей → v3.0-legacy + дефолты (кураторское правило)."""
+    doc = dump_v2(make_atom(), source={"content": "t", "form": "text",
+                                       "language": "x"}, traces={})
+    for key in ("extractor_contract", "chain_language", "anchor_language"):
+        doc["metadata"].pop(key, None)
+    path = write_v2(tmp_path / "old.aeon.json", doc)
+
+    loaded = load_v2(path)
+
+    assert loaded["metadata"]["extractor_contract"] == "v3.0-legacy"
+    assert loaded["metadata"]["chain_language"] == "en"
+    assert loaded["metadata"]["anchor_language"] is None
+
+
+def test_validator_accepts_contract_metadata_types(tmp_path):
+    doc = dump_v2(make_atom(), source={"content": "t", "form": "text",
+                                       "language": "x"}, traces={})
+    doc["metadata"]["chain_language"] = 42
+
+    with pytest.raises(AeonSchemaError, match="chain_language"):
+        write_v2(tmp_path / "bad.aeon.json", doc)
+
+
 # ── roundtrip ──
 
 def test_dump_v2_roundtrip_full_traces(tmp_path):

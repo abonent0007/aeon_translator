@@ -155,6 +155,10 @@ class AeonTranslator:
 
         atom.thresholds_snapshot = build_thresholds_snapshot()
 
+        # 2b: anchor_language — primary язык сегмента (из пака; Note A контракта)
+        if language_pack is not None:
+            atom.anchor_language = language_pack.iso_code
+
         print(f"✓ {atom}")
 
         if atom.embedding:

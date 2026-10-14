@@ -3,7 +3,15 @@
   "$id": "https://aeon.local/schemas/aeon_v2.json",
   "title": "AEON v2 .aeon document",
   "type": "object",
-  "required": ["aeon_version", "created_at", "generator", "source", "atom", "traces", "metadata"],
+  "required": [
+    "aeon_version",
+    "created_at",
+    "generator",
+    "source",
+    "atom",
+    "traces",
+    "metadata"
+  ],
   "properties": {
     "aeon_version": {
       "type": "string",
@@ -11,114 +19,330 @@
       "description": "semver: major bump = breaking; minor = только extensions (доп. №4)"
     },
     "aeon_version_min_reader": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
       "description": "минимальный reader, способный прочитать (опционально)"
     },
-    "created_at": {"type": "string", "format": "date-time"},
-    "generator": {"type": "string", "examples": ["aeon-4.0"]},
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "generator": {
+      "type": "string",
+      "examples": [
+        "aeon-4.0"
+      ]
+    },
     "source": {
       "type": "object",
-      "required": ["content", "form", "language"],
+      "required": [
+        "content",
+        "form",
+        "language"
+      ],
       "properties": {
-        "content": {"type": "string", "description": "ОРИГИНАЛ пользователя"},
-        "form": {"type": "string"},
-        "language": {"type": "string"},
-        "normalized": {"type": ["string", "null"], "description": "pipeline-вход после pack.normalize()"}
+        "content": {
+          "type": "string",
+          "description": "ОРИГИНАЛ пользователя"
+        },
+        "form": {
+          "type": "string"
+        },
+        "language": {
+          "type": "string"
+        },
+        "normalized": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "pipeline-вход после pack.normalize()"
+        }
       }
     },
     "atom": {
       "type": "object",
-      "required": ["content_hash", "atom_hash", "intent", "domain"],
+      "required": [
+        "content_hash",
+        "atom_hash",
+        "intent",
+        "domain"
+      ],
       "additionalProperties": true,
       "properties": {
-        "meaning_hash": {"type": "string", "description": "legacy v1-поле (identity); новый код использует content_hash/atom_hash"},
-        "content_hash": {"type": "string", "description": "sha256(source.content) — детерминирован от текста (доп. №2)"},
-        "atom_hash": {"type": "string", "description": "sha256(canonical atom core) — хэш РЕЗУЛЬТАТА, может различаться между прогонами (доп. №2)"},
-        "text": {"type": "string"},
-        "intent": {"type": "string"},
-        "domain": {"type": "string"},
+        "meaning_hash": {
+          "type": "string",
+          "description": "legacy v1-поле (identity); новый код использует content_hash/atom_hash"
+        },
+        "content_hash": {
+          "type": "string",
+          "description": "sha256(source.content) — детерминирован от текста (доп. №2)"
+        },
+        "atom_hash": {
+          "type": "string",
+          "description": "sha256(canonical atom core) — хэш РЕЗУЛЬТАТА, может различаться между прогонами (доп. №2)"
+        },
+        "text": {
+          "type": "string"
+        },
+        "intent": {
+          "type": "string"
+        },
+        "domain": {
+          "type": "string"
+        },
         "entities": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["name", "type"],
+            "required": [
+              "name",
+              "type"
+            ],
             "additionalProperties": true,
             "properties": {
-              "name": {"type": "string"},
-              "type": {"type": "string"},
-              "role": {"type": "string"},
-              "span": {"type": "string"},
-              "confidence": {"type": "number"},
-              "external_ids": {"type": "object"},
-              "external_labels": {"type": "object"},
-              "link_confidence": {"type": "number"},
-              "source_unavailable": {"type": "boolean"},
-              "is_fragment": {"type": "boolean"},
-              "completeness_score": {"type": "number"}
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              },
+              "span": {
+                "type": "string"
+              },
+              "confidence": {
+                "type": "number"
+              },
+              "external_ids": {
+                "type": "object"
+              },
+              "external_labels": {
+                "type": "object"
+              },
+              "link_confidence": {
+                "type": "number"
+              },
+              "source_unavailable": {
+                "type": "boolean"
+              },
+              "is_fragment": {
+                "type": "boolean"
+              },
+              "completeness_score": {
+                "type": "number"
+              }
             }
           }
         },
-        "semantic_roles": {"type": "object"},
-        "primitive_coordinates": {"type": "array"},
-        "complexity": {"type": "number"},
-        "urgency": {"type": "number"},
-        "extraction_confidence": {"type": "number"},
-        "explanation_chain": {"type": "array"},
-        "evidence": {"type": "array"},
-        "confidence_breakdown": {"type": "object"},
-        "language_origin": {"type": "string"},
-        "cross_lingual_confidence": {"type": "number"},
-        "is_fragment": {"type": "boolean"},
-        "completeness_score": {"type": "number"},
-        "needs_attention": {"type": "boolean"}
+        "semantic_roles": {
+          "type": "object"
+        },
+        "primitive_coordinates": {
+          "type": "array"
+        },
+        "complexity": {
+          "type": "number"
+        },
+        "urgency": {
+          "type": "number"
+        },
+        "extraction_confidence": {
+          "type": "number"
+        },
+        "explanation_chain": {
+          "type": "array"
+        },
+        "evidence": {
+          "type": "array"
+        },
+        "confidence_breakdown": {
+          "type": "object"
+        },
+        "language_origin": {
+          "type": "string"
+        },
+        "cross_lingual_confidence": {
+          "type": "number"
+        },
+        "is_fragment": {
+          "type": "boolean"
+        },
+        "completeness_score": {
+          "type": "number"
+        },
+        "needs_attention": {
+          "type": "boolean"
+        }
       }
     },
     "traces": {
       "type": "object",
       "description": "null = этап не запускался ИЛИ результат отсутствует; различение — через metadata.pipeline (доп. №1)",
       "properties": {
-        "extraction": {"type": ["object", "null"]},
-        "entity_linking": {"type": ["object", "null"]},
-        "verification": {"type": ["object", "null"]},
-        "linguistics": {"type": ["object", "null"]},
-        "focus": {"type": ["object", "null"]},
-        "reconstruction": {"type": ["object", "null"]},
-        "variant_readings": {"type": ["object", "null"], "description": "слот 3.5"},
-        "morphology": {"type": ["object", "null"], "description": "слот 3.2"},
-        "cross_references": {"type": ["object", "null"], "description": "слот 3.4"}
+        "extraction": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "entity_linking": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "verification": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "linguistics": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "focus": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "reconstruction": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "variant_readings": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "слот 3.5"
+        },
+        "morphology": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "слот 3.2"
+        },
+        "cross_references": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "слот 3.4"
+        }
       }
     },
     "metadata": {
       "type": "object",
-      "required": ["thresholds_snapshot", "mock", "pipeline"],
+      "required": [
+        "thresholds_snapshot",
+        "mock",
+        "pipeline"
+      ],
       "properties": {
-        "language_pack": {"type": ["string", "null"]},
-        "language_pack_version": {"type": ["string", "null"]},
-        "thresholds_snapshot": {"type": "object"},
-        "llm_provider": {"type": ["string", "null"]},
-        "llm_model": {"type": ["string", "null"]},
-        "mock": {"type": "boolean", "description": "true = MockLLM; writer запрещает false без DEEPSEEK_API_KEY (стоп-точка №2)"},
+        "language_pack": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "language_pack_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "thresholds_snapshot": {
+          "type": "object"
+        },
+        "llm_provider": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "llm_model": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "mock": {
+          "type": "boolean",
+          "description": "true = MockLLM; writer запрещает false без DEEPSEEK_API_KEY (стоп-точка №2)"
+        },
         "pipeline": {
           "type": "object",
           "description": "доп. №1: различать «не просили» / «выполнено» / «остановлено» / «упало»",
-          "required": ["steps_requested", "steps_executed"],
+          "required": [
+            "steps_requested",
+            "steps_executed"
+          ],
           "properties": {
-            "steps_requested": {"type": "array", "items": {"type": "string"}},
-            "steps_executed": {"type": "array", "items": {"type": "string"}},
+            "steps_requested": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "steps_executed": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
             "steps_halted": {
               "type": "array",
               "items": {
                 "type": "object",
-                "required": ["step", "reason"],
+                "required": [
+                  "step",
+                  "reason"
+                ],
                 "properties": {
-                  "step": {"type": "string"},
-                  "reason": {"type": "string"}
+                  "step": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
                 }
               }
             },
-            "steps_failed": {"type": "array", "items": {"type": "object"}}
+            "steps_failed": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            }
           }
+        },
+        "chain_language": {
+          "type": "string",
+          "description": "2b: язык chain (working analysis, en)"
+        },
+        "anchor_language": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "2b: primary язык якорей (pack.iso_code)"
+        },
+        "extractor_contract": {
+          "type": "string",
+          "description": "2b: v1 | v3.0-legacy (reader default для старых файлов)"
         }
       }
     },

@@ -85,6 +85,18 @@ def validate_v2(doc: Dict[str, Any]) -> None:
     _typecheck(metadata["pipeline"]["steps_requested"], list, "pipeline.steps_requested")
     _typecheck(metadata["pipeline"]["steps_executed"], list, "pipeline.steps_executed")
 
+    # 2b: контрактные метаданные — опциональны (backward compat с 2.7.x),
+    # но при наличии проверяются по типу.
+    if "chain_language" in metadata and not isinstance(metadata["chain_language"], str):
+        raise AeonSchemaError("metadata.chain_language должен быть строкой")
+    if ("anchor_language" in metadata
+            and metadata["anchor_language"] is not None
+            and not isinstance(metadata["anchor_language"], str)):
+        raise AeonSchemaError("metadata.anchor_language: строка или null")
+    if ("extractor_contract" in metadata
+            and not isinstance(metadata["extractor_contract"], str)):
+        raise AeonSchemaError("metadata.extractor_contract должен быть строкой")
+
     validate_extensions(doc.get("extensions") or {})
 
 

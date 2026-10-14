@@ -389,6 +389,8 @@ def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
     with METRICS.timeit("atom"):
         with METRICS.timeit("atom_network"):
             atom = extractor.extract_from_text(text, "auto")
+            if language_pack is not None:
+                atom.anchor_language = language_pack.iso_code
             result = None
             reconstruction = None
             chain_result = None

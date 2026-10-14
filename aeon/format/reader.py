@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict
 
+from ..logging_config import get_logger, log_event
 from .validator import AeonSchemaError, update_extensions, validate_v2
 from .versioning import compatibility
 from .writer import TRACE_SLOTS, compute_atom_hash, compute_content_hash
@@ -32,7 +33,29 @@ def load_v2(path) -> Dict[str, Any]:
     except Exception as exc:
         raise AeonSchemaError(str(exc)) from exc
     validate_v2(doc)
+    _normalize_contract_metadata(doc)
     return doc
+
+
+def _normalize_contract_metadata(doc: Dict[str, Any]) -> None:
+    """2b: старые v2-файлы (до extractor-contract v1) получают маркер legacy.
+
+    Правило куратора: существующие v2 (2.7.x) не переписываются, но при
+    загрузке chain-семантика маркируется `v3.0-legacy` (могла содержать
+    инструкции, а не semantic claims) + событие для аудита.
+    """
+    meta = doc.get("metadata") or {}
+    if "extractor_contract" not in meta:
+        meta["extractor_contract"] = "v3.0-legacy"
+        meta.setdefault("chain_language", "en")
+        meta.setdefault("anchor_language", None)
+        doc["metadata"] = meta
+        log_event(
+            get_logger("aeon.format"),
+            "v2_legacy_contract_defaulted",
+            note="old v2 (pre extractor-contract v1): chain may contain "
+                 "instructions, not semantic claims",
+        )
 
 
 def load_v1_and_migrate(path) -> Dict[str, Any]:
@@ -93,6 +116,9 @@ def load_v1_and_migrate(path) -> Dict[str, Any]:
             },
             "llm_provider": None,
             "llm_model": None,
+            "chain_language": "en",
+            "anchor_language": None,
+            "extractor_contract": "v3.0-legacy",
         },
         "extensions": {},
     }

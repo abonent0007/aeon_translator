@@ -103,6 +103,10 @@ def dump_v2(atom, *, source: Dict[str, Any], traces: Dict[str, Any],
         "thresholds_snapshot": dict(snapshot),
         "mock": bool(mock),
         "pipeline": pipeline,
+        # 2b: контрактные метаданные атома (chain/anchor/contract-era)
+        "chain_language": getattr(atom, "chain_language", "en"),
+        "anchor_language": getattr(atom, "anchor_language", None),
+        "extractor_contract": getattr(atom, "extractor_contract", "v1"),
     }
     meta.update(metadata or {})
 
