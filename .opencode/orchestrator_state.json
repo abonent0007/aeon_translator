@@ -88,7 +88,7 @@
         "2.7.3_gold_real": "DONE-WITH-STOP (2026-10-14): full real run 52 calls, 155.9s, $0.0351, failures=0. Raw: gold/real_runs/2026-10-14_t1; report: gold/reports/real_2026-10-14.md. Markers 1.00/1.00 (pack), is_fragment 1.00, MAE 0.00 (extractor always 1.0 — uncalibrated field), Entities F1 0.24 (P 0.14/R 0.76; word-salad FPs incl English translations; accent grave/acute mismatch — metric artifact), expert 0.88, logician 0.88, detective 0.00 => STOP-CONDITION #4 triggered, root-caused via raw (0 API): claim composition defect (grammar-instruction explanation_chain + forced Intent/Domain meta-claims with empty quotes, all-or-nothing grounded_count==total at detective.py:135, avg conf 0.83<0.85 even at 7/7). Exact-quote itself WORKS (quote_in_source 7/7). 2.7.4 BLOCKED pending curator decision on claim-contract/gold-verdict expectations. CONTRACTS: docs/contracts/extractor_v1.md + detective_v1.md drafted (pending curator approval; uncommitted). Evidence: extractor prompt has NO entity/claim contract (entities incl. types concept|action|abstract; explanation_chain='HOW you arrived' -> instructions); claims get meta rows appended by CALLER code (translator.py:173/runner.py:121/demo.py:398) — atom.intent/domain are separate fields. || t2 FAILED: deepseek-flash thinking-mode (reasoning ate max_tokens=2000 -> empty content x28, rule-fallback). Probe-verified; fix commit 7a721d0 (thinking disabled for flash). || t3 (valid v1 run): 52 calls, 135.3s, $0.0189, failures=0. Markers 1.00/1.00; is_fragment 1.00; Entities F1 0.75 (P .63/R .90; caesar 1.00, plato 1.00, homer .77, inscription .33); MAE 0.09; detective 0.75 (plato 1.00, sappho 0.60 — 2 segs avg-conf gate <0.85), expert/logician 1.00. STOP-FLAGS: grammar-flavored kept 48/84 (57%; anchored syntax observations, instructions skip=3) -> Rule-3 interpretation decision; role-consistency violations 3/28 (10.7%) > 5% -> Rule-5 instability.",
         "2.7.4_detective_greek": "pending (preview: exact-quote OK in smoke)",
         "2.7.5_calibration": "pending (separate commit policy)",
-        "2.7.6_focus": "pending",
+        "2.7.6_focus": "next (primary per curator: caesar+sappho real focus check, 5 points)",
         "2.7.7_cost": "pending (token tracking not implemented)",
         "2.7.8_closure": "pending"
       },
@@ -232,6 +232,46 @@
           "status": "open",
           "impact": "3/28 structures violate Rule 5 (entity role not reflected in semantic_roles)",
           "action": "prompt iteration candidate (few-shot emphasis) or post-hoc repair; keep warning-level"
+        },
+        {
+          "id": "chain_grammar_heavy_sappho",
+          "severity": "medium",
+          "status": "accepted, iteration deferred (post-2.7.6)",
+          "impact": "sappho 14/15 kept = grammar (93%); others: caesar 22%, plato 30%, papyrus 45%, homer 59%, inscription 65%",
+          "curator_verdict": "anchored morpho-syntax = compliant (not instructions/translations); Rule 3 literal ok"
+        },
+        {
+          "id": "rule3_priority_unspecified",
+          "severity": "low",
+          "status": "backlog",
+          "impact": "Rule 3 does not specify content-vs-structure priority",
+          "action": "contract v1.2 - content-first priority (after 2.7.6 focus data)"
+        },
+        {
+          "id": "role_consistency_violations_v1",
+          "severity": "medium",
+          "status": "accepted as known limitation; threshold updated (15% legacy / 10% new)",
+          "impact": "3/28 (10.7%) role-attribution errors (not hallucinations): homer Achilles genitive-as-patient, Achaeans goal-missing; plato vocative-as-patient",
+          "action": "backlog: contract v1.2 - Rule 5 emphasis + post-hoc repair"
+        },
+        {
+          "id": "deepseek_v4_thinking_default",
+          "severity": "high",
+          "status": "documented + fixed (7a721d0)",
+          "note": "AGENTS.md 'DeepSeek V4 quirks': flash thinking default, thinking-disabled extra_body, length-signature, t2-raw as failure document"
+        },
+        {
+          "id": "papyrus_sappho_fp_probe_t3",
+          "severity": "info",
+          "status": "resolved",
+          "impact": "t3 FP = 1+1 borderline (basileus generic-office, theoisin generic-deity-plural); otherwise entities=[] — NOT word-salad",
+          "action": "contract v1.2 edge-case candidates; gold revision NOT needed"
+        },
+        {
+          "id": "rerun_t3_breakthrough",
+          "severity": "info",
+          "status": "accepted",
+          "note": "contract-first refactor: entities 0.24->0.82 (fold), detective 0.00->0.75, expert/logician ->1.00; worked example recorded in gold/metrics.md"
         }
       ]
     },
@@ -354,7 +394,8 @@
     "CI: network-marker non-blocking job",
     "Phase 3: .aeon v2, CLI/web endpoints, README v4, morphology (Morpheus/CLTK), gold-standard corpus, search-layer sigma unification",
     "gold mock fixtures (gold/fixtures/mock_responses.json) — align with extractor contract v1 (entities taxonomy/semantic claims) after 2.7 re-run",
-    "2.7.5 data tasks: sappho min-conf gate cases (avg .60/.65 grounded all-quoted), grammar-flavor prompt iteration, entities FP on fragment texts (papyrus/sappho)"
+    "2.7.5 data tasks: sappho min-conf gate cases (avg .60/.65 grounded all-quoted), grammar-flavor prompt iteration, entities FP on fragment texts (papyrus/sappho)",
+    "contract v1.2: content-first priority (Rule 3), Rule 5 emphasis + post-hoc repair, edge-cases (generic office/deity-plural as entities?) — after 2.7.6 focus data"
   ],
   "config_wiring": {
     "canonical_access": "CONFIG.verification.<agent> is canonical; flat CONFIG.<agent> is a convenience alias",

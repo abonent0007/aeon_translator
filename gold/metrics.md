@@ -64,8 +64,16 @@ t3 = первый валидный v1-прогон.
   `Ἀθηναῖοι` (patient vs roles.patient='ὑμεῖς'). Rule 5 в v1 нестабилен.
 
 **Без изменений:** markers/is_fragment (pack-детерминизм). Entities per text:
-caesar 1.00, plato 1.00, homer 0.77, inscription 0.33, papyrus/sappho 0.00
-(FP при пустом gold — остаточный шум на непоправимо фрагментарных текстах).
+caesar 1.00, plato 1.00, homer 0.92, inscription 0.50, **papyrus/sappho 0.00 —
+артефакт zero-gold**: t3 FP там = **1+1** (граничные: `βασιλεύς` —
+generic-office; `θέοισιν` — generic-deity-plural; остальные сегменты
+`entities=[]`); кандидаты в contract v1.2 edge-case, НЕ word-salad.
+
+**Worked example (contract-first, 2.7.3):** гипотеза (contract-first: extractor v1
++ detective v1 + build_claims + v2-метаданные) → предсказание (entities F1 ↑,
+detective ↑) → измерение на ТЕХ ЖЕ gold (t1 vs t3): Entities 0.24→0.82,
+detective 0.00→0.75, expert/logician 0.88→1.00, MAE flat→0.09, cost −46%.
+Гипотеза подтверждена — методологический, не «прогресс разработки».
 
 ## Real-цели — гипотеза
 

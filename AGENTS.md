@@ -442,3 +442,13 @@ RU-конспектом → заменён подлинной grc-транскр
 - **Real-API gap:** demo-метрики на mock (200 ms/вызов — экстраполяция); реальный
   DeepSeek ≈1.5–4 s/вызов → 4 вызова ≈6–16 s; Ф2 multi-focus (до 12 вызовов)
   может потребовать параллелизации (backlog шаг 2.7).
+- **DeepSeek V4 quirks (актуально 2.7.3, 2026-10):** `deepseek-flash` —
+  **thinking-модель по умолчанию**: reasoning-токены входят в `max_tokens` →
+  `finish_reason=length` при пустом `content` (сигнатура: `reasoning_tokens>0` +
+  empty content). Non-reasoning задачи: `thinking: {"type": "disabled"}` —
+  реализовано в `DeepSeekClient` (`LLMConfig.disable_thinking`, env
+  `AEON_LLM_DISABLE_THINKING`; auto `extra_body` для flash). Легаси-алиас
+  `deepseek-chat` = non-thinking (обслуживается V4.1-Flash). `/models` →
+  `[deepseek-flash, deepseek-v4-pro]`; цены off-peak 0.15/0.60, cache-hit
+  0.003, peak ×2 (01–04/06–10 UTC Пн–Пт = 04–07/09–13 MSK); контекст до 1M.
+  Кейс провала t2 (28 пустых ответов) сохранён: `gold/real_runs/2026-10-14_t2/`.
