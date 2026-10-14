@@ -3,8 +3,9 @@
 ## Overview
 Semantic processor: переводит смысл между формами (текст/код/эмоция/голос/изображение)
 с верификацией, entity linking и анализом древних текстов.
-Статус: **Фаза 0 ✅, Фаза 1 ✅, Фаза 2 ✅ (2.0–2.6, known gap: 2.7 по ключу),
-Фаза 3 — шаги 3.1 ✅ (`.aeon v2`) и 3.5 ✅ (variant readings)**. Впереди: 3.3 gold-standard.
+Статус: **Фаза 0 ✅, Фаза 1 ✅, Фаза 2 ✅ (2.0–2.6; 2.7 разблокирован —
+ключ в `.env`, отложен до конца 3.3 по политике), Фаза 3 — шаги 3.1 ✅
+(`.aeon v2`), 3.5 ✅ (variant readings), 3.3 ✅ (gold-standard: 28 записей/6 текстов)**.
 
 ## Architecture (Фаза 1)
 ```
@@ -314,6 +315,37 @@ Demo-значение `conf=0.71` у selected — **canned** (`DEMO_RESPONSES`),
 не вычисляется пайплайном; при неоднозначном stem (напр. `greek_text_1.txt`)
 work-guard даст `ConfigError` — by design, передавайте `--variant-work` явно.
 
+## Gold-standard corpus (шаг 3.3)
+`gold/` (README, `annotation_schema.json` — schema_version +
+marker_offsets_relative_to + optional entity role; `annotators.json`
+`human:<handle>`; `texts/` — чистые тексты; `annotations/` — 28 записей/6 текстов;
+`fixtures/mock_responses.json` — canned, ≠ gold; `metrics.md`) + пакет
+`aeon/gold/` (loader: схема + integrity «segment_text ⊆ текст, offsets
+валидны, сегменты не перекрываются»; metrics: P/R/F1 markers per kind,
+entities (QID-exact | casefold), is_fragment acc, MAE, verdicts — stdlib, без
+pandas/HF; runner; report CLI).
+
+**Анти-циркулярность:** gold — ручная разметка (аннотатор `human:curator`,
+draft до подписи); gold_mock использует canned-фикстуру, сознательно не равную
+gold (тест `test_runner_mock_not_circular`). Q-ID только верифицированные
+(live Wikidata API): Achilles=Q41746, Athenians=Q120096553, Zeus=Q34201 и др.;
+неверифицированные → null.
+
+**Mock-базлайн (факт):** markers macro F1 1.00 (lacuna 1.00 / supplement 1.00),
+is_fragment acc 1.00; entities F1 0.06, completeness MAE 0.40, detective 0.00 —
+canned-сигналы (стоп №3: два уровня тестов — `*_reports_value` всегда,
+`*_meets_baseline` с xfail до real/2.7). Реальные цели — в `gold/metrics.md`.
+
+pytest-маркеры: `gold_mock` (входит в дефолтный прогон), `gold_real`
+(исключён в pytest.ini; skip без ключа; smoke — Plato). CLI:
+`python -m aeon.gold.report --dataset gold/annotations/ --mode mock`.
+
+**Аудит RU-флага (закрыт):** `examples/greek/plato_apologia_17a.txt` был
+RU-конспектом → заменён подлинной grc-транскрипцией 17a; оба RU-файла в
+`examples/greek/legacy/`; regression `tests/test_examples_corpus.py` (файлы
+вне legacy/ обязаны содержать греческие codepoints; 2.1-тесты флаг не затронул —
+они на inline-греческом).
+
 ## Tech Stack
 - Python 3.11 (Windows dev), приоритет stdlib
 - LLM: DeepSeek (OpenAI-совместимый), фасад `aeon.llm.DeepSeekClient`
@@ -341,6 +373,8 @@ work-guard даст `ConfigError` — by design, передавайте `--varia
   `--focus=all|historian,philosopher,...` — Multi-focus (all без esoteric);
   `--variant-readings PATH` (+`--variant-work`) — Variant Readings (шаг 3.5):
   выбор среди attested readings, пример `examples/apparatus/sappho_fr31.json`)
+- Gold-standard: `python -m aeon.gold.report --dataset gold/annotations/ --mode mock`
+  (real — при ключе; `pytest -m gold_mock` / `-m gold_real`)
 - verify_mode в API: `translator.translate(..., verify_mode="off|basic|full", language_pack=None)`
   (legacy `verify=True` ≡ `verify_mode="full"`)
 - Реестр паков: `python -c "from aeon.language import registry; print(registry.list_available())"`

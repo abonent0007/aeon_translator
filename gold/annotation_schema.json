@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aeon.local/schemas/gold_annotation_v1.json",
+  "title": "AEON gold-standard annotation — одна запись JSONL = один атом/сегмент",
+  "type": "object",
+  "required": ["schema_version", "text_id", "language", "segment_id", "segment_text",
+               "marker_offsets_relative_to", "annotator", "annotation_date",
+               "expected_atom", "expected_markers", "expected_entities",
+               "expected_verdicts"],
+  "properties": {
+    "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+                       "description": "версия схемы аннотации (как aeon_version в v2)"},
+    "text_id": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+    "language": {"type": "string", "pattern": "^[a-z]{2,3}$",
+                 "description": "ISO-код языкового пака (grc, la)"},
+    "segment_id": {"type": "integer", "minimum": 1},
+    "segment_text": {"type": "string", "minLength": 1,
+                     "description": "точная подстрока texts/<text_id>.txt; проверяет loader (integrity)"},
+    "marker_offsets_relative_to": {"const": "segment",
+                                   "description": "якорь offset'ов — начало segment_text (явное поле, а не конвенция)"},
+    "annotator": {"type": "string",
+                  "pattern": "^(human:[A-Za-z0-9][A-Za-z0-9_-]*|mock)$",
+                  "description": "human:<handle> из gold/annotators.json — валидная gold-разметка; mock — только тесты схемы"},
+    "annotation_date": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+    "annotator_notes": {"type": "string",
+                        "description": "методические пометки; обязательная фиксация статуса draft до подписи"},
+    "expected_atom": {
+      "type": "object",
+      "required": ["intent", "domain", "is_fragment", "completeness_score"],
+      "properties": {
+        "intent": {"type": "string", "minLength": 1,
+                   "description": "контролируемый словарь (совместим с extractor): statement/question/command/invocation/..."},
+        "domain": {"type": "string", "minLength": 1,
+                   "description": "philosophy/literature/history/epigraphy/papyrology/religion/..."},
+        "is_fragment": {"type": "boolean",
+                        "description": "свойство СЕГМЕНТА: любой lacuna|supplement-маркер → true (физическая утрата); editorial/deletion/uncertain → false"},
+        "completeness_score": {"type": "number", "minimum": 0.0, "maximum": 1.0,
+                               "description": "полнота ИЗВЛЕЧЕНИЯ (ортогональна is_fragment); ожидание для читаемого текста — 1.0"}
+      }
+    },
+    "expected_markers": {
+      "type": "array",
+      "description": "ВСЕ маркеры сегмента; пустой список валиден (чистый текст не значит «не аннотирован»)",
+      "items": {
+        "type": "object",
+        "required": ["kind", "text", "offset"],
+        "properties": {
+          "kind": {"type": "string",
+                   "enum": ["lacuna", "supplement", "editorial", "deletion",
+                            "uncertain", "crux"]},
+          "text": {"type": "string", "minLength": 1},
+          "offset": {"type": "integer", "minimum": 0,
+                     "description": "Unicode code points от начала segment_text (0-based); см. marker_offsets_relative_to"}
+        }
+      }
+    },
+    "expected_entities": {
+      "type": "array",
+      "description": "только ЯВНО упомянутые референты (не inferred); родовые плюралы/местоимения не включаются",
+      "items": {
+        "type": "object",
+        "required": ["name", "wikidata_id", "is_fragment"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "wikidata_id": {"type": ["string", "null"], "pattern": "^Q[0-9]+$",
+                          "description": "точный Q-ID, ВЕРИФИЦИРОВАННЫЙ (live API / надёжная уверенность); null → match по тексту (casefold)"},
+          "is_fragment": {"type": "boolean",
+                          "description": "упоминание внутри/на месте лакуны"},
+          "role": {"type": ["string", "null"],
+                   "enum": ["speaker", "addressee", "subject", "object", "location", null],
+                   "description": "опционально; заполняется для 1–2 текстов (задел finding-level валидации)"}
+        }
+      }
+    },
+    "expected_verdicts": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "object",
+         "required": ["detective", "expert", "logician"],
+         "properties": {
+           "detective": {"type": "string",
+                         "enum": ["grounded", "contradicted",
+                                  "unverifiable_due_to_missing_data", "abstained"]},
+           "expert": {"type": "string",
+                      "enum": ["supported", "contradicted",
+                               "unverifiable_due_to_missing_data", "abstained"]},
+           "logician": {"type": "string",
+                        "enum": ["coherent", "incoherent", "abstained"]}
+         }}
+      ],
+      "description": "заполняется только для 1–2 текстов (Plato Apologia, Sappho fr. 31); для остальных — null"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "handles": {
+    "curator": {
+      "display_name": "Project Curator",
+      "role": "primary-annotator",
+      "affiliation": "AEON project",
+      "credentials": "anonymous"
+    }
+  }
+}

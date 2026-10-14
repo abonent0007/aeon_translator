@@ -1,0 +1,35 @@
+{
+  "_note": "Canned-ответы MockLLM для gold_mock (шаг 3.3). АНТИ-ЦИРКУЛЯРНОСТЬ: значения НЕ совпадают с gold-аннотациями — фиксируют текущее (несовершенное) поведение пайплайна на моках. НЕ подменять gold-данными.",
+  "responses": {
+    "Analyze the following text": {
+      "intent": "statement",
+      "domain": "general",
+      "entities": [
+        {"name": "Ἀθηναῖοι", "type": "group", "role": "agent",
+         "span": "Ἀθηναῖοι", "confidence": 0.75},
+        {"name": "Belgae", "type": "group", "role": "agent",
+         "span": "Belgae", "confidence": 0.7},
+        {"name": "Ἀχιλλεύς", "type": "person", "role": "agent",
+         "span": "Ἀχιλλεύς", "confidence": 0.8}
+      ],
+      "semantic_roles": {},
+      "evidence": [],
+      "explanation_chain": ["canned extraction (fixture, not calibrated)"],
+      "confidence_breakdown": {},
+      "complexity": 0.4,
+      "urgency": 0.2,
+      "extraction_confidence": 0.8,
+      "semantic_tokens": []
+    },
+    "Detective": {"claims": [
+      {"claim": "canned", "quote": "", "contradicts": false,
+       "confidence": 0.7, "reasoning": "canned (no quote → не grounded)"}
+    ]},
+    "Expert": {"claims": [
+      {"claim": "canned", "status": "unknown", "source": "",
+       "confidence": 0.4, "reasoning": "внешние источники не подключены"}
+    ]},
+    "Logician": {"contradictions": [], "coherence": 0.9,
+                 "reasoning": "canned"}
+  }
+}

@@ -3,21 +3,81 @@
   "original_request": "AEON v4.0 'Deep Analyst'. Phase 1 COMPLETE. Phase 2: 2.0-2.6 done.",
   "enriched_request": "Phase 2: 2.0-2.6 done (Packs, Fragments, Layers, Focus, Offline Adapters). Next: 2.7 Real API + parallelization (triggers on key).",
   "plan": [
-    {"step": "0.1", "status": "done"}, {"step": "0.2", "status": "done"},
-    {"step": "0.3", "status": "done"}, {"step": "0.4", "status": "done"},
-    {"step": "1.1", "status": "done"}, {"step": "1.2", "status": "done"},
-    {"step": "1.3", "status": "done"}, {"step": "1.4", "status": "done"},
-    {"step": "2.0", "status": "done"}, {"step": "2.1", "status": "done"},
-    {"step": "2.2", "status": "done"}, {"step": "2.3", "status": "done"},
-    {"step": "2.4", "status": "done"}, {"step": "2.5", "status": "done"},
-    {"step": "2.6", "status": "done"}
+    {
+      "step": "0.1",
+      "status": "done"
+    },
+    {
+      "step": "0.2",
+      "status": "done"
+    },
+    {
+      "step": "0.3",
+      "status": "done"
+    },
+    {
+      "step": "0.4",
+      "status": "done"
+    },
+    {
+      "step": "1.1",
+      "status": "done"
+    },
+    {
+      "step": "1.2",
+      "status": "done"
+    },
+    {
+      "step": "1.3",
+      "status": "done"
+    },
+    {
+      "step": "1.4",
+      "status": "done"
+    },
+    {
+      "step": "2.0",
+      "status": "done"
+    },
+    {
+      "step": "2.1",
+      "status": "done"
+    },
+    {
+      "step": "2.2",
+      "status": "done"
+    },
+    {
+      "step": "2.3",
+      "status": "done"
+    },
+    {
+      "step": "2.4",
+      "status": "done"
+    },
+    {
+      "step": "2.5",
+      "status": "done"
+    },
+    {
+      "step": "2.6",
+      "status": "done"
+    }
   ],
   "current_step": 15,
   "next_step": "2.7",
   "phase": "complete_with_known_gap",
   "phase2": {
     "status": "complete_with_known_gap",
-    "steps_completed": ["2.0", "2.1", "2.2", "2.3", "2.4", "2.5", "2.6"],
+    "steps_completed": [
+      "2.0",
+      "2.1",
+      "2.2",
+      "2.3",
+      "2.4",
+      "2.5",
+      "2.6"
+    ],
     "step_2_7": {
       "status": "blocked",
       "blocker": "DEEPSEEK_API_KEY not present",
@@ -39,23 +99,59 @@
       "Замеры времени vs экстраполяция 0.8s; >30s/атом → параллелизация",
       "Re-calibration порогов (0.75/0.85/0.60/0.50) — отдельный коммит calibrate"
     ],
-    "focus_roles_available": ["historian", "philosopher", "linguist", "esoteric"],
-    "language_packs_registered": ["grc", "la"],
-    "offline_sources": {"pleiades": {"adapter": "ready", "status": "awaiting_user_dump"}, "trismegistos": {"status": "stub_no_public_dataset"}},
-    "phase3_draft": ["3.1 .aeon v2 (traces/versioning/schema)", "3.2 morphology hooks (Ithaca/Aeneas/LatinBERT, after gold-standard)", "3.3 gold-standard corpus (mock-vs-real validation)", "3.4 multi-document analysis", "3.5 variant readings mode (Sappho)", "3.6 web UI/API (after 2.7)", "3.7 export formats (BibTeX/TEI-XML/Markdown)", "3.8 real-API calibration automation"],
-    "phase3_recommended_first": ["3.1 .aeon v2", "3.3 gold-standard corpus", "3.5 variant readings mode"]
+    "focus_roles_available": [
+      "historian",
+      "philosopher",
+      "linguist",
+      "esoteric"
+    ],
+    "language_packs_registered": [
+      "grc",
+      "la"
+    ],
+    "offline_sources": {
+      "pleiades": {
+        "adapter": "ready",
+        "status": "awaiting_user_dump"
+      },
+      "trismegistos": {
+        "status": "stub_no_public_dataset"
+      }
+    },
+    "phase3_draft": [
+      "3.1 .aeon v2 (traces/versioning/schema)",
+      "3.2 morphology hooks (Ithaca/Aeneas/LatinBERT, after gold-standard)",
+      "3.3 gold-standard corpus (mock-vs-real validation)",
+      "3.4 multi-document analysis",
+      "3.5 variant readings mode (Sappho)",
+      "3.6 web UI/API (after 2.7)",
+      "3.7 export formats (BibTeX/TEI-XML/Markdown)",
+      "3.8 real-API calibration automation"
+    ],
+    "phase3_recommended_first": [
+      "3.1 .aeon v2",
+      "3.3 gold-standard corpus",
+      "3.5 variant readings mode"
+    ]
   },
   "phase3": {
-    "status": "step_3_3_in_progress",
+    "status": "step_3_3_implemented_pending_acceptance",
     "step_3_5_clarifications": "Уточнения куратора закрыты: (1) demo conf=0.71 — canned (DEMO_RESPONSES), illustrative — задокументировано в AGENTS.md; (2) пустой loci — loader отклоняет (test_empty_loci_rejected_by_loader), engine на программном пустом apparatus → selections=[] без LLM (test_engine_empty_loci_returns_empty_selection); (3) неоднозначный stem → ConfigError by design — задокументировано. Tests: 29.",
     "step_3_3_preflight": "gold/ (README/annotation_schema.json/texts/annotations/metrics.md); аннотация вручную (не pipeline — анти-циркулярность); стоп-точка №1: пример Plato 17a seg1 показан до массовой разметки; метрики stdlib (statistics), без pandas/HF; двухуровневые тесты (reports + baseline); маркеры pytest gold_mock/gold_real.",
     "step_3_1": "done (aeon/format writer/reader/validator/versioning; D1 frozen v1 fixture (e8cf5ca); D2 meaning_hash только в legacy; D3 snapshot при создании атома; D4 +4 теста; mock-guard + force_unsafe аудит-лог; --save-aeon/--load-aeon в demo). Facts: format tests = 24 (tests/test_format_v2.py; suite 317), v2 size: plato_full(--layers=all --focus=all) = 17.3KB, plato(focus=historian) = 15.7KB (<50KB, limit 200KB with margin; structured-only confirmed). NameError-fix (chain_result/focus_run) в 50ea764 + регрессионный test_demo_save_aeon_without_optional_steps.",
     "step_3_5": "done (aeon/variants apparatus/prompts/selector/engine + schemas/apparatus_v1.json + examples/apparatus/sappho_fr31.json; tests/test_variants.py = 27, suite 344; coverage aeon.variants 91-100%, TOTAL 93%). Решения: rule3 измеримо (fewer editorial marks, fallback -1); work-guard = все значимые токены apparatus.work ⊆ variant_work (default: stem файла в demo) → ConfigError; unanimous_after_veto → support=издания выбранного, vetoed dict; пустой context → no_context; editions скрыты от LLM; порог 0.5 (AEON_VARIANTS_MIN_CONFIDENCE); порядок reconstruct(1.6)→variant(1.9) подтверждён тестом порядка LLM-вызовов. Demo e2e: variant-only / reconstruct+variant+save/load (steps=[extract,reconstruction,variant_readings], traces=[reconstruction,variant_readings]) / work-mismatch не падает. Фикс бага: work_tokens regex включал '_' → plato_apologia_17a не разбивался; теперь [^\\W_]+.",
-    "order": ["3.1 aeon_v2", "3.5 variant readings", "3.3 gold-standard", "3.2 morphology (after gold+2.7)", "3.6 web (after 2.7)", "3.4/3.7/3.8 backlog"],
+    "order": [
+      "3.1 aeon_v2",
+      "3.5 variant readings",
+      "3.3 gold-standard",
+      "3.2 morphology (after gold+2.7)",
+      "3.6 web (after 2.7)",
+      "3.4/3.7/3.8 backlog"
+    ],
     "schema_draft": "schemas/aeon_v2.json — awaiting curator verification BEFORE 3.1 implementation",
     "design_doc": "docs/phase3_design.md",
-    "key_available": false,
-    "defer_2_7": false,
+    "key_available": true,
+    "defer_2_7": true,
     "preflight_3_5": {
       "source_of_readings": "b — LLM только выбирает между внешне заданными attested readings; генерация запрещена",
       "apparatus_format": "sidecar-JSON {work, editions[], loci[] with readings+editions}; CLI --variant-readings PATH",
@@ -70,12 +166,14 @@
       "license": "CC0 (source texts PD)",
       "format": "JSONL expectations + README в gold/",
       "mock_vs_real": "pytest markers gold_mock (CI baseline) / gold_real (нужен ключ)"
-    }
+    },
+    "step_3_3": "done (pending curator acceptance). gold/: schema v1.0.0 (+schema_version/offsets-anchor/entity-role), annotators.json (human:curator), texts/ (6 чистых, Plato = grc-транскрипция), annotations/ 28 записей/6 текстов (13 markers, 21 entities), fixtures/mock_responses.json (анти-циркулярные canned), metrics.md. aeon/gold/: loader (схема+integrity+non-overlap), metrics (stdlib P/R/F1 per kind, entities QID|casefold, MAE, verdicts), runner (mock/real, verdicts для Plato+Sappho), report CLI. pytest.ini: маркеры gold_mock (в дефолте) / gold_real (исключён). Suite: 367 passed, 2 xfailed (baseline entities/completeness — стоп №3), gold_mock 2 passed/2 xfailed. Coverage aeon.gold: metrics 100%, runner 91%, loader 89%, TOTAL 92%. Mock-факт: markers 1.00/1.00, is_fragment 1.00; entities 0.06, MAE 0.40 (canned-сигналы). RU-аудит закрыт: 2 файла (оба Plato), вариант (c)+legacy+regression test_examples_corpus.py (grc>=50/lat).",
+    "ru_audit": "closed: only 2 files affected (examples/greek/plato_apologia_17a.txt + examples/plato_sample.txt, both RU-only); 4 remaining greek files genuine (grc 87-237); test_grc_pack 2.1 used inline Greek — pack validation unaffected. Fix: genuine grc transcription + git mv to examples/greek/legacy/ + tests/test_examples_corpus.py."
   },
   "completed_at": null,
   "user_preferences": {
     "embeddings": "pluggable; MiniLM/LaBSE defaults",
-    "llm_keys": "user adds DEEPSEEK_API_KEY; tests on mocks; .env ABSENT",
+    "llm_keys": "DEEPSEEK_API_KEY PRESENT in .env (added ~2026-10-14); 2.7 deferred until after 3.3 per policy (key_available=true, defer_2_7=true); gold_real runnable (excluded by default)",
     "ancient_packs": "grc + la DONE",
     "reference_texts": "examples/greek (5) + examples/latin (5)",
     "fragment_hypotheses": "grounded-only, threshold 0.75",
@@ -89,7 +187,9 @@
     "2.5 refinements: demo mock line now 'illustrative, not calibrated'; --focus=all,esoteric FIXED (all previously overwrote the list; extras now appended; test added); all_disagree mechanism documented (pairs of INSIGHTS from different roles; claim tokens >3 chars; Jaccard>=0.5 and claims differ; example VIII vs VI век → True; semantic arbitration backlog).",
     "Phase 2.6 (Offline Adapters): aeon/offline/ (base/pleiades/trismegistos stub/registry). JSONL dump format (line1 meta + record per line; streaming, stdlib only). Additions A-E: (A) atomic load transaction+rollback (test_load_rollback_on_malformed_batch); (B) indexes after load (test_indexes_present_after_load); (C) idempotency same->skip/new->replace+offline_dump_upgraded (2 tests); (D) .gitignore: data/ patterns with README exceptions (data/{pleiades,trismegistos}/README.md in repo); (E) provenance with license+license_file_sha256 from bundle, missing -> OfflineDumpError (test). Staleness: >AEON_OFFLINE_MAX_AGE_DAYS(90) -> offline_dump_stale (test). Chain: PleiadesClient.get_place offline-first via offline_adapter attr, source='offline_pleiades'; offline miss + allow_live_fallback=False -> reason 'offline_miss_no_fallback', 0 HTTP (tests). Metrics: offline namespace + offline_dump_age_days gauge. Trismegistos stub (no_public_dataset). Real Pleiades dump unreachable from this environment (host blocked) - adapter works against user-provided converted dump; license verification comes from bundle LICENSE (sha256), not from our memory.",
     "Coverage: offline package >=88%, TOTAL 93%; runner incl. aeon.offline, aeon.variants.",
-    "Step 3.5 (Variant Readings) DONE: aeon/variants/ (apparatus/prompts/selector/engine), sidecar-JSON apparatus (semver, attribution обязателен), Detective mode 'reading' (context-agreement), selector экономит LLM (unanimous / no_context / veto / unanimous_after_veto), порог 0.5, work-guard ConfigError, translator+ demo интеграция (--variant-readings/--variant-work), v2 traces.variant_readings + pipeline steps, 27 tests, coverage per-module 91-100%."
+    "Step 3.5 (Variant Readings) DONE: aeon/variants/ (apparatus/prompts/selector/engine), sidecar-JSON apparatus (semver, attribution обязателен), Detective mode 'reading' (context-agreement), selector экономит LLM (unanimous / no_context / veto / unanimous_after_veto), порог 0.5, work-guard ConfigError, translator+ demo интеграция (--variant-readings/--variant-work), v2 traces.variant_readings + pipeline steps, 27 tests, coverage per-module 91-100%.",
+    "RU-audit (3.3 stop-condition) CLOSED: examples/greek/plato_apologia_17a.txt was a RU summary used as grc input since Phase 1; scope = only 2 Plato files; genuine grc transcription replaced it (own transcription, PD), both RU files moved to examples/greek/legacy/ via git mv; regression tests/test_examples_corpus.py (greek files need >=50 greek codepoints; latin files >=50 latin, <=5 greek); LICENSE.md updated; historical defect noted: pre-3.3 Plato demo/v2-size measurements were on RU text (scientifically meaningless, superseded).",
+    "Step 3.3 (Gold-standard) IMPLEMENTED (pending acceptance): gold/ corpus (28 records/6 texts, 13 markers/21 entities) + aeon/gold harness (loader/metrics/runner/report, stdlib only) + pytest markers gold_mock/gold_real + metrics.md baseline. Q-IDs verified live (Achilles Q41746, Athenians Q120096553, Zeus Q34201, Sappho Q17892, Caesar Q1048, Gaul Q38060, Belgae Q337104, Aquitani Q1255605, Gauls Q273854, Achaeans Q3514911, Garonne Q5077, Seine Q1471); unverified -> null. DEEPSEEK_API_KEY detected (.env present) -> defer_2_7=true per policy; 2.7 becomes next priority after 3.3 acceptance."
   ],
   "backlog": [
     "2.7 Real API verification when key available (Sappho reconstruction, layers/focus quality); budget options (a)/(b); parallelism tuning",
@@ -101,10 +201,26 @@
   ],
   "config_wiring": {
     "canonical_access": "CONFIG.verification.<agent> is canonical; flat CONFIG.<agent> is a convenience alias",
-    "wired_in": ["llm", "logging", "entity_linking", "crosswalk (+offline chain)", "scoring weights", "verification", "language packs", "fragments", "linguistics", "focus", "offline (CONFIG.offline -> adapters; allow_live_fallback in chain)"],
-    "not_wired_yet": ["similarity levels (optional, later)"]
+    "wired_in": [
+      "llm",
+      "logging",
+      "entity_linking",
+      "crosswalk (+offline chain)",
+      "scoring weights",
+      "verification",
+      "language packs",
+      "fragments",
+      "linguistics",
+      "focus",
+      "offline (CONFIG.offline -> adapters; allow_live_fallback in chain)"
+    ],
+    "not_wired_yet": [
+      "similarity levels (optional, later)"
+    ]
   },
-  "legacy_config_used_by": ["verification legacy projection (risk bands) + Aggregator review_threshold"],
+  "legacy_config_used_by": [
+    "verification legacy projection (risk bands) + Aggregator review_threshold"
+  ],
   "created_at": "2026-10-14T10:30:33+03:00",
   "baseline_commit": "1c5a460",
   "tooling": {

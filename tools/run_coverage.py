@@ -30,6 +30,7 @@ SOURCE = [
     "aeon.focus",
     "aeon.offline",
     "aeon.variants",
+    "aeon.gold",
 ]
 
 
