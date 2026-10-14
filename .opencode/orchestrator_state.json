@@ -85,7 +85,7 @@
       "substeps": {
         "2.7.1_smoke": "PASS (2026-10-14): plato full real, no exceptions; mock=false, llm_model=deepseek-chat; CVI 0.9465 verified; 16.2s/atom (~5 calls, ~3.2s/call); detective exact-quote 7/7 on Greek with diacritics. FINDING: extractor returned 8 entities incl. pronouns/words (ὑμεῖς, ἐγώ, ἀληθές, οὐδέν) vs gold 1 — entity-extraction quality signal for 2.7.3; entity_linking OFF.",
         "2.7.2_sappho": "PASS-with-findings (fixes applied) (2026-10-14): real DeepSeek honest refusal (raw {\"hypotheses\": [], \"status\": \"no_reconstruction_possible\"}); engine reason 'llm_returned_none' MISLEADING (conflates decline vs parse-garbage). Mock-canned (v3.0 baseline, git -S) = optimistic: contained Voigt readings (ἴδρως κακχέεται 0.78 / τρόμος δὲ παῖσαν ἄγρει 0.55) — misleading demo, NOT gold-circular (gold fixtures have no reconstruction entries). No hallucinations. Detective+0.75 filter NOT exercised on real (no hypotheses to filter) — honest gap. CVI=1.00 'verified' on fragment (detective unverifiable 5/7): positives-only mean — calibration material. Cost: ~5 calls, 12.6s (2.5s/call).",
-        "2.7.3_gold_real": "DONE-WITH-STOP (2026-10-14): full real run 52 calls, 155.9s, $0.0351, failures=0. Raw: gold/real_runs/2026-10-14_t1; report: gold/reports/real_2026-10-14.md. Markers 1.00/1.00 (pack), is_fragment 1.00, MAE 0.00 (extractor always 1.0 — uncalibrated field), Entities F1 0.24 (P 0.14/R 0.76; word-salad FPs incl English translations; accent grave/acute mismatch — metric artifact), expert 0.88, logician 0.88, detective 0.00 => STOP-CONDITION #4 triggered, root-caused via raw (0 API): claim composition defect (grammar-instruction explanation_chain + forced Intent/Domain meta-claims with empty quotes, all-or-nothing grounded_count==total at detective.py:135, avg conf 0.83<0.85 even at 7/7). Exact-quote itself WORKS (quote_in_source 7/7). 2.7.4 BLOCKED pending curator decision on claim-contract/gold-verdict expectations.",
+        "2.7.3_gold_real": "DONE-WITH-STOP (2026-10-14): full real run 52 calls, 155.9s, $0.0351, failures=0. Raw: gold/real_runs/2026-10-14_t1; report: gold/reports/real_2026-10-14.md. Markers 1.00/1.00 (pack), is_fragment 1.00, MAE 0.00 (extractor always 1.0 — uncalibrated field), Entities F1 0.24 (P 0.14/R 0.76; word-salad FPs incl English translations; accent grave/acute mismatch — metric artifact), expert 0.88, logician 0.88, detective 0.00 => STOP-CONDITION #4 triggered, root-caused via raw (0 API): claim composition defect (grammar-instruction explanation_chain + forced Intent/Domain meta-claims with empty quotes, all-or-nothing grounded_count==total at detective.py:135, avg conf 0.83<0.85 even at 7/7). Exact-quote itself WORKS (quote_in_source 7/7). 2.7.4 BLOCKED pending curator decision on claim-contract/gold-verdict expectations. CONTRACTS: docs/contracts/extractor_v1.md + detective_v1.md drafted (pending curator approval; uncommitted). Evidence: extractor prompt has NO entity/claim contract (entities incl. types concept|action|abstract; explanation_chain='HOW you arrived' -> instructions); claims get meta rows appended by CALLER code (translator.py:173/runner.py:121/demo.py:398) — atom.intent/domain are separate fields.",
         "2.7.4_detective_greek": "pending (preview: exact-quote OK in smoke)",
         "2.7.5_calibration": "pending (separate commit policy)",
         "2.7.6_focus": "pending",
@@ -135,6 +135,14 @@
       "token_tracking": "done (9b78e66): provider usage counters (calls/prompt/completion tokens), DeepSeekClient.usage, tariffs in LLMConfig (AEON_LLM_PRICE_IN/OUT_PER_M, defaults 0.27/1.10), runner stats + attach_raw_recorder (gold real_runs audit), report --dry-run/--raw-dir/cost-block. Dry-run: 52 calls (28 extract + 24 verify). Cost estimate: $0.03-0.25 (live measurement; stop >$2).",
       "findings_2_7_3": [
         {
+          "id": "llm_prompt_contract_underspecified_meta",
+          "severity": "high",
+          "impact": "ONE CLASS of defects: 2.7.1 entity contract, 2.7.2 CVI rule, 2.7.3 claims composition — all 'LLM outputs without formal contract'; mock masked via implicit-knowledge canned answers",
+          "root_cause_hypothesis": "prompts never define strict output contracts; real LLM fills gaps unpredictably",
+          "action": "contract audit for ALL LLM steps; current block (extractor+detective) fix now (contracts drafted, pending approval); linguistics/focus — after 2.7 as separate step 'contract: audit LLM step outputs'",
+          "not_a_bug": "meta-pattern, the finding of 2.7.3"
+        },
+        {
           "id": "detective_claim_composition_meta_rows",
           "severity": "high",
           "impact": "detective accuracy 0.00 on gold verdict texts; exact-quote fine, claims not verifiable as composed",
@@ -170,7 +178,8 @@
           "root_cause_hypothesis": "annotator wrote expectations pre-real-data",
           "action": "revisit expected_verdicts jointly with claims-contract decision (annotations_version bump if changed)"
         }
-      ]
+      ],
+      "deepseek_api_check_2_7_3": "Researched 2026-10-14: current API lineup V4: deepseek-flash (replaces deepseek-chat/V4-Flash; legacy deepseek-chat alias still served, billed flash price), deepseek-reasoner, deepseek-v4-pro(retained). Endpoint https://api.deepseek.com unchanged (OpenAI-compatible). Flash pricing off-peak: in $0.15/M (cache-hit $0.003) / out $0.60/M; peak (01-04, 06-10 UTC Mon-Fri) x2. Our defaults stale: model=deepseek-chat (works via alias), tariff 0.27/1.10 (pre-V4). Proposal (pending approval): config defaults -> deepseek-flash + 0.15/0.60 + capture prompt_cache_hit_tokens; optional peak-aware cost. Run cost recomputed vs new tariff would be lower."
     },
     "known_gaps": [
       "LLM quality not validated on real API (mock used throughout)",
