@@ -17,6 +17,7 @@ AEON v4.0 Configuration — центральная конфигурация.
 
 import os
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import Optional
 
 
@@ -144,7 +145,7 @@ class LLMConfig:
     """LLM-провайдер (дефолты v3.0: DeepSeek, OpenAI-совместимый endpoint)."""
 
     provider: str = "deepseek"
-    model: str = "deepseek-chat"
+    model: str = "deepseek-flash"
     base_url: str = "https://api.deepseek.com"
     temperature_default: float = 0.7
     temperature_json: float = 0.3
@@ -152,10 +153,12 @@ class LLMConfig:
     max_attempts: int = 3
     retry_backoff_base: float = 0.5
     timeout_sec: float = 60.0
-    # Тариф USD/1M токенов для cost-tracking (2.7.7); дефолт deepseek-chat
-    # (cache-miss, актуально на 2026-10); настраивается через AEON_LLM_PRICE_*.
-    price_in_per_m: float = 0.27
-    price_out_per_m: float = 1.10
+    # Тариф USD/1M токенов для cost-tracking (2.7.7); дефолт deepseek-flash
+    # OFF-PEAK (актуально на 2026-10, /models+pricing верифицированы);
+    # peak-часы (01-04, 06-10 UTC Пн-Пт) ×2 — is_peak_hour(); env AEON_LLM_PRICE_*.
+    price_in_per_m: float = 0.15
+    price_out_per_m: float = 0.60
+    price_cache_hit_per_m: float = 0.003
 
 
 @dataclass(frozen=True)
@@ -275,12 +278,24 @@ class AeonConfig:
 
 # ── сборка из окружения ──────────────────────────────────────
 
+def is_peak_hour(dt: Optional[datetime] = None) -> bool:
+    """Peak-часы DeepSeek: 01:00–04:00 и 06:00–10:00 UTC, Пн–Пт (цена ×2).
+
+    Выходные — off-peak. Праздники КНР не учитываем (нужен внешний календарь —
+    допустимое упрощение для research-воспроизводимости, документировано).
+    """
+    moment = dt or datetime.now(timezone.utc)
+    if moment.weekday() >= 5:  # Sat/Sun
+        return False
+    return (1 <= moment.hour < 4) or (6 <= moment.hour < 10)
+
+
 def load_config() -> AeonConfig:
     """Собирает конфигурацию из окружения (AEON_* переопределяет дефолты v3.0)."""
     llm = LLMConfig(
         provider=_env_str("AEON_LLM_PROVIDER", "deepseek"),
         model=_env_str(
-            "AEON_LLM_MODEL", _env_str("DEEPSEEK_MODEL", "deepseek-chat")
+            "AEON_LLM_MODEL", _env_str("DEEPSEEK_MODEL", "deepseek-flash")
         ),
         base_url=_env_str(
             "AEON_LLM_BASE_URL",
@@ -292,8 +307,9 @@ def load_config() -> AeonConfig:
         max_attempts=_env_int("AEON_LLM_MAX_ATTEMPTS", 3),
         retry_backoff_base=_env_float("AEON_LLM_RETRY_BACKOFF_BASE", 0.5),
         timeout_sec=_env_float("AEON_LLM_TIMEOUT_SEC", 60.0),
-        price_in_per_m=_env_float("AEON_LLM_PRICE_IN_PER_M", 0.27),
-        price_out_per_m=_env_float("AEON_LLM_PRICE_OUT_PER_M", 1.10),
+        price_in_per_m=_env_float("AEON_LLM_PRICE_IN_PER_M", 0.15),
+        price_out_per_m=_env_float("AEON_LLM_PRICE_OUT_PER_M", 0.60),
+        price_cache_hit_per_m=_env_float("AEON_LLM_PRICE_CACHE_HIT_PER_M", 0.003),
     )
 
     embeddings = EmbeddingsConfig(

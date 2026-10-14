@@ -65,13 +65,14 @@ def _offline_embeddings():
 
 
 def _snapshot_usage(llm: Any) -> tuple:
-    """(calls, prompt_tokens, completion_tokens) — usage или len(llm.calls)."""
+    """(calls, prompt_tokens, completion_tokens, cache_hit_tokens)."""
     usage = dict(getattr(llm, "usage", {}) or {})
     if usage:
         return (int(usage.get("calls", 0)),
                 int(usage.get("prompt_tokens", 0)),
-                int(usage.get("completion_tokens", 0)))
-    return (len(getattr(llm, "calls", None) or []), 0, 0)
+                int(usage.get("completion_tokens", 0)),
+                int(usage.get("cache_hit_tokens", 0)))
+    return (len(getattr(llm, "calls", None) or []), 0, 0, 0)
 
 
 def attach_raw_recorder(llm: Any, raw_dir) -> Path:
@@ -181,18 +182,24 @@ def run_dataset(dataset: GoldDataset, *, mode: str = "mock",
             waited = time.perf_counter() - segment_started
             entry = stats.setdefault("per_text", {}).setdefault(
                 record.text_id, {"calls": 0, "prompt_tokens": 0,
-                                 "completion_tokens": 0, "latency_sec": 0.0})
+                                 "completion_tokens": 0, "cache_hit_tokens": 0,
+                                 "latency_sec": 0.0})
             entry["calls"] += after[0] - before[0]
             entry["prompt_tokens"] += after[1] - before[1]
             entry["completion_tokens"] += after[2] - before[2]
+            entry["cache_hit_tokens"] += after[3] - before[3]
             entry["latency_sec"] = round(entry["latency_sec"] + waited, 2)
 
     if stats is not None:
+        from ..config import is_peak_hour
+
         usage_after = _snapshot_usage(llm)
         stats["latency_sec"] = round(time.perf_counter() - started, 2)
         stats["mode"] = mode
         stats["calls"] = usage_after[0] - usage_before[0]
         stats["prompt_tokens"] = usage_after[1] - usage_before[1]
         stats["completion_tokens"] = usage_after[2] - usage_before[2]
+        stats["cache_hit_tokens"] = usage_after[3] - usage_before[3]
+        stats["peak_hour"] = is_peak_hour()
         stats["failures"] = failures
     return predictions

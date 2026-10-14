@@ -73,6 +73,7 @@ class DeepSeekClient:
             "calls": self._provider.calls,
             "prompt_tokens": self._provider.prompt_tokens,
             "completion_tokens": self._provider.completion_tokens,
+            "cache_hit_tokens": self._provider.cache_hit_tokens,
         }
 
     def _call(

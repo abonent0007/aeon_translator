@@ -50,6 +50,7 @@ class OpenAICompatibleProvider:
         self.calls = 0
         self.prompt_tokens = 0
         self.completion_tokens = 0
+        self.cache_hit_tokens = 0  # 2.7.3: prompt_cache_hit_tokens (DeepSeek)
 
         if client is not None:
             self._client = client
@@ -132,9 +133,13 @@ class OpenAICompatibleProvider:
         usage = getattr(response, "usage", None)
         tokens_in = int(getattr(usage, "prompt_tokens", 0) or 0) if usage else 0
         tokens_out = int(getattr(usage, "completion_tokens", 0) or 0) if usage else 0
+        # Note 4 (куратор): поле может отсутствовать — graceful .get/getattr
+        tokens_cache_hit = (int(getattr(usage, "prompt_cache_hit_tokens", 0) or 0)
+                            if usage else 0)
         self.calls += 1
         self.prompt_tokens += tokens_in
         self.completion_tokens += tokens_out
+        self.cache_hit_tokens += tokens_cache_hit
         log_event(
             self._logger,
             "llm_call",
@@ -146,6 +151,7 @@ class OpenAICompatibleProvider:
             ok=True,
             tokens_in=tokens_in,
             tokens_out=tokens_out,
+            tokens_cache_hit=tokens_cache_hit,
             trace_id=tid,
         )
         return response.choices[0].message.content

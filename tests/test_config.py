@@ -42,8 +42,12 @@ def test_config_defaults_unchanged(clean_env):
     assert cfg.similarity.good == 0.65
     assert cfg.similarity.partial == 0.45
 
-    # LLM / embeddings — дефолты v3.0
-    assert cfg.llm.model == "deepseek-chat"
+    # LLM / embeddings — дефолты v3.0 (модель/тарифы обновлены в 2.7.3,
+    # DeepSeek V4: /models+pricing верифицированы — коммит 5)
+    assert cfg.llm.model == "deepseek-flash"
+    assert cfg.llm.price_in_per_m == 0.15      # off-peak, USD/1M
+    assert cfg.llm.price_out_per_m == 0.60
+    assert cfg.llm.price_cache_hit_per_m == 0.003
     assert cfg.llm.base_url == "https://api.deepseek.com"
     assert cfg.llm.max_attempts == 3
     assert cfg.llm.retry_backoff_base == 0.5

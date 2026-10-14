@@ -35,17 +35,24 @@ def planned_calls(dataset) -> Dict[str, int]:
 
 
 def format_cost_block(stats: Dict[str, Any], usage: Dict[str, Any]) -> str:
-    """Cost/latency-блок (2.7.7): факт из usage-счётчиков провайдера."""
-    cost = ((usage.get("prompt_tokens", 0) / 1_000_000) * CONFIG.llm.price_in_per_m
+    """Cost/latency-блок (2.7.7 + 2.7.3): cache-hit split + peak-hour flag."""
+    cache_hit = int(usage.get("cache_hit_tokens", 0) or 0)
+    prompt_total = int(usage.get("prompt_tokens", 0) or 0)
+    cache_miss = max(0, prompt_total - cache_hit)
+    cost = ((cache_miss / 1_000_000) * CONFIG.llm.price_in_per_m
+            + (cache_hit / 1_000_000) * CONFIG.llm.price_cache_hit_per_m
             + (usage.get("completion_tokens", 0) / 1_000_000) * CONFIG.llm.price_out_per_m)
     return "\n".join([
         "",
         "## Cost / latency (2.7.7)",
         "",
         f"- LLM-вызовов: {stats.get('calls', 0)}",
-        f"- tokens in/out: {usage.get('prompt_tokens', 0)}/{usage.get('completion_tokens', 0)}",
-        f"- **cost: ${cost:.4f}** (тариф {CONFIG.llm.price_in_per_m}/"
-        f"{CONFIG.llm.price_out_per_m} USD за 1M in/out — дефолт, env-настраиваемый)",
+        f"- tokens in/out: {prompt_total}/{usage.get('completion_tokens', 0)} "
+        f"(cache-hit: {cache_hit}, miss: {cache_miss})",
+        f"- **cost: ${cost:.4f}** (off-peak тариф {CONFIG.llm.price_in_per_m}/"
+        f"{CONFIG.llm.price_out_per_m}, cache-hit {CONFIG.llm.price_cache_hit_per_m} USD/M; "
+        f"peak ×2 — env AEON_LLM_PRICE_*)",
+        f"- peak-hour: {stats.get('peak_hour', 'n/a')} (01–04, 06–10 UTC Пн–Пт)",
         f"- latency: {stats.get('latency_sec', 'n/a')} s total",
     ]) + "\n"
 
@@ -61,7 +68,10 @@ def format_run_details(dataset, stats: Dict[str, Any]) -> str:
         verdict_records = sum(1 for record in records
                               if record.expected_verdicts is not None)
         entry = stats.get("per_text", {}).get(text_id, {})
-        cost = ((entry.get("prompt_tokens", 0) / 1_000_000) * CONFIG.llm.price_in_per_m
+        cache_hit = int(entry.get("cache_hit_tokens", 0) or 0)
+        cache_miss = max(0, int(entry.get("prompt_tokens", 0) or 0) - cache_hit)
+        cost = ((cache_miss / 1_000_000) * CONFIG.llm.price_in_per_m
+                + (cache_hit / 1_000_000) * CONFIG.llm.price_cache_hit_per_m
                 + (entry.get("completion_tokens", 0) / 1_000_000) * CONFIG.llm.price_out_per_m)
         total_cost += cost
         lines.append(
