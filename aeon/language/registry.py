@@ -90,10 +90,11 @@ def list_available() -> List[str]:
 
 def detect(text: str) -> Optional[LanguagePack]:
     """
-    Эвристическая детекция языка по Unicode-диапазонам паков.
+    Эвристическая детекция языка: Unicode-hits (unicode_ranges) +
+    опциональный бонус пака detect_heuristic (общий алфавит, напр. ASCII-латынь).
 
     Tie-break (refinement 2.0 №1): обход в алфавитном порядке iso_code —
-    при равных hits побеждает лексикографически первый (детерминировано,
+    при равных score побеждает лексикографически первый (детерминировано,
     порядок регистрации не влияет); неоднозначность логируется событием
     `detect_ambiguous`.
 
@@ -104,14 +105,15 @@ def detect(text: str) -> Optional[LanguagePack]:
     if not text or not text.strip():
         return None
     best_pack: Optional[LanguagePack] = None
-    best_hits = 0
+    best_score = 0.0
     tied: List[str] = []
     for iso_code in list_available():  # sorted ⇒ детерминированный tie-break
         pack = get(iso_code)
-        hits = _count_unicode_hits(text, pack.unicode_ranges)
-        if hits > best_hits:
-            best_pack, best_hits, tied = pack, hits, [iso_code]
-        elif hits == best_hits and hits > 0:
+        score = _count_unicode_hits(text, pack.unicode_ranges)
+        score += max(0.0, pack.detect_heuristic(text))
+        if score > best_score:
+            best_pack, best_score, tied = pack, score, [iso_code]
+        elif score == best_score and score > 0:
             tied.append(iso_code)
     if len(tied) > 1:
         log_event(
@@ -119,7 +121,7 @@ def detect(text: str) -> Optional[LanguagePack]:
             "detect_ambiguous",
             candidates=list(tied),
             winner=tied[0],
-            hits=best_hits,
+            hits=best_score,
         )
     return best_pack
 

@@ -1,0 +1,10 @@
+C. Iulius Caesar. Commentarii de Bello Gallico I, 1 (стандартный текст)
+
+Gallia est omnis dīvīsa in partēs trēs, quārum ūnam incolunt Belgae,
+aliam Aquītānī, tertiam quī ipsōrum linguā Celtae, nostrā Gallī
+appellantur. Hī omnēs linguā, īnstitūtīs, lēgibus inter sē differunt.
+Gallōs ab Aquītānīs Garumna flūmen, ā Belgīs Matrona et Sēquana dīvidit.
+
+Примечание: классическая проза; текст античного автора — общественное
+достояние; транскрипция AEON с макронами (учебная конвенция).
+См. LICENSE.md.

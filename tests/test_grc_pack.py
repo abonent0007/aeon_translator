@@ -121,6 +121,37 @@ def test_registry_lists_grc_after_registration():
     assert "grc" in registry.list_available()
 
 
+def test_detect_modern_greek_documented_limitation():
+    """Новогреческий тоже матчится на grc — известное ограничение (AGENTS.md)."""
+    pack = registry.detect("καλημέρα, φίλε")
+
+    assert pack is not None
+    assert pack.iso_code == "grc"  # древний/новый не различаем (стоп-точка 2.0 №2)
+
+
+def test_detective_quote_matches_after_normalization(mock_llm):
+    """Quote-matching работает с нормализованным греческим (NFC, диакритика)."""
+    from aeon.config import CONFIG
+    from aeon.verification import DetectiveAgent, VerificationContext
+    from aeon.verification.verdicts import VERDICT_GROUNDED
+
+    mock_llm.responses = {"Detective": {"claims": [
+        {"claim": "Ахилл гневается", "quote": "μῆνιν ἄειδε θεά", "contradicts": False,
+         "confidence": 0.9, "reasoning": "exact"},
+    ]}}
+
+    source = AncientGreekPack().normalize("μῆνιν ἄειδε θεά Πηληϊάδεω Ἀχιλῆος")
+    agent = DetectiveAgent(mock_llm, CONFIG.verification.detective)
+
+    verdict = agent.verify(VerificationContext(
+        source_text=source, claims=["Ахилл гневается"]
+    ))
+
+    assert verdict.verdict == VERDICT_GROUNDED
+    quote = verdict.details["claims"][0]["quote"]
+    assert quote in source  # диакритика не деградировала — точная подстрока
+
+
 def test_end_to_end_translate_with_grc_pack(mock_llm, sample_structure):
     from aeon.embeddings import EmbeddingEngine
     from aeon.extractor import MeaningExtractor

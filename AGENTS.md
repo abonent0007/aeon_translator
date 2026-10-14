@@ -3,8 +3,8 @@
 ## Overview
 Semantic processor: переводит смысл между формами (текст/код/эмоция/голос/изображение)
 с верификацией, entity linking и анализом древних текстов.
-Статус: **Фаза 0 ✅, Фаза 1 ✅, Фаза 2 — шаги 2.0 ✅, 2.1 ✅** (Language Pack Infra,
-Ancient Greek Pack). Впереди: 2.2 Latin Pack, 2.3 Fragment Hypotheses,
+Статус: **Фаза 0 ✅, Фаза 1 ✅, Фаза 2 — шаги 2.0 ✅, 2.1 ✅, 2.2 ✅**
+(Language Pack Infra, Ancient Greek, Latin). Впереди: 2.3 Fragment Hypotheses,
 2.4 Linguistic Layers, 2.5 Multi-focus, 2.6 Offline adapters, 2.7 Real API.
 
 ## Architecture (Фаза 1)
@@ -25,13 +25,15 @@ Ancient Greek Pack). Впереди: 2.2 Latin Pack, 2.3 Fragment Hypotheses,
 `special_tokens` {lacuna, editorial} (значение — строка ИЛИ список вариантов),
 `prompts` {extract, verify, reconstruct}, `dictionaries`, `unicode_ranges`;
 методы: `detect_markers` [abstract], `normalize` [NFC default], `is_fragment`,
-`validate` (fail-fast контракт).
+`detect_heuristic` [default 0; бонус к Unicode-hits для общих алфавитов,
+напр. ASCII-латынь], `validate` (fail-fast контракт).
 
 Реестр (`aeon/language/registry.py`): `register` — eager-регистрация фабрики,
 lazy-инстанциация + validate при первом `get` (инстанс валидируется сразу);
 `force=True` — осознанный override; `get` — KeyError со списком; `list_available`
-(sorted); `detect` — по `unicode_ranges`, **tie-break детерминирован
-(алфавитный iso_code) + событие `detect_ambiguous`**; `clear` — тесты.
+(sorted); `detect` — score = unicode-hits + `detect_heuristic`, **tie-break
+детерминирован (алфавитный iso_code) + событие `detect_ambiguous`**;
+`clear` — тесты.
 
 Как добавить пак: подкласс `LanguagePack` (реализовать `detect_markers`) →
 `registry.register(PackClass)`; builtin-паки регистрируются в
@@ -65,12 +67,40 @@ Unicode-стандарт + практика изданий Perseus/TLG (стан
 `no_reconstruction_possible` (max confidence < 0.5).
 
 Ограничения: морфологии нет (Ф3, Morpheus — интерфейс-хук); древний и
-новогреческий по codepoints не различаем (кандидат от `detect`).
+новогреческий по codepoints не различаем (кандидат от `detect`;
+тест-документация `test_detect_modern_greek_documented_limitation`).
 
 Эталонные тексты: `examples/greek/` — 5 фрагментов (Plato Apologia,
 Homer Il. 1.1–7, надпись с лакунами, папирус с лакунами, Sappho fr. 31)
 + `LICENSE.md` (public domain; копии оцифровок Perseus/PHI сознательно
 не использовались — стоп-точка 2.1 №4; per-file атрибуция — Ф2.6).
+
+## Latin Pack (шаг 2.2)
+`aeon/language/la.py` — `la` (Latin, period −200..1800; Classical vs
+Medieval/Neo-Latin не различаем).
+
+Маркеры: `lacuna`/`editorial`/`deletion`/`uncertain` — как в grc;
+**`crux` `†...†` — ОТДЕЛЬНЫЙ kind (стоп-точка 2.2 №2)**: locus desperatus —
+текст есть, но испорчен (≠ lacuna «утрачено физически», ≠ editorial
+«добавлено редактором»); `[буквы]` → supplement (контекстное правило).
+
+Нормализация (стоп-точка 2.2 №1, решение): NFC; **j/v и i/u НЕ сводятся** —
+текст сохраняется как в источнике (OCT/Teubner/Loeb печатают классику с
+осмысленным u/v-различением; свёртка — поисковый слой Ф3, как ς/σ в grc);
+макроны (ā ē ī ō ū) СОХРАНЯЮТСЯ (долгота/метрика); регистр не трогаем.
+
+Детекция: ranges Latin-1 Supplement / Ext-A / Ext-B + **word-эвристика**
+(служебные слова + падежные окончания, порог ≥2 — общий ASCII-алфавит с
+английским): «Gallia est omnis divisa…» → `la`, «hello world» → `None`.
+
+Промпты (≤30 строк): verify — lacuna И `†word†` → 
+`unverifiable_due_to_missing_data` (НЕ contradicted); reconstruct — cruces
+восстанавливаются только с внешними свидетельствами, иначе
+`no_reconstruction_possible`.
+
+Тексты: `examples/latin/` — Caesar BG 1.1, Cicero Cat. 1.1, Vergil Aen. 1.1–7,
+CIL-образец (лакуны/восстановления/†), Vulgata Gen. 1.1 + `LICENSE.md`
+(PD; макроны Vulgata — учебная конвенция AEON; CIL/EDCS-копии не делались).
 
 ## Tech Stack
 - Python 3.11 (Windows dev), приоритет stdlib
@@ -91,13 +121,13 @@ Homer Il. 1.1–7, надпись с лакунами, папирус с лак�
 ## Commands
 - Тесты: `python -m pytest -q` (live: `pytest -m network -k pleiades`)
 - Coverage (обходной раннер — см. quirks): `python tools/run_coverage.py`
-- Demo верификации: `python -m aeon.demo --text examples/greek/plato_apologia_17a.txt --verify=full --language=grc`
+- Demo верификации: `python -m aeon.demo --text examples/latin/caesar_bg_1_1.txt --verify=full --language=la`
   (mock 200ms/вызов; `--real` — с DEEPSEEK_API_KEY; `--verify=off|basic|full`;
   `--language` — ISO-код пака: нормализация + маркеры)
 - verify_mode в API: `translator.translate(..., verify_mode="off|basic|full", language_pack=None)`
   (legacy `verify=True` ≡ `verify_mode="full"`)
 - Реестр паков: `python -c "from aeon.language import registry; print(registry.list_available())"`
-  → `['grc']` (Latin — 2.2)
+  → `['grc', 'la']`
 
 ## Key Decisions
 - **Config access (канонический):** `CONFIG.verification.detective` — иерархический;
@@ -126,7 +156,8 @@ Homer Il. 1.1–7, надпись с лакунами, папирус с лак�
   overall_verdict) + v4.0 (agents/combined/cvi/abstained/reasoning_trace).
 - **LanguagePack (Ф2):** вариант A (промпты + словари + special tokens;
   морфология — Ф3); stdlib-only (`unicodedata`); detect() — декларативные
-  `unicode_ranges`; registry — eager-регистрация + lazy-инстанциация.
+  `unicode_ranges` + опциональный `detect_heuristic`; registry —
+  eager-регистрация + lazy-инстанциация.
 - **Нормализация пака — только pipeline:** оригинал сохраняется в
   `result["source"]["content"]` (refinement 2.0 №2).
 

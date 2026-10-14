@@ -1,0 +1,12 @@
+Надпись (учебный образец в конвенциях CIL; эпиграфика)
+
+[Imp(eratori) Caesari] dīvī fīliō [Augustō ...]
+pontificī maximō, trib(ūnīcia) potest(āte) [---],
+[cōnsulī] iterum, [patrī patriae],
+†datum† [...] ā [colōnīs] dēcrētum.
+
+Примечание: педагогический образец конвенций эпиграфики —
+лакуны ([...], [---]), редакторские восстановления ([Imp(eratori)…]),
+corrupt-место †datum† (locus desperatus). НЕ копия конкретной записи
+CIL; датасеты EDCS (возможные ограничения) не использовались —
+стоп-точка 2.2 №4. См. LICENSE.md.

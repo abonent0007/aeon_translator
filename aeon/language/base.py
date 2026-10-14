@@ -65,6 +65,16 @@ class LanguagePack(ABC):
         """True, если в источнике есть маркеры-лакуны (свойство ИСТОЧНИКА)."""
         return bool(self.detect_markers(text))
 
+    def detect_heuristic(self, text: str) -> float:
+        """
+        Опциональная эвристика детекции (бонус к Unicode-hits).
+
+        Нужна для языков с общим алфавитом: чистую ASCII-латынь нельзя
+        отличить от английского по codepoints — пак добавляет
+        word-эвристику (маркеры-слова/окончания). По умолчанию — 0.
+        """
+        return 0.0
+
     def validate(self) -> None:
         """Проверка контракта пака (fail-fast при регистрации/get)."""
         problems: List[str] = []

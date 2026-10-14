@@ -1,0 +1,11 @@
+Vulgata. Genesis 1, 1–5 (стандартный текст; поздняя латынь)
+
+In prīncipiō creāvit Deus caelum et terram.
+Terra autem erat inānis et vacua, et tenebrae erant super faciem abyssī,
+et Spīritus Deī ferēbātur super aquās.
+Dīxitque Deus: Fiat lūx. Et facta est lūx.
+Et vīdit Deus lūcem quod esset bona, et dīvīsit lūcem ā tenebrīs.
+
+Примечание: поздняя латынь (Vulgata) — контроль периода; PD.
+Макроны добавлены AEON для учебных целей (традиционный набор Vulgata
+их не содержит). См. LICENSE.md.
