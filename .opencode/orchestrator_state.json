@@ -5,15 +5,15 @@
   "plan": [
     {"step": "0.1", "description": "git init + baseline commit + secret scan + .gitignore hardening + .env.example + orchestrator state", "status": "done"},
     {"step": "0.2", "description": "tests/ + pytest.ini + MockLLM; aeon/logging_config.py (JSON-lines); aeon/metrics.py + pytest_terminal_summary", "status": "done"},
-    {"step": "0.3", "description": "aeon/config.py (defaults == v3.0 behavior, env overrides, per-agent thresholds, ABSTENTION_THRESHOLD)", "status": "pending"},
+    {"step": "0.3", "description": "aeon/config.py (defaults == v3.0 behavior, env overrides, per-agent thresholds, ABSTENTION_THRESHOLD)", "status": "done"},
     {"step": "0.4", "description": "aeon/llm/ provider layer (openai-compatible + optional anthropic), retries, JSON-repair; DeepSeekClient facade", "status": "pending"},
     {"step": "1.1", "description": "aeon/entity_linking.py WikidataClient (wbsearchentities/wbgetentities, SQLite cache 7d, rate limit 1 rps, redirect+merged QID healing, offline mode)", "status": "pending"},
     {"step": "1.2", "description": "Candidate scoring (prior+text_sim+context), Entity.is_fragment/completeness_score/external_ids/link_confidence, Pleiades(P1584)/Trismegistos(P11651) crosswalk, extractor integration", "status": "pending"},
     {"step": "1.3", "description": "aeon/verification/ package: GroundingAgent/ExpertAgent/LogicAgent + CVI aggregator + abstention; verify_atom backward-compatible", "status": "pending"},
     {"step": "1.4", "description": "Integration in translator (verify_mode), AGENTS.md update, final metrics report, acceptance demo", "status": "pending"}
   ],
-  "current_step": 2,
-  "next_step": "0.3",
+  "current_step": 3,
+  "next_step": "0.4",
   "total_steps": 8,
   "phase": "executing",
   "user_preferences": {
@@ -23,7 +23,10 @@
     "web_ui": "minimal additions only; full redesign deferred",
     "checkpoints": "curator verifies step reports with fixed format; stop at defined stop-points (0.1, 0.2, 0.3, 1.1, 1.2, 1.3, 1.4)"
   },
-  "known_deltas": [],
+  "known_deltas": [
+    "Threshold audit (step 0.3, 2026-10-14): v3.0 literals captured in config.legacy_verification with IDENTICAL defaults — cross-lingual 0.65; risk bands 0.15/0.35/0.60; consistency/grounding weights 0.5/0.5; similarity levels 0.85/0.65/0.45. No divergent hardcodes vs new agent thresholds (0.85/0.75/0.60) — no conflicts, stop-point not triggered.",
+    "Contract refinements (pre-0.3): log_event gained optional trace_id (None default, backward compatible); metrics.snapshot gained avg_time_per_atom_local / avg_time_per_atom_network."
+  ],
   "backlog": [
     "Phase 2: linguistic_layers (Chain-of-Linguistics), focus.py (multi-focus), fragments.py (lacunae), aeon/ancient/ packs (ancient_greek + latin priority)",
     "Phase 3: .aeon v2 (verification trace, entity links, hypotheses; v1 read compat), CLI analyze/link/fragments, web endpoints, README v4 + docs/ARCHITECTURE.md"

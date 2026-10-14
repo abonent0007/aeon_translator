@@ -28,6 +28,7 @@ from .image_gen import FluxImageGenerator
 from .verification import VerificationEngine
 from .aeon_format import AeonFormat
 from .embeddings import EmbeddingEngine, get_embedding_engine
+from .config import CONFIG, ConfigError, load_config
 
 _llm = DeepSeekClient()
 _llm_status = "ONLINE" if _llm.available else "OFFLINE (rule-based)"
