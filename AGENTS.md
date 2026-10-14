@@ -56,6 +56,11 @@ v3.0 → v4.0 (Фаза 0: фундамент; Фаза 1: Entity Linking + Veri
 - **Crosswalk:** Pleiades — защитный парсер (только `.get()`), live-тесты под
   маркером `network`; Trismegistos — заглушка (публичного API нет: SSL-мисконфиг
   + 403 анти-бот; датасеты — Фаза 2 backlog).
+- **Ограничение Детектива (переводы):** exact-quote матчинг работает только
+  с исходным языком; для текстов в переводе цитаты не находятся →
+  `unverifiable_due_to_missing_data` (негатива нет). Опция
+  `detective.allow_translation_match` — Фаза 2 backlog (контракт-тест
+  `test_detective_translated_source_abstains` зафиксирован).
 - **Фрагменты (задел):** вердикты различают `unverifiable_due_to_missing_data`
   (нейтрально) и `contradicted` (негативно) — отсутствие данных не штрафуется.
 - **Протокол фаз:** кураторские чек-поинты с фиксированным форматом отчёта

@@ -41,11 +41,11 @@ class LogicianAgent(BaseVerifier):
             return self._emit(context, self._abstained("LLM недоступен"))
 
         if len(context.claims) < 2:
-            return self._emit(context, Verdict(
-                verdict=VERDICT_COHERENT,
-                confidence=1.0,
-                agent=self.name,
-                reasoning="менее двух утверждений — противоречий быть не может",
+            # False positive запрещён: без предмета сравнения coherence
+            # не оценивается (abstained, не trivially coherent).
+            return self._emit(context, self._abstained(
+                "менее двух утверждений — coherence не оценивается (нет предмета сравнения)",
+                0.0,
             ))
 
         result = self.llm._call_json([

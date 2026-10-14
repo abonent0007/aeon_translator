@@ -91,3 +91,15 @@ def test_verdict_taxonomy_fragment_neutral():
     assert combined.verdict == VERDICT_VERIFIED
     assert combined.overall_confidence == 0.9
     assert combined.abstained is False
+
+
+def test_aggregator_single_claim_all_neutral_abstains():
+    """Один claim: логик abstained (не trivially coherent) → итог abstained."""
+    combined = AGG.combine({
+        "detective": v("detective", VERDICT_ABSTAINED, 0.5),
+        "expert": v("expert", VERDICT_UNVERIFIABLE_MISSING_DATA, 0.4),
+        "logician": v("logician", VERDICT_ABSTAINED, 0.0),
+    })
+
+    assert combined.verdict == VERDICT_ABSTAINED
+    assert combined.abstained is True

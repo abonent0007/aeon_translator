@@ -110,6 +110,26 @@ def test_detective_parse_error_abstains(mock_llm):
     assert verdict.verdict == VERDICT_ABSTAINED
 
 
+def test_detective_translated_source_abstains(mock_llm):
+    """Контракт-тест (ограничение): claim из ПЕРЕВОДА не матчится с источником.
+
+    Текущее поведение: цитата не найдена → unverifiable_due_to_missing_data
+    (нейтрально, без негатива). При добавлении allow_translation_match
+    (Фаза 2 backlog) тест обновляется осознанно.
+    """
+    mock_llm.responses = {"Detective": {"claims": [
+        {"claim": "переведённое утверждение", "quote": "", "contradicts": False,
+         "confidence": 0.6, "reasoning": "original text is in another language"},
+    ]}}
+
+    verdict = make_detective(mock_llm).verify(
+        ctx(["переведённое утверждение"], source="Ἀθῆναι πόλις ἐστίν")
+    )
+
+    assert verdict.verdict == VERDICT_UNVERIFIABLE_MISSING_DATA
+    assert is_negative(verdict.verdict) is False
+
+
 # ── Эксперт ──
 
 def test_expert_supported(mock_llm):
@@ -213,12 +233,13 @@ def test_logician_low_coherence_abstains(mock_llm):
     assert verdict.verdict == VERDICT_ABSTAINED  # 0.5 < min_coherence 0.6
 
 
-def test_logician_single_claim_trivially_coherent(mock_llm):
+def test_logician_single_claim_abstains(mock_llm):
+    """False positive запрещён: с одним claim coherence не оценивается."""
     agent = make_logician(mock_llm)
 
     verdict = agent.verify(ctx(["only one claim"]))
 
-    assert verdict.verdict == VERDICT_COHERENT
+    assert verdict.verdict == VERDICT_ABSTAINED
     assert mock_llm.calls == []  # без вызова LLM
 
 
