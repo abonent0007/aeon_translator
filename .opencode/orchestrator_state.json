@@ -84,14 +84,42 @@
       "trigger": "satisfied: DEEPSEEK_API_KEY present in .env (~2026-10-14)",
       "substeps": {
         "2.7.1_smoke": "PASS (2026-10-14): plato full real, no exceptions; mock=false, llm_model=deepseek-chat; CVI 0.9465 verified; 16.2s/atom (~5 calls, ~3.2s/call); detective exact-quote 7/7 on Greek with diacritics. FINDING: extractor returned 8 entities incl. pronouns/words (ὑμεῖς, ἐγώ, ἀληθές, οὐδέν) vs gold 1 — entity-extraction quality signal for 2.7.3; entity_linking OFF.",
-        "2.7.2_sappho": "pending",
+        "2.7.2_sappho": "PASS-with-findings (2026-10-14): real DeepSeek honest refusal (raw {\"hypotheses\": [], \"status\": \"no_reconstruction_possible\"}); engine reason 'llm_returned_none' MISLEADING (conflates decline vs parse-garbage). Mock-canned (v3.0 baseline, git -S) = optimistic: contained Voigt readings (ἴδρως κακχέεται 0.78 / τρόμος δὲ παῖσαν ἄγρει 0.55) — misleading demo, NOT gold-circular (gold fixtures have no reconstruction entries). No hallucinations. Detective+0.75 filter NOT exercised on real (no hypotheses to filter) — honest gap. CVI=1.00 'verified' on fragment (detective unverifiable 5/7): positives-only mean — calibration material. Cost: ~5 calls, 12.6s (2.5s/call).",
         "2.7.3_gold_real": "pending",
         "2.7.4_detective_greek": "pending (preview: exact-quote OK in smoke)",
         "2.7.5_calibration": "pending (separate commit policy)",
         "2.7.6_focus": "pending",
         "2.7.7_cost": "pending (token tracking not implemented)",
         "2.7.8_closure": "pending"
-      }
+      },
+      "findings_2_7_1": [
+        {
+          "id": "entity_extraction_contract_underspecified",
+          "severity": "high",
+          "impact": "entities F1 real likely << mock (0.06)",
+          "root_cause_hypothesis": "prompt doesn't define 'entity'; gold uses 'named referents only'",
+          "action": "quantify in 2.7.3, then decide contract, then fix prompt",
+          "not_a_bug": "may be schema ambiguity, not extractor defect"
+        }
+      ],
+      "findings_2_7_2": [
+        {
+          "id": "reconstruction_reason_taxonomy_conflates_decline_and_garbage",
+          "severity": "medium",
+          "impact": "llm_returned_none maps both 'LLM honestly declined (status no_reconstruction_possible)' and 'unparseable/empty hypotheses'",
+          "root_cause_hypothesis": "engine checks only parsed hypotheses list; ignores result['status']",
+          "action": "post-2.7.3: distinguish reason='llm_declined' when status declares refusal",
+          "not_a_bug": "terminal outcome identical; observability/докладность only"
+        },
+        {
+          "id": "cvi_overclaims_on_fragment_texts",
+          "severity": "medium",
+          "impact": "sappho: detective unverifiable (5/7), expert neutral 0.30, logician coherent 1.00 -> CVI=1.00, verdict=verified",
+          "root_cause_hypothesis": "CVI = mean confidence of POSITIVE verdicts only; single-positive case yields 1.00 without coverage penalty",
+          "action": "2.7.5 calibration material: consider positive-coverage factor for fragments",
+          "not_a_bug": "formula as documented; question is fitness on fragment texts"
+        }
+      ]
     },
     "known_gaps": [
       "LLM quality not validated on real API (mock used throughout)",
