@@ -172,7 +172,7 @@ class MeaningExtractor:
         # 5. Семантические токены
         tokens = structure.get("semantic_tokens", [])
 
-        # 6. Фрагменты: лакуны + доля заполненных полей (задел v4.0)
+        # 6. Фрагменты: лакуна источника и качество извлечения — ортогональны
         completeness = compute_completeness(
             intent=structure.get("intent", "statement"),
             domain=structure.get("domain", "general"),
@@ -180,7 +180,8 @@ class MeaningExtractor:
             semantic_roles=roles,
             evidence=evidence,
         )
-        is_fragment = detect_lacunae(text) or completeness < FRAGMENT_THRESHOLD
+        is_fragment = detect_lacunae(text)  # свойство источника
+        needs_attention = is_fragment or completeness < FRAGMENT_THRESHOLD
 
         # 7. Entity Linking (опционально; enabled=False → 0 сетевых вызовов)
         self._link_entities(entities, detected_lang)
@@ -207,6 +208,7 @@ class MeaningExtractor:
             semantic_tokens=tokens,
             is_fragment=is_fragment,
             completeness_score=completeness,
+            needs_attention=needs_attention,
         )
 
     def extract_from_code(self, code: str, language: str = "python") -> SemanticAtom:

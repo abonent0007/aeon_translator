@@ -213,7 +213,8 @@ def test_pleiades_graceful_degradation(mock_llm, sample_structure, tmp_path):
     assert "pleiades" not in entity.external_labels  # обогащение не удалось
 
 
-def test_fragment_flags_from_completeness(mock_llm, tmp_path):
+def test_low_quality_extraction_is_not_source_fragment(mock_llm, tmp_path):
+    """Ортогональность: плохое извлечение ≠ лакуна источника."""
     structure = {
         "intent": "statement",
         "domain": "general",
@@ -234,11 +235,12 @@ def test_fragment_flags_from_completeness(mock_llm, tmp_path):
 
     atom = extractor.extract_from_text("обрывок текста", "russian")
 
-    assert atom.completeness_score == 0.4  # intent + domain из 5 полей
-    assert atom.is_fragment is True        # 0.4 < 0.5
+    assert atom.completeness_score == 0.4   # 2 из 5 полей
+    assert atom.is_fragment is False        # лакуны в источнике нет
+    assert atom.needs_attention is True     # агрегат: качество < 0.5
 
 
-def test_fragment_marker_sets_flag_on_atom_and_entities(
+def test_lacuna_is_source_fragment_even_with_full_extraction(
     mock_llm, sample_structure
 ):
     mock_llm.responses = {"Analyze the following text": sample_structure}
@@ -248,6 +250,7 @@ def test_fragment_marker_sets_flag_on_atom_and_entities(
 
     atom = extractor.extract_from_text("текст [...] с лакуной", "russian")
 
-    assert atom.is_fragment is True
-    assert atom.completeness_score == 1.0
-    assert atom.entities[0].is_fragment is True  # флаги проброшены на сущности
+    assert atom.is_fragment is True         # свойство источника
+    assert atom.completeness_score == 1.0   # извлечение полное
+    assert atom.needs_attention is True
+    assert atom.entities[0].is_fragment is True  # проброс на сущности

@@ -85,8 +85,9 @@ class SemanticAtom:
     hallucination_risk: float = 0.0
 
     # ── Фрагменты (задел v4.0) ──
-    is_fragment: bool = False
-    completeness_score: float = 1.0
+    is_fragment: bool = False          # свойство ИСТОЧНИКА: есть лакуна
+    completeness_score: float = 1.0    # свойство ИЗВЛЕЧЕНИЯ: доля полей
+    needs_attention: bool = False      # агрегат: лакуна ИЛИ низкая полнота
 
     # ── AEON-native токены ──
     semantic_tokens: List[str] = field(default_factory=list)
