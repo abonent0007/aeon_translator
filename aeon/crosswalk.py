@@ -103,6 +103,7 @@ class PlaceInfo:
     place_types: List[str] = field(default_factory=list)
     repr_point: Optional[List[float]] = None  # [lon, lat]
     uri: str = ""
+    source: str = "live"                      # "live" | "offline_<source>" (шаг 2.6)
 
 
 @dataclass
@@ -150,6 +151,7 @@ class PleiadesClient:
             base = Path(self.cfg.cache_path)
             cache_path = str(base.parent / "crosswalk.db")
         self._cache = CrosswalkCache(cache_path, ttl_days=30, now=self._clock)
+        self.offline_adapter = None  # шаг 2.6: offline-first цепочка (назначается извне)
 
     def get_place(self, pleiades_id: str) -> PlaceFetchResult:
         """Место по Pleiades ID (кэш → сеть). Деградация без исключений."""
@@ -157,6 +159,23 @@ class PleiadesClient:
             return PlaceFetchResult(reason="disabled")
         if not pleiades_id:
             return PlaceFetchResult(reason="empty_id")
+
+        # Офлайн-цепочка (шаг 2.6): offline adapter → live (если разрешён)
+        adapter = getattr(self, "offline_adapter", None)
+        if adapter is not None and adapter.loaded:
+            record = adapter.lookup(str(pleiades_id))
+            if record is not None:
+                return PlaceFetchResult(place=PlaceInfo(
+                    pleiades_id=record.id, title=record.title,
+                    place_types=list(record.place_types),
+                    repr_point=record.repr_point, uri=record.uri,
+                    source=f"offline_{adapter.source_name}",
+                ))
+            fallback_allowed = getattr(
+                getattr(CONFIG, "offline", None), "allow_live_fallback", True
+            )
+            if not fallback_allowed:
+                return PlaceFetchResult(reason="offline_miss_no_fallback")
 
         cached = self._cache.get("pleiades", str(pleiades_id))
         if cached is not None:

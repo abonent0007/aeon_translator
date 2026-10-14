@@ -41,6 +41,16 @@ aeon_flux_*
 htmlcov/
 *.db
 
+# Offline dumps (данные не коммитим; README-инструкции — в репо)
+data/*.zip
+data/*.json
+data/*.jsonl
+data/*.csv
+data/pleiades/*
+data/trismegistos/*
+!data/pleiades/README.md
+!data/trismegistos/README.md
+
 # IDE
 .vscode/
 .idea/

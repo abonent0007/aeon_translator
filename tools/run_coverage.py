@@ -28,6 +28,7 @@ SOURCE = [
     "aeon.fragments",
     "aeon.linguistics",
     "aeon.focus",
+    "aeon.offline",
 ]
 
 

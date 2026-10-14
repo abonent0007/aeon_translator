@@ -53,7 +53,13 @@ class MultiFocusOrchestrator:
         """Запуск ролей; ConfigError при неизвестной роли."""
         requested = list(roles) if roles else list(DEFAULT_ROLES)
         if "all" in requested:
-            requested = list(DEFAULT_ROLES)  # esoteric — только явно
+            # "all" — безопасный набор; явные доп. роли сохраняются:
+            # --focus=all,esoteric → historian+philosopher+linguist+esoteric
+            extras = [
+                name for name in requested
+                if name != "all" and name not in DEFAULT_ROLES
+            ]
+            requested = list(DEFAULT_ROLES) + extras
         ordered = self.validate_roles(requested)
 
         if not self.llm.available:

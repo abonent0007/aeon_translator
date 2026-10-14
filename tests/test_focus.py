@@ -190,6 +190,17 @@ def test_focus_all_excludes_esoteric(mock_llm):
     assert "esoteric" not in result.insights_by_role
 
 
+def test_focus_all_plus_esoteric_explicit(mock_llm):
+    """Документированная альтернатива (уточнение 2.5 №2): 'all,esoteric'."""
+    mock_llm.responses = dict(ROLE_RESPONSES)
+
+    result = make_orchestrator(mock_llm).run(make_atom(), roles=["all", "esoteric"])
+
+    assert set(result.insights_by_role) == {
+        "historian", "philosopher", "linguist", "esoteric",
+    }
+
+
 def test_focus_trace_id_shared(mock_llm):
     mock_llm.responses = dict(ROLE_RESPONSES)
 

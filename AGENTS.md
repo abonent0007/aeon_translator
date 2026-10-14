@@ -3,9 +3,9 @@
 ## Overview
 Semantic processor: переводит смысл между формами (текст/код/эмоция/голос/изображение)
 с верификацией, entity linking и анализом древних текстов.
-Статус: **Фаза 0 ✅, Фаза 1 ✅, Фаза 2 — шаги 2.0 ✅ … 2.5 ✅**
+Статус: **Фаза 0 ✅, Фаза 1 ✅, Фаза 2 — шаги 2.0 ✅ … 2.6 ✅**
 (Language Pack Infra, Ancient Greek, Latin, Fragment Hypotheses, Linguistic
-Layers, Multi-focus). Впереди: 2.6 Offline adapters, 2.7 Real API.
+Layers, Multi-focus, Offline Adapters). Впереди: 2.7 Real API (по ключу).
 
 ## Architecture (Фаза 1)
 ```
@@ -218,6 +218,31 @@ backlog 2.7 [не оптимизируем до реальных замеров]
 Прочее (подозрения 2.4): handoff >1500 симв. → truncate + событие
 `handoff_truncated` (тест есть); demo/test mock-значения (0.80–0.82,
 insights) — **illustrative, не калиброванные** (реальный LLM даст разброс).
+
+## Offline Knowledge Adapters (шаг 2.6)
+Пакет `aeon/offline/`: `base.py` (ABC `OfflineAdapter`, `OfflineRecord`,
+`OfflineProvenance`, `SqliteOfflineStore`), `pleiades.py`, `trismegistos.py`
+(stub), `registry.py` (`get_adapter`/`register`/`list_adapters`).
+
+Формат дампа — **JSONL**: строка 1 `{"meta": {...}}`, далее запись на строку
+(стриминг без внешних парсеров); спецификация и инструкция атрибуции —
+`data/<source>/README.md` (README в репо, сами данные — под .gitignore).
+
+Механика (дополнения A–E): **атомарность** (transaction + периодические
+commit + rollback — битая запись не оставляет частично загруженный дамп);
+**индексы создаются ПОСЛЕ загрузки**; **идемпотентность** по `dump_version`
+(same → skip, new → replace + событие `offline_dump_upgraded`);
+**provenance** обязателен с `license` + `license_file_sha256` из бандла
+(без sha256 → `OfflineDumpError`); **staleness**: дамп старше
+`AEON_OFFLINE_MAX_AGE_DAYS` (90) → событие `offline_dump_stale`.
+
+Цепочка в `PleiadesClient.get_place` (шаг 2.6): offline adapter (если
+загружен) → live (при `AEON_OFFLINE_ALLOW_LIVE_FALLBACK=1`); офлайн-результат
+помечается `source="offline_pleiades"`. Trismegistos — stub
+(`no_public_dataset`: публичного датасета нет) — в pipeline не включается.
+
+Метрики: `offline_cache_hit_rate`, `offline_dump_age_days`.
+Demo: `python -m aeon.demo --text examples/greek/homer_iliad_1_1-10.txt --offline-pleiades tests/fixtures/dumps/pleiades_sample.jsonl`.
 
 ## Tech Stack
 - Python 3.11 (Windows dev), приоритет stdlib

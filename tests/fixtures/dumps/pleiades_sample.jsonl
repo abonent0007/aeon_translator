@@ -1,0 +1,6 @@
+{"meta": {"source": "pleiades", "dump_version": "2026.01", "dump_date": "2026-09-01", "license": "CC-BY-3.0", "license_file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}}
+{"id": "579885", "title": "Athenae", "place_types": ["settlement"], "repr_point": [23.725, 37.975], "uri": "https://pleiades.stoa.org/places/579885", "dump_version": "2026.01"}
+{"id": "550567", "title": "Alexandreia", "place_types": ["settlement"], "repr_point": [29.918, 31.199], "uri": "https://pleiades.stoa.org/places/550567", "dump_version": "2026.01"}
+{"id": "423025", "title": "Roma", "place_types": ["settlement", "capital"], "repr_point": [12.483, 41.891], "uri": "https://pleiades.stoa.org/places/423025", "dump_version": "2026.01"}
+{"id": "599574", "title": "Ephesos", "place_types": ["settlement"], "repr_point": [27.341, 37.939], "uri": "https://pleiades.stoa.org/places/599574", "dump_version": "2026.01"}
+{"id": "315082", "title": "Carthago", "place_types": ["settlement"], "repr_point": [10.323, 36.852], "uri": "https://pleiades.stoa.org/places/315082", "dump_version": "2026.01"}

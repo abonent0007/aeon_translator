@@ -1,7 +1,7 @@
 {
   "project": "C:\\Users\\User\\Documents\\aeon_translator-main\\aeon_translator-main",
-  "original_request": "AEON v4.0 'Deep Analyst'. Phase 1 COMPLETE. Phase 2 in progress (2.0-2.5 done).",
-  "enriched_request": "Phase 2: 2.0-2.5 done (Language Pack Infra, Ancient Greek, Latin, Fragment Hypotheses, Linguistic Layers, Multi-focus). Next: 2.6 Offline adapters -> 2.7 Real API + parallelization.",
+  "original_request": "AEON v4.0 'Deep Analyst'. Phase 1 COMPLETE. Phase 2: 2.0-2.6 done.",
+  "enriched_request": "Phase 2: 2.0-2.6 done (Packs, Fragments, Layers, Focus, Offline Adapters). Next: 2.7 Real API + parallelization (triggers on key).",
   "plan": [
     {"step": "0.1", "status": "done"}, {"step": "0.2", "status": "done"},
     {"step": "0.3", "status": "done"}, {"step": "0.4", "status": "done"},
@@ -9,47 +9,48 @@
     {"step": "1.3", "status": "done"}, {"step": "1.4", "status": "done"},
     {"step": "2.0", "status": "done"}, {"step": "2.1", "status": "done"},
     {"step": "2.2", "status": "done"}, {"step": "2.3", "status": "done"},
-    {"step": "2.4", "status": "done"}, {"step": "2.5", "status": "done"}
+    {"step": "2.4", "status": "done"}, {"step": "2.5", "status": "done"},
+    {"step": "2.6", "status": "done"}
   ],
-  "current_step": 14,
-  "next_step": "2.6",
+  "current_step": 15,
+  "next_step": "2.7",
   "phase": "phase2_executing",
   "phase2": {
-    "step_2.5": "done (Multi-focus: aeon/focus/, independent roles, parallel ThreadPoolExecutor, all=no-esoteric, esoteric opt-in with guardrails, aggregator all_disagree heuristic, translator result['focus'], demo --focus)",
+    "step_2.6": "done (Offline Adapters: aeon/offline/, JSONL dumps, atomic load + idempotency + provenance sha256 + staleness, Pleiades offline-first chain, TS stub)",
     "focus_roles_available": ["historian", "philosopher", "linguist", "esoteric"],
     "language_packs_registered": ["grc", "la"],
-    "remaining": ["2.6 Offline adapters", "2.7 Real API + parallelization"]
+    "offline_sources": {"pleiades": {"adapter": "ready", "status": "awaiting_user_dump"}, "trismegistos": {"status": "stub_no_public_dataset"}},
+    "remaining": ["2.7 Real API + parallelization (triggers on DEEPSEEK_API_KEY)"]
   },
   "completed_at": null,
   "user_preferences": {
     "embeddings": "pluggable; MiniLM/LaBSE defaults",
     "llm_keys": "user adds DEEPSEEK_API_KEY; tests on mocks; .env ABSENT",
     "ancient_packs": "grc + la DONE",
-    "reference_texts": "examples/greek (5) + examples/latin (5) + LICENSE.md",
-    "fragment_hypotheses": "grounded-only Detective (mode=hypothesis), threshold 0.75",
-    "multi_focus": "opt-in; all=3 roles; esoteric only explicit",
+    "reference_texts": "examples/greek (5) + examples/latin (5)",
+    "fragment_hypotheses": "grounded-only, threshold 0.75",
+    "multi_focus": "opt-in; all=3 roles; all,esoteric documented alternative",
     "linguistic_layers": "opt-in, strict deps, halt 0.3",
+    "offline_dumps": "user provides converted JSONL dumps in data/<source>/ (READMEs in repo)",
     "checkpoints": "curator verifies step reports with fixed format"
   },
   "known_deltas": [
-    "Phases 1, 2.0-2.4 complete (details in git/AGENTS.md).",
-    "2.4 suspicions closure: (1) linguistic canned values per layer distinct but ILLUSTRATIVE (not calibrated) - documented in AGENTS; contradiction detector tested explicitly (test_lexical_syntactic_contradiction_actually_triggers: verb vs noun same span -> event + 0.8*0.7); (2) handoff >1500 -> truncate + event handoff_truncated (test_handoff_truncation_logged); (3) detector mechanism = 3 lines, NO LLM: index (span, kind) in CONFLICT_KINDS -> casefold value comparison (linguistics/orchestrator.py detect_contradictions).",
-    "Phase 2.5 (Multi-focus): aeon/focus/ (base/prompts/4 roles/orchestrator/aggregator). Roles INDEPENDENT (FocusContext has no other-role data; structural test). >1 roles parallel via ThreadPoolExecutor (timing test 3x300ms < 0.75s), 1 role sequential. Alias 'all' = historian+philosopher+linguist; esoteric ONLY explicit (anti-pseudoscience guardrails in prompt + empty-insights valid; 'Why esoteric is opt-in' in AGENTS). Aggregator does NOT arbitrate; all_disagree heuristic (Jaccard>=0.5 significant words, different claims). translator focus param -> result['focus']; demo --focus (ConfigError wrapped with message).",
-    "Budget warning (2.5 stop-point #4): worst atom extract+3verify+4layers+4focus ~= 12 calls ~= 30-40s real; options (a) disable layers when focus=all, (b) parallelize everything - backlog 2.7, no premature optimization.",
-    "Gold-standard corpus for linguistic layers & focus roles - backlog Phase 3 (curator recommendation: mock can imitate success).",
-    "Coverage: focus 85-100% (base 85%, orchestrator 96%), TOTAL 93%; runner incl. aeon.focus."
+    "Phases 1, 2.0-2.5 complete (details in git/AGENTS.md).",
+    "2.5 refinements: demo mock line now 'illustrative, not calibrated'; --focus=all,esoteric FIXED (all previously overwrote the list; extras now appended; test added); all_disagree mechanism documented (pairs of INSIGHTS from different roles; claim tokens >3 chars; Jaccard>=0.5 and claims differ; example VIII vs VI век → True; semantic arbitration backlog).",
+    "Phase 2.6 (Offline Adapters): aeon/offline/ (base/pleiades/trismegistos stub/registry). JSONL dump format (line1 meta + record per line; streaming, stdlib only). Additions A-E: (A) atomic load transaction+rollback (test_load_rollback_on_malformed_batch); (B) indexes after load (test_indexes_present_after_load); (C) idempotency same->skip/new->replace+offline_dump_upgraded (2 tests); (D) .gitignore: data/ patterns with README exceptions (data/{pleiades,trismegistos}/README.md in repo); (E) provenance with license+license_file_sha256 from bundle, missing -> OfflineDumpError (test). Staleness: >AEON_OFFLINE_MAX_AGE_DAYS(90) -> offline_dump_stale (test). Chain: PleiadesClient.get_place offline-first via offline_adapter attr, source='offline_pleiades'; offline miss + allow_live_fallback=False -> reason 'offline_miss_no_fallback', 0 HTTP (tests). Metrics: offline namespace + offline_dump_age_days gauge. Trismegistos stub (no_public_dataset). Real Pleiades dump unreachable from this environment (host blocked) - adapter works against user-provided converted dump; license verification comes from bundle LICENSE (sha256), not from our memory.",
+    "Coverage: offline package >=88%, TOTAL 93%; runner incl. aeon.offline."
   ],
   "backlog": [
-    "2.6 Pleiades offline dump adapter + Trismegistos datasets adapter",
-    "2.7 Real API verification when key available (incl. Sappho reconstruction + focus/layers quality); budget options (a)/(b); hybrid layer batching after real measurements",
-    "Variant readings mode (Sappho contested readings) - separate mode, not a focus role (2.6+)",
-    "Linguistics: contradiction resolution via LLM (variant C); focus disagreement semantic arbitration (LLM); la heuristic config (AEON_LA_DETECT_THRESHOLD)",
+    "2.7 Real API verification when key available (Sappho reconstruction, layers/focus quality); budget options (a)/(b); parallelism tuning",
+    "Variant readings mode (Sappho) - separate mode (2.6+)",
+    "Offline: real Pleiades dump download/convert when user has network access; TS dataset if ever public; duckdb/pandas never (stdlib only)",
+    "Linguistics: contradiction resolution via LLM (variant C); focus disagreement semantic arbitration; la heuristic config",
     "CI: network-marker non-blocking job",
-    "Phase 3: .aeon v2 (all traces incl. focus/layers), CLI/web endpoints, README v4, morphology (Morpheus/CLTK), gold-standard corpus, search-layer sigma unification"
+    "Phase 3: .aeon v2, CLI/web endpoints, README v4, morphology (Morpheus/CLTK), gold-standard corpus, search-layer sigma unification"
   ],
   "config_wiring": {
     "canonical_access": "CONFIG.verification.<agent> is canonical; flat CONFIG.<agent> is a convenience alias",
-    "wired_in": ["llm", "logging", "entity_linking", "crosswalk", "scoring weights", "verification", "language packs", "fragments", "linguistics", "focus (translator focus param; demo --focus)"],
+    "wired_in": ["llm", "logging", "entity_linking", "crosswalk (+offline chain)", "scoring weights", "verification", "language packs", "fragments", "linguistics", "focus", "offline (CONFIG.offline -> adapters; allow_live_fallback in chain)"],
     "not_wired_yet": ["similarity levels (optional, later)"]
   },
   "legacy_config_used_by": ["verification legacy projection (risk bands) + Aggregator review_threshold"],
@@ -61,6 +62,6 @@
     "wikidata_schema_check": "live script; zero drift",
     "pleiades_trismegistos_check": "live scripts; outcomes in known_deltas",
     "network_live_tests": "tests/test_network_live.py (marker network)",
-    "coverage_runner": "tools/run_coverage.py (incl. language, fragments, linguistics, focus)"
+    "coverage_runner": "tools/run_coverage.py (incl. language, fragments, linguistics, focus; offline to add)"
   }
 }

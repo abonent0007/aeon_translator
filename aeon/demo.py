@@ -335,7 +335,8 @@ def _offline_embeddings():
 def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
                     use_real: bool, language: str | None = None,
                     reconstruct: bool = False, layers: str | None = None,
-                    focus: str | None = None) -> None:
+                    focus: str | None = None,
+                    offline_pleiades: str | None = None) -> None:
     """Demo: атом + trace верификации + метрики (мок с задержкой или реальный LLM)."""
     from pathlib import Path
 
@@ -370,7 +371,7 @@ def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
     if llm is None:
         llm = MockLLM(responses=DEMO_RESPONSES, latency_ms=latency_ms)
         print(f"LLM: MockLLM (латентность {latency_ms:g} ms/вызов — имитация сети; "
-              f"canned-ответы, не реальный LLM)")
+              f"canned-ответы, illustrative, not calibrated)")
 
     extractor = MeaningExtractor(llm_client=llm, embedding_engine=_offline_embeddings())
     verification = VerificationEngine(llm_client=llm)
@@ -482,6 +483,29 @@ def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
                 if focus_run.all_disagree:
                     print("  ⚠️ all_disagree=True (роли расходятся в формулировках)")
 
+        if offline_pleiades:
+            from aeon.offline import OfflineDumpError, get_adapter
+
+            adapter = get_adapter("pleiades")
+            try:
+                load_result = adapter.load(offline_pleiades)
+                print(f"\n🗄️ OFFLINE PLEIADES: status={load_result['status']} "
+                      f"v{load_result['dump_version']} rows={load_result['rows']}")
+                provenance = adapter.provenance()
+                if provenance is not None:
+                    print(f"  license: {provenance.license} | "
+                          f"sha256: {provenance.license_file_sha256[:16]}… | "
+                          f"bundle: {provenance.bundle_size_bytes} B")
+                age = adapter.dump_age_days()
+                if age is not None:
+                    print(f"  dump age: {age} days")
+                sample = adapter.lookup("579885")
+                if sample is not None:
+                    print(f"  sample lookup: {sample.id} → {sample.title} "
+                          f"({sample.source}, v{sample.dump_version})")
+            except OfflineDumpError as exc:
+                print(f"\n🗄️ OFFLINE PLEIADES: {exc}")
+
     METRICS.record_atom()
     print_separator("METRICS")
     print(METRICS.format_summary())
@@ -508,12 +532,15 @@ def main():
                         help="Chain-of-Linguistics (шаг 2.4): 'all' или 'lexical,syntactic,...'")
     parser.add_argument("--focus", type=str, default=None,
                         help="Multi-focus (шаг 2.5): 'all' (без esoteric) или 'historian,philosopher,...'")
+    parser.add_argument("--offline-pleiades", type=str, default=None,
+                        help="Путь к JSONL-дампу Pleiades (offline adapter, шаг 2.6)")
     args = parser.parse_args()
 
     if args.text:
         run_verify_demo(args.text, args.verify, args.latency_ms, args.real,
                         language=args.language, reconstruct=args.reconstruct,
-                        layers=args.layers, focus=args.focus)
+                        layers=args.layers, focus=args.focus,
+                        offline_pleiades=args.offline_pleiades)
         return
 
     print("""

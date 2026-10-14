@@ -221,6 +221,16 @@ class LinguisticsConfig:
 
 
 @dataclass(frozen=True)
+class OfflineConfig:
+    """Offline Knowledge Adapters (шаг 2.6)."""
+
+    enabled: bool = False
+    max_age_days: int = 90                          # старше → offline_dump_stale
+    db_path: str = "cache/offline.db"
+    allow_live_fallback: bool = True                # offline miss → live-запрос
+
+
+@dataclass(frozen=True)
 class AeonConfig:
     """Полная конфигурация AEON v4.0."""
 
@@ -235,6 +245,7 @@ class AeonConfig:
     logging: LoggingConfig = field(default_factory=LoggingConfig)
     fragments: FragmentsConfig = field(default_factory=FragmentsConfig)
     linguistics: LinguisticsConfig = field(default_factory=LinguisticsConfig)
+    offline: OfflineConfig = field(default_factory=OfflineConfig)
 
     # ── удобный доступ (CONFIG.detective.min_confidence) ──
 
@@ -344,6 +355,13 @@ def load_config() -> AeonConfig:
         layer_min_confidence=_env_float("AEON_LAYER_MIN_CONFIDENCE", 0.3),
     )
 
+    offline_cfg = OfflineConfig(
+        enabled=_env_bool("AEON_OFFLINE_ENABLED", False),
+        max_age_days=_env_int("AEON_OFFLINE_MAX_AGE_DAYS", 90),
+        db_path=_env_str("AEON_OFFLINE_DB_PATH", "cache/offline.db"),
+        allow_live_fallback=_env_bool("AEON_OFFLINE_ALLOW_LIVE_FALLBACK", True),
+    )
+
     return AeonConfig(
         llm=llm,
         embeddings=embeddings,
@@ -354,6 +372,7 @@ def load_config() -> AeonConfig:
         logging=logging_cfg,
         fragments=fragments_cfg,
         linguistics=linguistics_cfg,
+        offline=offline_cfg,
     )
 
 

@@ -5,9 +5,9 @@ AEON Metrics — лёгкий сборщик метрик производите
 Собирает: время на атом, количество сетевых вызовов, hit-rate кэшей.
 Кэши разделены по namespace:
   - "main"     — основные lookup'ы (поиск/сущности);
-  - "redirect" — маппинг merged Q-ID (отдельный счётчик для 1.4).
-Сводка автоматически выводится в конце pytest-сессии
-(см. pytest_terminal_summary в tests/conftest.py).
+  - "redirect" — маппинг merged Q-ID;
+  - "offline"  — offline-адаптеры (шаг 2.6).
+Плюс gauge: offline_dump_age_days (возраст загруженного дампа).
 """
 
 import threading
@@ -27,6 +27,9 @@ class Metrics:
     cache_misses: int = 0
     cache_hits_redirect: int = 0
     cache_misses_redirect: int = 0
+    cache_hits_offline: int = 0
+    cache_misses_offline: int = 0
+    offline_dump_age_days: Optional[float] = None
     timings: Dict[str, List[float]] = field(default_factory=dict)
     _lock: threading.Lock = field(
         default_factory=threading.Lock, repr=False, compare=False
@@ -49,11 +52,20 @@ class Metrics:
                     self.cache_hits_redirect += 1
                 else:
                     self.cache_misses_redirect += 1
+            elif namespace == "offline":
+                if hit:
+                    self.cache_hits_offline += 1
+                else:
+                    self.cache_misses_offline += 1
             else:
                 if hit:
                     self.cache_hits += 1
                 else:
                     self.cache_misses += 1
+
+    def record_offline_dump_age(self, days: float) -> None:
+        with self._lock:
+            self.offline_dump_age_days = float(days)
 
     @contextmanager
     def timeit(self, name: str = "default") -> Iterator[None]:
@@ -93,6 +105,12 @@ class Metrics:
                 "redirect_cache_hit_rate": self._rate(
                     self.cache_hits_redirect, self.cache_misses_redirect
                 ),
+                "cache_hits_offline": self.cache_hits_offline,
+                "cache_misses_offline": self.cache_misses_offline,
+                "offline_cache_hit_rate": self._rate(
+                    self.cache_hits_offline, self.cache_misses_offline
+                ),
+                "offline_dump_age_days": self.offline_dump_age_days,
                 "avg_time_per_atom_sec": self._avg(self.timings.get("atom", [])),
                 "avg_time_per_atom_local": self._avg(self.timings.get("atom_local", [])),
                 "avg_time_per_atom_network": self._avg(self.timings.get("atom_network", [])),
@@ -113,6 +131,8 @@ class Metrics:
             f"(avg {_fmt(s['network_calls_per_atom'])}/atom)",
             f"  cache_hit_rate:    {_fmt(s['cache_hit_rate'])} "
             f"(redirect: {_fmt(s['redirect_cache_hit_rate'])})",
+            f"  offline:           hit-rate {_fmt(s['offline_cache_hit_rate'])} "
+            f"| dump age: {_fmt(s['offline_dump_age_days'])}d",
             f"  avg_time_per_atom: {_sec(s['avg_time_per_atom_sec'])} "
             f"(local {_sec(s['avg_time_per_atom_local'])} / "
             f"network {_sec(s['avg_time_per_atom_network'])})",
@@ -126,6 +146,9 @@ class Metrics:
             self.cache_misses = 0
             self.cache_hits_redirect = 0
             self.cache_misses_redirect = 0
+            self.cache_hits_offline = 0
+            self.cache_misses_offline = 0
+            self.offline_dump_age_days = None
             self.timings.clear()
 
 

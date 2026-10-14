@@ -165,3 +165,59 @@ def test_api_error_payload_returns_reason(tmp_path):
     assert result.source_unavailable is False
     assert result.reason == "not-found"
     client.close()
+
+
+def test_offline_adapter_first_chain(tmp_path):
+    """Шаг 2.6: offline adapter первый в цепочке → 0 HTTP, source=offline_pleiades."""
+    from pathlib import Path as _Path
+
+    from aeon.offline import PleiadesOfflineAdapter
+
+    sample = (_Path(__file__).resolve().parent / "fixtures" / "dumps"
+              / "pleiades_sample.jsonl")
+    adapter = PleiadesOfflineAdapter(db_path=str(tmp_path / "offline.db"))
+    adapter.load(sample)
+
+    transport = FakeTransport(payload=PLEIADES_PAYLOAD)
+    client, _ = make_pleiades(tmp_path, transport)
+    client.offline_adapter = adapter
+
+    result = client.get_place("579885")
+
+    assert result.place is not None
+    assert result.place.source == "offline_pleiades"
+    assert result.place.title == "Athenae"
+    assert transport.calls == []  # 0 HTTP
+    client.close()
+    adapter.close()
+
+
+def test_offline_miss_no_fallback_zero_network(tmp_path, monkeypatch):
+    """offline miss + allow_live_fallback=False → 0 сети (offline-only режим)."""
+    import dataclasses as _dc
+    from pathlib import Path as _Path
+
+    from aeon.config import CONFIG
+    from aeon.offline import PleiadesOfflineAdapter
+
+    sample = (_Path(__file__).resolve().parent / "fixtures" / "dumps"
+              / "pleiades_sample.jsonl")
+    adapter = PleiadesOfflineAdapter(db_path=str(tmp_path / "offline.db"))
+    adapter.load(sample)
+    monkeypatch.setattr(
+        "aeon.crosswalk.CONFIG",
+        _dc.replace(CONFIG,
+                    offline=_dc.replace(CONFIG.offline, allow_live_fallback=False)),
+    )
+
+    transport = FakeTransport(payload=PLEIADES_PAYLOAD)
+    client, _ = make_pleiades(tmp_path, transport)
+    client.offline_adapter = adapter
+
+    result = client.get_place("999999999")
+
+    assert result.place is None
+    assert result.reason == "offline_miss_no_fallback"
+    assert transport.calls == []
+    client.close()
+    adapter.close()

@@ -96,3 +96,22 @@ def test_redirect_rate_in_summary():
 
     text = METRICS.format_summary()
     assert "redirect: 1.0" in text
+
+
+def test_offline_namespace_and_gauge():
+    m = Metrics()
+    m.record_cache(hit=True, namespace="offline")
+    m.record_cache(hit=False, namespace="offline")
+    m.record_offline_dump_age(12.0)
+
+    s = m.snapshot()
+    assert s["offline_cache_hit_rate"] == 0.5
+    assert s["offline_dump_age_days"] == 12.0
+    assert "dump age" in m.format_summary()
+
+
+def test_offline_age_reset():
+    m = Metrics()
+    m.record_offline_dump_age(5.0)
+    m.reset()
+    assert m.snapshot()["offline_dump_age_days"] is None
