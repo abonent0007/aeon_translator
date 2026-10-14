@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aeon.local/schemas/aeon_v2.json",
+  "title": "AEON v2 .aeon document",
+  "type": "object",
+  "required": ["aeon_version", "created_at", "generator", "source", "atom", "traces", "metadata"],
+  "properties": {
+    "aeon_version": {
+      "type": "string",
+      "pattern": "^2\\.[0-9]+$",
+      "description": "semver-совместимо: 2.1 = опциональные поля в extensions; 3.0 = breaking"
+    },
+    "created_at": {"type": "string", "format": "date-time"},
+    "generator": {"type": "string", "examples": ["aeon-4.0"]},
+    "source": {
+      "type": "object",
+      "required": ["content", "form", "language"],
+      "properties": {
+        "content": {"type": "string", "description": "ОРИГИНАЛ пользователя (нормализация не теряет оригинал)"},
+        "form": {"type": "string"},
+        "language": {"type": "string"},
+        "normalized": {"type": ["string", "null"], "description": "pipeline-вход после pack.normalize()"}
+      }
+    },
+    "atom": {
+      "type": "object",
+      "required": ["meaning_hash", "intent", "domain"],
+      "additionalProperties": true,
+      "properties": {
+        "meaning_hash": {"type": "string"},
+        "text": {"type": "string"},
+        "intent": {"type": "string"},
+        "domain": {"type": "string"},
+        "entities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "type"],
+            "additionalProperties": true,
+            "properties": {
+              "name": {"type": "string"},
+              "type": {"type": "string"},
+              "role": {"type": "string"},
+              "span": {"type": "string"},
+              "confidence": {"type": "number"},
+              "external_ids": {"type": "object", "description": "wikidata/pleiades/trismegistos"},
+              "external_labels": {"type": "object"},
+              "link_confidence": {"type": "number"},
+              "source_unavailable": {"type": "boolean"},
+              "is_fragment": {"type": "boolean"},
+              "completeness_score": {"type": "number"}
+            }
+          }
+        },
+        "semantic_roles": {"type": "object"},
+        "primitive_coordinates": {"type": "array"},
+        "complexity": {"type": "number"},
+        "urgency": {"type": "number"},
+        "extraction_confidence": {"type": "number"},
+        "explanation_chain": {"type": "array"},
+        "evidence": {"type": "array"},
+        "confidence_breakdown": {"type": "object"},
+        "language_origin": {"type": "string"},
+        "cross_lingual_confidence": {"type": "number"},
+        "is_fragment": {"type": "boolean"},
+        "completeness_score": {"type": "number"},
+        "needs_attention": {"type": "boolean"}
+      }
+    },
+    "traces": {
+      "type": "object",
+      "description": "Полный reasoning trace; null = этап не выполнялся",
+      "properties": {
+        "extraction": {"type": ["object", "null"]},
+        "entity_linking": {"type": ["object", "null"]},
+        "verification": {"type": ["object", "null"], "description": "agents/combined/cvi/abstained/reasoning_trace (2.0-2.3)"},
+        "linguistics": {"type": ["object", "null"], "description": "слот шага 2.4"},
+        "focus": {"type": ["object", "null"], "description": "слот шага 2.5"},
+        "reconstruction": {"type": ["object", "null"], "description": "слот шага 2.3"},
+        "variant_readings": {"type": ["object", "null"], "description": "ЗАРЕЗЕРВИРОВАНО под 3.5 (attested readings + edition attribution)"},
+        "morphology": {"type": ["object", "null"], "description": "ЗАРЕЗЕРВИРОВАНО под 3.2 (Ithaca/Aeneas/LatinBERT)"},
+        "cross_references": {"type": ["object", "null"], "description": "ЗАРЕЗЕРВИРОВАНО под 3.4 (multi-document)"}
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["thresholds_snapshot", "mock"],
+      "properties": {
+        "language_pack": {"type": ["string", "null"]},
+        "language_pack_version": {"type": ["string", "null"]},
+        "thresholds_snapshot": {
+          "type": "object",
+          "description": "ОБЯЗАТЕЛЬНО: ABSTENTION/agents/layers/focus/fragments пороги на момент прогона"
+        },
+        "llm_provider": {"type": ["string", "null"]},
+        "llm_model": {"type": ["string", "null"]},
+        "mock": {"type": "boolean", "description": "true = прогон на MockLLM (до 2.7 всегда true)"}
+      }
+    },
+    "extensions": {
+      "type": "object",
+      "description": "Произвольное расширение без bump версии; тут же legacy_v1_original при чтении v1"
+    }
+  }
+}

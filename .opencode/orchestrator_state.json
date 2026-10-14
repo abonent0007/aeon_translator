@@ -45,6 +45,29 @@
     "phase3_draft": ["3.1 .aeon v2 (traces/versioning/schema)", "3.2 morphology hooks (Ithaca/Aeneas/LatinBERT, after gold-standard)", "3.3 gold-standard corpus (mock-vs-real validation)", "3.4 multi-document analysis", "3.5 variant readings mode (Sappho)", "3.6 web UI/API (after 2.7)", "3.7 export formats (BibTeX/TEI-XML/Markdown)", "3.8 real-API calibration automation"],
     "phase3_recommended_first": ["3.1 .aeon v2", "3.3 gold-standard corpus", "3.5 variant readings mode"]
   },
+  "phase3": {
+    "status": "kickoff",
+    "order": ["3.1 aeon_v2", "3.5 variant readings", "3.3 gold-standard", "3.2 morphology (after gold+2.7)", "3.6 web (after 2.7)", "3.4/3.7/3.8 backlog"],
+    "schema_draft": "schemas/aeon_v2.json — awaiting curator verification BEFORE 3.1 implementation",
+    "design_doc": "docs/phase3_design.md",
+    "key_available": false,
+    "defer_2_7": false,
+    "preflight_3_5": {
+      "source_of_readings": "b — LLM только выбирает между внешне заданными attested readings; генерация запрещена",
+      "apparatus_format": "sidecar-JSON {work, editions[], loci[] with readings+editions}; CLI --variant-readings PATH",
+      "vs_2_3": "отдельный движок aeon/variants/ (mode=select); общий engine не делаем",
+      "attribution": "обязателен: каждое чтение цитирует издание(я); без издания — отклонение",
+      "flags": "--variant-readings независим от --reconstruct; оба могут сосуществовать; <0.5 → no_selection_possible"
+    },
+    "preflight_3_3": {
+      "annotation_source": "c hybrid; старт — ручная аннотация 5 отрывков (treebanks опционально при доступе)",
+      "granularity": "marker+atom-level все 5; finding/insight-level 1-2 отрывка",
+      "metrics": "markers P/R/F1 per kind; entities F1; is_fragment accuracy; findings accuracy; focus human binary check (backlog)",
+      "license": "CC0 (source texts PD)",
+      "format": "JSONL expectations + README в gold/",
+      "mock_vs_real": "pytest markers gold_mock (CI baseline) / gold_real (нужен ключ)"
+    }
+  },
   "completed_at": null,
   "user_preferences": {
     "embeddings": "pluggable; MiniLM/LaBSE defaults",

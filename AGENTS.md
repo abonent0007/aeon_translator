@@ -247,6 +247,17 @@ live-кэш проверяется на расхождение (0 сети); н�
 Метрики: `offline_cache_hit_rate`, `offline_dump_age_days`.
 Demo: `python -m aeon.demo --text examples/greek/homer_iliad_1_1-10.txt --offline-pleiades tests/fixtures/dumps/pleiades_sample.jsonl`.
 
+## Phase 3 roadmap (kickoff)
+Порядок: **3.1 `.aeon v2` → 3.5 variant readings → 3.3 gold-standard**;
+3.2 morphology — только после 3.3 И 2.7; 3.6 web — после 2.7;
+3.4/3.7/3.8 — backlog. Дизайн и preflight — `docs/phase3_design.md`;
+схема v2 — `schemas/aeon_v2.json` (required: thresholds_snapshot + mock;
+forward-slots: variant_readings/morphology/cross_references = null).
+Правила 2.7 (real API): ключ до 3.1 → пауза Ф3 и делаем 2.7; во время
+шага → `key_available/defer_2_7` в state, продолжаем; после 3.3 → 2.7
+приоритетно. Без real-API **не стартовать 3.2**.
+Не в скоупе: раздувание паков до gold-standard; «AI-агент-исследователь».
+
 ## Tech Stack
 - Python 3.11 (Windows dev), приоритет stdlib
 - LLM: DeepSeek (OpenAI-совместимый), фасад `aeon.llm.DeepSeekClient`
