@@ -11,9 +11,23 @@ gold-метрики (шаг 3.3) — stdlib only (statistics), без pandas/num
   - verdicts: accuracy per агент (только записи с заполненным expected).
 """
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
+
+import unicodedata
 
 from .loader import GoldDataset, GoldRecord
+
+
+def _fold(text: Any) -> str:
+    """Коммит 4 (2.7.3): NFKD + снятие комбинируемых знаков + casefold.
+
+    Матчинг имён без Q-ID не должен зависеть от варианта диакритики
+    (grave/acute: Διός vs Διὸς, Ἀκαμαντίς vs Ἀκαμαντὶς) — только для
+    СРАВНЕНИЯ, не для вывода/хранения.
+    """
+    base = unicodedata.normalize("NFKD", str(text or ""))
+    stripped = "".join(ch for ch in base if not unicodedata.combining(ch))
+    return stripped.casefold()
 
 
 def _prf(tp: int, fp: int, fn: int) -> Dict[str, float]:
@@ -55,7 +69,7 @@ def markers_prf(expected: List[Dict], predicted: List[Dict]) -> Dict[str, Any]:
 
 
 def entities_prf(expected: List[Dict], predicted: List[Dict]) -> Dict[str, float]:
-    """Матч: exact Q-ID, если оба не-null; иначе casefold-равенство имени."""
+    """Матч: exact Q-ID, если оба не-null; иначе accent-insensitive имя (коммит 4)."""
     used = set()
     tp = 0
     for entity in expected:
@@ -66,8 +80,7 @@ def entities_prf(expected: List[Dict], predicted: List[Dict]) -> Dict[str, float
             if exp_qid and pred_qid:
                 matched = str(exp_qid) == str(pred_qid)
             else:
-                matched = str(entity.get("name", "")).casefold() == \
-                    str(candidate.get("name", "")).casefold()
+                matched = _fold(entity.get("name", "")) == _fold(candidate.get("name", ""))
             if matched:
                 tp += 1
                 used.add(index)

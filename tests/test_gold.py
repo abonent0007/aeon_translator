@@ -242,6 +242,15 @@ def test_metrics_entities_null_qid_text_match():
     assert entities_prf(expected, predicted_wrong)["f1"] == 0.0
 
 
+def test_metrics_entities_accent_insensitive():
+    """Коммит 4: grave/acute-варианты совпадают (сравнение, не вывод)."""
+    expected = [{"name": "Διός", "wikidata_id": None, "is_fragment": False},
+                {"name": "Ἀκαμαντίς", "wikidata_id": None, "is_fragment": False}]
+    predicted = [{"name": "Διὸς", "wikidata_id": None},
+                 {"name": "Ἀκαμαντὶς", "wikidata_id": None}]
+    assert entities_prf(expected, predicted)["f1"] == 1.0
+
+
 def test_metrics_is_fragment_accuracy():
     assert is_fragment_accuracy([(True, True), (False, True)]) == 0.5
     assert is_fragment_accuracy([]) == 1.0
