@@ -89,6 +89,9 @@ class SemanticAtom:
     completeness_score: float = 1.0    # свойство ИЗВЛЕЧЕНИЯ: доля полей
     needs_attention: bool = False      # агрегат: лакуна ИЛИ низкая полнота
 
+    # ── .aeon v2 (шаг 3.1, D3): снимок порогов НА МОМЕНТ создания атома ──
+    thresholds_snapshot: Dict[str, Any] = field(default_factory=dict)
+
     # ── AEON-native токены ──
     semantic_tokens: List[str] = field(default_factory=list)
 

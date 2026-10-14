@@ -140,6 +140,12 @@ class AeonTranslator:
         else:
             raise ValueError(f"Неизвестная форма источника: {source_form}")
 
+        # D3 (шаг 3.1): снимок порогов НА МОМЕНТ создания атома
+        # (writer читает его из атома и НЕ пересчитывает)
+        from .format import build_thresholds_snapshot
+
+        atom.thresholds_snapshot = build_thresholds_snapshot()
+
         print(f"✓ {atom}")
 
         if atom.embedding:

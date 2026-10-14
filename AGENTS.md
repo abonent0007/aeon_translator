@@ -3,9 +3,8 @@
 ## Overview
 Semantic processor: переводит смысл между формами (текст/код/эмоция/голос/изображение)
 с верификацией, entity linking и анализом древних текстов.
-Статус: **Фаза 0 ✅, Фаза 1 ✅, Фаза 2 — шаги 2.0 ✅ … 2.6 ✅**
-(Language Pack Infra, Ancient Greek, Latin, Fragment Hypotheses, Linguistic
-Layers, Multi-focus, Offline Adapters). Впереди: 2.7 Real API (по ключу).
+Статус: **Фаза 0 ✅, Фаза 1 ✅, Фаза 2 ✅ (2.0–2.6, known gap: 2.7 по ключу),
+Фаза 3 — шаг 3.1 ✅** (`.aeon v2`). Впереди: 3.5 variant readings → 3.3 gold-standard.
 
 ## Architecture (Фаза 1)
 ```
@@ -257,6 +256,30 @@ forward-slots: variant_readings/morphology/cross_references = null).
 шага → `key_available/defer_2_7` в state, продолжаем; после 3.3 → 2.7
 приоритетно. Без real-API **не стартовать 3.2**.
 Не в скоупе: раздувание паков до gold-standard; «AI-агент-исследователь».
+
+## .aeon v2 format (шаг 3.1)
+Пакет `aeon/format/` (writer/reader/validator/versioning); схема —
+`schemas/aeon_v2.json`; спецификация — `docs/phase3_design.md`.
+Контракт: required `thresholds_snapshot` + `mock` + `pipeline`
+(steps_requested/executed/halted/failed — различает «не просили» vs
+«остановлено»); `atom.content_hash` (вход) + `atom.atom_hash` (результат;
+`meaning_hash` — legacy v1-поле); `extensions` — только namespaced-ключи,
+core-override запрещён, `legacy_*` immutable (`AeonSchemaError`); semver
+`X.Y.Z` (major>reader → «reader too old», major< → миграционный путь,
+minor совместим).
+**D3:** snapshot порогов фиксируется НА МОМЕНТ создания атома (translator),
+writer читает его из атома и НЕ пересчитывает; атом без snapshot →
+`AeonSchemaError`. **Mock-guard (стоп №2):** `mock=false` без
+`DEEPSEEK_API_KEY` запрещён; обход только `force_unsafe=True` +
+обязательный `force_reason` + аудит-лог `aeon_mock_flag_bypassed`
+(reason/operator/trace_id).
+**Миграция v1:** `load_v1_and_migrate` (production v1-reader;
+`meaning_hash` — только в `extensions.legacy_v1_original`; хэши
+пересчитываются — не угадываем семантику v1; v1-entities получают
+v2-дефолты). Frozen fixture `tests/fixtures/aeon_v1/legacy.aeon`
+(не пересоздаётся; паритет-тест — warning).
+Demo: `--save-aeon PATH` / `--load-aeon PATH`. Сохраняются только
+структурированные результаты (raw LLM — backlog `--save-raw`).
 
 ## Tech Stack
 - Python 3.11 (Windows dev), приоритет stdlib

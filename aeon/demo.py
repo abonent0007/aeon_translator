@@ -336,7 +336,8 @@ def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
                     use_real: bool, language: str | None = None,
                     reconstruct: bool = False, layers: str | None = None,
                     focus: str | None = None,
-                    offline_pleiades: str | None = None) -> None:
+                    offline_pleiades: str | None = None,
+                    save_aeon: str | None = None) -> None:
     """Demo: атом + trace верификации + метрики (мок с задержкой или реальный LLM)."""
     from pathlib import Path
 
@@ -382,6 +383,9 @@ def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
         with METRICS.timeit("atom_network"):
             atom = extractor.extract_from_text(text, "auto")
             result = None
+            reconstruction = None
+            chain_result = None
+            focus_run = None
             if verify_mode != "off":
                 claims = atom.explanation_chain + [
                     f"Intent: {atom.intent}", f"Domain: {atom.domain}"
@@ -506,6 +510,57 @@ def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
             except OfflineDumpError as exc:
                 print(f"\n🗄️ OFFLINE PLEIADES: {exc}")
 
+        if save_aeon:
+            from aeon.format import build_thresholds_snapshot, dump_v2, write_v2
+
+            if not atom.thresholds_snapshot:
+                atom.thresholds_snapshot = build_thresholds_snapshot()
+            requested = ["extract"]
+            executed = ["extract"]
+            halted = []
+            if verify_mode != "off":
+                requested.append("verification")
+                if result is not None:
+                    executed.append("verification")
+            if reconstruct:
+                requested.append("reconstruction")
+                if reconstruction is not None:
+                    executed.append("reconstruction")
+            if layers:
+                requested.append("linguistics")
+                if chain_result is not None:
+                    executed.append("linguistics")
+                    if chain_result.status.startswith("halted_at_"):
+                        halted.append({"step": "linguistics",
+                                       "reason": chain_result.status})
+            if focus:
+                requested.append("focus")
+                if focus_run is not None:
+                    executed.append("focus")
+            doc = dump_v2(
+                atom,
+                source={"content": text, "form": "text", "language": "auto"},
+                traces={
+                    "verification": result,
+                    "linguistics": (chain_result.to_dict() if chain_result else None),
+                    "reconstruction": (reconstruction.to_dict() if reconstruct
+                                       and reconstruction else None),
+                    "focus": (focus_run.to_dict() if focus and focus_run else None),
+                },
+                metadata={
+                    "language_pack": (language_pack.iso_code
+                                      if language_pack else None),
+                    "llm_provider": "mock" if not use_real else "deepseek",
+                    "llm_model": None,
+                },
+                pipeline={"steps_requested": requested, "steps_executed": executed,
+                          "steps_halted": halted, "steps_failed": []},
+                mock=not use_real,
+                trace_id=atom.meaning_hash,
+            )
+            write_v2(save_aeon, doc)
+            print(f"\n💾 .aeon v2 сохранён: {save_aeon}")
+
     METRICS.record_atom()
     print_separator("METRICS")
     print(METRICS.format_summary())
@@ -534,13 +589,33 @@ def main():
                         help="Multi-focus (шаг 2.5): 'all' (без esoteric) или 'historian,philosopher,...'")
     parser.add_argument("--offline-pleiades", type=str, default=None,
                         help="Путь к JSONL-дампу Pleiades (offline adapter, шаг 2.6)")
+    parser.add_argument("--save-aeon", type=str, default=None,
+                        help="Сохранить результат как .aeon v2 (шаг 3.1)")
+    parser.add_argument("--load-aeon", type=str, default=None,
+                        help="Прочитать .aeon v2 (или мигрировать v1) и показать сводку")
     args = parser.parse_args()
+
+    if args.load_aeon:
+        from aeon.format import AeonSchemaError, load_v1_and_migrate, load_v2
+
+        try:
+            doc = load_v2(args.load_aeon)
+        except AeonSchemaError:
+            doc = load_v1_and_migrate(args.load_aeon)
+        pipeline = doc["metadata"]["pipeline"]
+        loaded_traces = [key for key, value in doc["traces"].items() if value is not None]
+        print(f"\n📂 AEON v{doc['aeon_version']} | mock={doc['metadata']['mock']} | "
+              f"steps={pipeline['steps_executed']}")
+        print(f"   atom: {doc['atom']['intent']}/{doc['atom']['domain']} | "
+              f"traces: {loaded_traces}")
+        return
 
     if args.text:
         run_verify_demo(args.text, args.verify, args.latency_ms, args.real,
                         language=args.language, reconstruct=args.reconstruct,
                         layers=args.layers, focus=args.focus,
-                        offline_pleiades=args.offline_pleiades)
+                        offline_pleiades=args.offline_pleiades,
+                        save_aeon=args.save_aeon)
         return
 
     print("""
