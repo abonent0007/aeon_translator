@@ -3,8 +3,9 @@
 ## Overview
 Semantic processor: переводит смысл между формами (текст/код/эмоция/голос/изображение)
 с верификацией, entity linking и анализом древних текстов.
-Статус: **Фаза 0 ✅, Фаза 1 ✅** (рефакторинг v3.0 → v4.0). Фаза 2 — впереди
-(паки древних языков: др.-греческий, латынь; fragments/multi-focus).
+Статус: **Фаза 0 ✅, Фаза 1 ✅, Фаза 2 — шаг 2.0 ✅** (Language Pack Infrastructure).
+Впереди: 2.1 Ancient Greek Pack, 2.2 Latin Pack, 2.3 Fragment Hypotheses,
+2.4 Linguistic Layers, 2.5 Multi-focus, 2.6 Offline adapters, 2.7 Real API.
 
 ## Architecture (Фаза 1)
 ```
@@ -17,6 +18,31 @@ Semantic processor: переводит смысл между формами (т�
       │     └─► Aggregator: CVI + calibrated abstention (≥0.50, иначе «Я не знаю»)
       ──► Generator / .aeon v1 (reasoning trace — в v2, Фаза 3)
 ```
+
+## Language Pack Architecture (Фаза 2)
+Контракт (`aeon/language/base.py`): ABC `LanguagePack` — `iso_code`,
+`display_name`, `period` (BCE — отрицательные), `direction`,
+`special_tokens` {lacuna, editorial}, `prompts` {extract, verify, reconstruct},
+`dictionaries`, `unicode_ranges`; методы: `detect_markers` [abstract],
+`normalize` [NFC default], `is_fragment`, `validate` (fail-fast контракт).
+
+Реестр (`aeon/language/registry.py`): `register` — eager-регистрация фабрики
+(класс/инстанс/callable), lazy-инстанциация + validate при первом `get`
+(инстанс валидируется сразу); `force=True` — осознанный override; `get` —
+KeyError со списком доступных; `list_available` (sorted); `detect` — по
+декларативным `unicode_ranges` (греческий → кандидат `grc`; ancient vs modern
+по codepoints НЕ различаем — стоп-точка 2.0 №2); `clear` — тесты/перезагрузка.
+
+Как добавить пак: подкласс `LanguagePack` (реализовать `detect_markers`) →
+`registry.register(PackClass)`.
+
+Приоритет маркеров (стоп-точка 2.0 №1): `pack.special_tokens` — приоритетный
+источник; `semantic_atom.LACUNA_MARKERS` — fallback, когда pack=None
+(интеграция в extractor — шаг 2.1+).
+
+Интеграционная точка: `translate(..., language_pack=None)` — при заданном
+паке `content` нормализуется (`pack.normalize`); extractor/verifier-интеграция
+— шаги 2.1+.
 
 ## Tech Stack
 - Python 3.11 (Windows dev), приоритет stdlib
@@ -35,12 +61,14 @@ Semantic processor: переводит смысл между формами (т�
 - MockLLM — в `aeon/testing.py` (общий с demo; `latency_ms` имитирует сеть)
 
 ## Commands
-- Тесты: `python -m pytest -q` (141 passed; live: `pytest -m network -k pleiades`)
+- Тесты: `python -m pytest -q` (live: `pytest -m network -k pleiades`)
 - Coverage (обходной раннер — см. quirks): `python tools/run_coverage.py`
 - Demo верификации: `python -m aeon.demo --text examples/plato_sample.txt --verify=full`
   (mock 200ms/вызов; `--real` — с DEEPSEEK_API_KEY; `--verify=off|basic|full`)
 - verify_mode в API: `translator.translate(..., verify_mode="off|basic|full")`
   (legacy `verify=True` ≡ `verify_mode="full"`)
+- Реестр паков: `python -c "from aeon.language import registry; print(registry.list_available())"`
+  (пусто до 2.1–2.2)
 
 ## Key Decisions
 - **Config access (канонический):** `CONFIG.verification.detective` — иерархический;
@@ -67,6 +95,9 @@ Semantic processor: переводит смысл между формами (т�
   conf<0.85, logician coherence<0.60); logician при <2 claims — abstained.
 - **verify_atom:** legacy-ключи (consistency/grounding/hallucination_risk/
   overall_verdict) + v4.0 (agents/combined/cvi/abstained/reasoning_trace).
+- **LanguagePack (Ф2):** вариант A (промпты + словари + special tokens;
+  морфология — Ф3); stdlib-only (`unicodedata`); detect() — декларативные
+  `unicode_ranges`; registry — eager-регистрация + lazy-инстанциация.
 
 ## Known Quirks & Limitations
 - **Wikidata:** ошибки API = HTTP 200 + `{"error": {...}}` (не HTTP-код!). Каждый

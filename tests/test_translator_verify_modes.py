@@ -98,3 +98,19 @@ def test_translator_legacy_verify_true_maps_to_full(translator):
 
     verification = result["metadata"]["verification"]
     assert set(verification["agents"].keys()) == {"detective", "expert", "logician"}
+
+
+def test_translator_language_pack_normalize_hook(translator):
+    """Интеграционная точка 2.0: pack.normalize вызывается; None — no-op."""
+    calls = []
+
+    class SpyPack:
+        iso_code = "grc"
+
+        def normalize(self, text):
+            calls.append(text)
+            return text
+
+    translator.translate(TEXT, source_language="russian", language_pack=SpyPack())
+
+    assert calls == [TEXT]

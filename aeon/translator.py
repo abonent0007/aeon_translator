@@ -14,6 +14,7 @@ from .image_gen import FluxImageGenerator
 from .verification import VerificationEngine
 from .aeon_format import AeonFormat
 from .embeddings import EmbeddingEngine, get_embedding_engine
+from .language import LanguagePack
 
 
 class AeonTranslator:
@@ -70,7 +71,8 @@ class AeonTranslator:
         target_form: str = "text",
         target_language: str = "english",
         verify: bool = False,
-        verify_mode: Optional[str] = None
+        verify_mode: Optional[str] = None,
+        language_pack: Optional["LanguagePack"] = None
     ) -> Dict[str, Any]:
         """
         Универсальный перевод смысла с верификацией.
@@ -80,9 +82,15 @@ class AeonTranslator:
           - basic — Детектив + Логик (быстро, без внешних источников);
           - full  — три верификатора + Wikidata-обогащение.
         Legacy: verify=True эквивалентен verify_mode="full".
+
+        language_pack: опциональный LanguagePack (Фаза 2). Если задан —
+        content нормализуется через pack.normalize(); None → поведение
+        Фазы 1 без изменений (интеграция в extractor/verifier — шаг 2.1+).
         """
         if verify_mode is None:
             verify_mode = "full" if verify else "off"
+        if language_pack is not None:
+            content = language_pack.normalize(content)
         self.translation_count += 1
 
         print(f"\n{'='*60}")
