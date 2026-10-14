@@ -84,12 +84,15 @@ class Metrics:
         def _fmt(value: Any) -> Any:
             return "n/a" if value is None else value
 
+        avg_atom = s["avg_time_per_atom_sec"]
+        avg_atom_str = "n/a" if avg_atom is None else f"{avg_atom}s"
+
         return "\n".join([
             f"  atoms_processed:   {s['atoms_processed']}",
             f"  network_calls:     {s['network_calls']} "
             f"(avg {_fmt(s['network_calls_per_atom'])}/atom)",
             f"  cache_hit_rate:    {_fmt(s['cache_hit_rate'])}",
-            f"  avg_time_per_atom: {_fmt(s['avg_time_per_atom_sec'])}s",
+            f"  avg_time_per_atom: {avg_atom_str}",
         ])
 
     def reset(self) -> None:
