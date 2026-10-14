@@ -594,7 +594,7 @@ def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
                     "language_pack": (language_pack.iso_code
                                       if language_pack else None),
                     "llm_provider": "mock" if not use_real else "deepseek",
-                    "llm_model": None,
+                    "llm_model": (getattr(llm, "model", None) if use_real else None),
                 },
                 pipeline={"steps_requested": requested, "steps_executed": executed,
                           "steps_halted": halted, "steps_failed": []},
@@ -607,8 +607,13 @@ def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
     METRICS.record_atom()
     print_separator("METRICS")
     print(METRICS.format_summary())
-    print(f"  LLM-вызовов (mock): {len(llm.calls)} × {latency_ms:g} ms = "
-          f"{len(llm.calls) * latency_ms / 1000.0:.2f} s (экстраполяция сети)")
+    mock_calls = getattr(llm, "calls", None)
+    if mock_calls is not None:
+        print(f"  LLM-вызовов (mock): {len(mock_calls)} × {latency_ms:g} ms = "
+              f"{len(mock_calls) * latency_ms / 1000.0:.2f} s (экстраполяция сети)")
+    else:
+        print(f"  LLM: real ({getattr(llm, 'model', '?')}) — реальная сеть, "
+              f"время в avg_time_per_atom")
 
 
 def main():

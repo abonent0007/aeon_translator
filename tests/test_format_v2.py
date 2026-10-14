@@ -204,6 +204,14 @@ def test_force_unsafe_requires_reason(monkeypatch):
                 traces={}, mock=False, force_unsafe=True)
 
 
+def test_mock_false_allowed_with_key(monkeypatch):
+    """Стоп №3 (2.7): с ключом mock=false разрешён без force_unsafe."""
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "test-key")
+    doc = dump_v2(make_atom(), source={"content": "t", "form": "text", "language": "x"},
+                  traces={}, mock=False)
+    assert doc["metadata"]["mock"] is False
+
+
 # ── roundtrip ──
 
 def test_dump_v2_roundtrip_full_traces(tmp_path):

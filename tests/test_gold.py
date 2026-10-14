@@ -120,6 +120,23 @@ def test_segment_texts_non_overlapping(dataset):
             assert start >= end, text_id
 
 
+def test_gold_offsets_tool_and_dataset_valid():
+    """Утилита tools/annotate_offsets.py: offset-finder + полная валидация."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "annotate_offsets", REPO / "tools" / "annotate_offsets.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    rows = module.find_offsets(GOLD / "texts" / "inscription_ig.txt", "[...]")
+    assert rows and rows[0][0] == 2   # вхождение в строке 2 декрета
+    assert rows[0][1] > 0             # offset внутри строки-сегмента
+
+    checked = module.check_dataset(ANNOTATIONS)
+    assert len(checked.records) == 28
+
+
 # ── metrics ──
 
 
