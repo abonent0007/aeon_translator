@@ -310,3 +310,24 @@ def test_v1_writer_matches_frozen_fixture(tmp_path):
         warnings.warn("v1 writer drift vs frozen fixture — проверить легальность эволюции",
                       stacklevel=2)
     assert True  # паритет-тест: предупреждает, не падает
+
+
+def test_demo_save_aeon_without_optional_steps(tmp_path):
+    """Уточнение 3.1 №1: --verify=off --save-aeon без layers/focus не падает
+    (регрессия на NameError chain_result/focus_run)."""
+    import subprocess
+    import sys
+
+    target = tmp_path / "min.aeon.json"
+    repo_root = Path(__file__).resolve().parent.parent
+    proc = subprocess.run(
+        [sys.executable, "-m", "aeon.demo",
+         "--text", "examples/greek/plato_apologia_17a.txt",
+         "--verify=off", "--save-aeon", str(target)],
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+        cwd=str(repo_root), timeout=180,
+    )
+    assert target.exists(), (proc.stdout[-400:] + proc.stderr[-400:])
+    doc = load_v2(target)
+    assert doc["metadata"]["pipeline"]["steps_executed"] == ["extract"]
+    assert doc["traces"]["linguistics"] is None

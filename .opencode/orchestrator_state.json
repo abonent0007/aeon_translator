@@ -47,7 +47,7 @@
   },
   "phase3": {
     "status": "step_3.1_done",
-    "step_3_1": "done (aeon/format writer/reader/validator/versioning; D1 frozen v1 fixture (e8cf5ca); D2 meaning_hash только в legacy; D3 snapshot при создании атома; D4 +4 теста; mock-guard + force_unsafe аудит-лог; --save-aeon/--load-aeon в demo; 316 tests)",
+    "step_3_1": "done (aeon/format writer/reader/validator/versioning; D1 frozen v1 fixture (e8cf5ca); D2 meaning_hash только в legacy; D3 snapshot при создании атома; D4 +4 теста; mock-guard + force_unsafe аудит-лог; --save-aeon/--load-aeon в demo). Facts: format tests = 24 (tests/test_format_v2.py; suite 317), v2 size: plato_full(--layers=all --focus=all) = 17.3KB, plato(focus=historian) = 15.7KB (<50KB, limit 200KB with margin; structured-only confirmed). NameError-fix (chain_result/focus_run) в 50ea764 + регрессионный test_demo_save_aeon_without_optional_steps.",
     "order": ["3.1 aeon_v2", "3.5 variant readings", "3.3 gold-standard", "3.2 morphology (after gold+2.7)", "3.6 web (after 2.7)", "3.4/3.7/3.8 backlog"],
     "schema_draft": "schemas/aeon_v2.json — awaiting curator verification BEFORE 3.1 implementation",
     "design_doc": "docs/phase3_design.md",
