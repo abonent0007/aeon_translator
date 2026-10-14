@@ -7,13 +7,13 @@
     {"step": "0.2", "description": "tests/ + pytest.ini + MockLLM; aeon/logging_config.py (JSON-lines); aeon/metrics.py + pytest_terminal_summary", "status": "done"},
     {"step": "0.3", "description": "aeon/config.py (defaults == v3.0 behavior, env overrides, per-agent thresholds, ABSTENTION_THRESHOLD)", "status": "done"},
     {"step": "0.4", "description": "aeon/llm/ provider layer (openai-compatible + optional anthropic), retries, JSON-repair; DeepSeekClient facade", "status": "done"},
-    {"step": "1.1", "description": "aeon/entity_linking.py WikidataClient (wbsearchentities/wbgetentities, SQLite cache 7d, rate limit 1 rps, redirect+merged QID healing, offline mode). Tests marker: enabled=True -> mock-HTTP works; enabled=False -> 0 network calls (assert via mock)", "status": "pending"},
+    {"step": "1.1", "description": "aeon/entity_linking.py WikidataClient (wbsearchentities/wbgetentities, SQLite cache 7d, rate limit 1 rps, redirect+merged QID healing, offline mode). Tests: enabled=True -> mock-HTTP works; enabled=False -> 0 network calls; offline -> 0 network + cache-only", "status": "done"},
     {"step": "1.2", "description": "Candidate scoring (prior+text_sim+context), Entity.is_fragment/completeness_score/external_ids/link_confidence, Pleiades(P1584)/Trismegistos(P11651) crosswalk, extractor integration", "status": "pending"},
     {"step": "1.3", "description": "aeon/verification/ package: GroundingAgent/ExpertAgent/LogicAgent + CVI aggregator + abstention; verify_atom backward-compatible", "status": "pending"},
     {"step": "1.4", "description": "Integration in translator (verify_mode), AGENTS.md update, final metrics report, acceptance demo", "status": "pending"}
   ],
-  "current_step": 4,
-  "next_step": "1.1",
+  "current_step": 5,
+  "next_step": "1.2",
   "total_steps": 8,
   "phase": "executing",
   "user_preferences": {
@@ -27,16 +27,24 @@
     "Threshold audit (step 0.3, 2026-10-14): v3.0 literals captured in config.legacy_verification with IDENTICAL defaults — cross-lingual 0.65; risk bands 0.15/0.35/0.60; consistency/grounding weights 0.5/0.5; similarity levels 0.85/0.65/0.45. No divergent hardcodes vs new agent thresholds (0.85/0.75/0.60) — no conflicts, stop-point not triggered.",
     "Contract refinements (pre-0.3): log_event gained optional trace_id (None default, backward compatible); metrics.snapshot gained avg_time_per_atom_local / avg_time_per_atom_network.",
     "LLM inventory (step 0.4 stop-point #1): ALL v3.0 LLM calls go through DeepSeekClient (extractor/generator/verification/translator/image_gen/demo/__init__). Direct requests use is only image_gen.py (Flux image API — not LLM). No hidden LLM call sites; facade covers 100%.",
-    "_call_json failure channel preserved (v3.0 compat): unrepairable JSON returns {\"raw_response\": ..., \"parse_error\": \"unrepairable JSON\"} (not an exception) + llm_json_parse_failed log event."
+    "_call_json failure channel preserved (v3.0 compat): unrepairable JSON returns {\"raw_response\": ..., \"parse_error\": \"unrepairable JSON\"} (not an exception) + llm_json_parse_failed log event.",
+    "Retry-After support (0.4 refine, curator #1): retry delay = max(backoff, Retry-After header) when present. llm_call now logs attempts + retries; latency_ms = wall-time of ALL attempts incl. backoff sleeps (documented in AGENTS.md, curator #5).",
+    "Extractor parse_error guard (0.4 refine, curator #3): on unrepairable JSON extractor logs extract_structure_parse_error and falls back to rule-based structure (no silent empty result). Remaining _call_json consumers (verification paths) audited at 1.3 rewrite / 1.4 demo.",
+    "Wikidata schema live-check (1.1 stop-point, 2026-10-14): NO drift. wbsearchentities hit = {id,label,description,match{type,language,text},pageid,concepturi,title,repository,url,display} (no aliases in hit); wbgetentities top = {entities, success}; entity keys = {aliases, claims, descriptions, id, labels, sitelinks, type}; redirects field absent on normal fetch (parser handles list[{from,to}] AND dict{old:new}); API errors return HTTP 200 with {\"error\":{\"code\",\"info\"}} e.g. no-such-entity."
   ],
   "backlog": [
+    "LLM retry jitter (+/-20%) — curator 0.4 note #2; apply at 1.4+ when concurrent atoms grow (thundering herd).",
     "Phase 2: linguistic_layers (Chain-of-Linguistics), focus.py (multi-focus), fragments.py (lacunae), aeon/ancient/ packs (ancient_greek + latin priority)",
     "Phase 3: .aeon v2 (verification trace, entity links, hypotheses; v1 read compat), CLI analyze/link/fragments, web endpoints, README v4 + docs/ARCHITECTURE.md"
   ],
   "config_wiring": {
     "canonical_access": "CONFIG.verification.<agent> is canonical (per AGENTS.md); flat CONFIG.<agent> is a convenience alias only",
-    "wired_in": ["llm (CONFIG.llm -> DeepSeekClient/OpenAICompatibleProvider, incl. max_attempts/backoff/timeout)", "logging (CONFIG.logging -> get_logger default file/level)"],
-    "not_wired_yet": ["verification thresholds (1.3)", "legacy_verification (1.3 decision: wire or deprecate)", "similarity levels (1.2/1.4)", "embeddings model (1.2 optional)", "entity_linking (1.1)"]
+    "wired_in": [
+      "llm (CONFIG.llm -> DeepSeekClient/OpenAICompatibleProvider, incl. max_attempts/backoff/timeout)",
+      "logging (CONFIG.logging -> get_logger default file/level)",
+      "entity_linking client (CONFIG.entity_linking -> WikidataClient: enabled/offline/rate_limit/cache_ttl/cache_path/timeout/max_attempts/contact_email)"
+    ],
+    "not_wired_yet": ["verification thresholds (1.3)", "legacy_verification (1.3 decision: wire or deprecate)", "similarity levels (1.2/1.4)", "embeddings model (1.2 optional)", "entity_linking -> extractor/atom integration (1.2)"]
   },
   "legacy_config_used_by": [],
   "completed_at": null,
@@ -44,6 +52,7 @@
   "baseline_commit": "1c5a460",
   "tooling": {
     "secrets_scan": "astra-sentinel MCP (opencode) — tool astra-sentinel_scan; run 2026-10-14; scope: 14 key files (setup.py, install.ps1, run_aeon.bat, run_web.bat, Install.txt, README.md, aeon/{__init__,cli,llm_client,image_gen,web_server,voice,translator,verification}.py); result: 0 findings",
-    "llm_layer": "aeon/llm/ (base, retries, json_repair, openai_compatible, deepseek) + aeon/llm_client.py shim; JSON-repair stdlib only (json/ast/re) per stop-point #2"
+    "llm_layer": "aeon/llm/ (base, retries, json_repair, openai_compatible, deepseek) + aeon/llm_client.py shim; JSON-repair stdlib only (json/ast/re) per stop-point #2",
+    "wikidata_schema_check": "live script %TEMP%\\opencode\\check_wikidata.py; 2026-10-14; requests: search 'Plato', get Q859, invalid Q-ID; confirmed actual schemas (see known_deltas); zero drift from design assumptions"
   }
 }

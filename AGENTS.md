@@ -29,12 +29,19 @@ v3.0 → v4.0 (Фаза 0: фундамент; Фаза 1: Entity Linking + Veri
   `orchestrator_state.json → legacy_config_used_by`).
 - **LLM-слой:** пакет `aeon/llm/` (base/retries/json_repair/openai_compatible/
   deepseek). `from aeon.llm_client import DeepSeekClient` — рабочий shim.
-- **Ретраи:** экспоненциальный backoff; retryable = 5xx / 408 / 429 /
+- **Ретраи:** экспоненциальный backoff + `Retry-After` из ответа
+  (delay = max(backoff, Retry-After)); retryable = 5xx / 408 / 429 /
   timeout / connection; прочие 4xx — fail fast.
+- **LLM-логи:** `llm_call.latency_ms` — wall-time всех попыток (включая
+  backoff-паузы), поля `attempts` и `retries` — для разбора.
 - **JSON-repair:** только stdlib-эвристики (fences, скобки, trailing commas,
   `ast.literal_eval`). Внешние json-repair/json5 — не тащим.
 - **Entity Linking:** opt-in (`AEON_ENTITY_LINKING=1`, default off);
-  Wikidata: UA с контактом + rate limit ≤1 rps; маппинг merged Q-ID кэшируется.
+  Wikidata Action API (2 яруса: `wbsearchentities` → `wbgetentities`);
+  UA `AEON-Translator/4.0 (research; contact: ...)`; rate limit ≤1 rps;
+  SQLite-кэш 7 дней + маппинг merged Q-ID (old→new); offline-режим
+  (`AEON_WIKIDATA_OFFLINE=1`) — только кэш; недоступность источника →
+  `source_unavailable=True`, без исключений.
 - **Фрагменты (задел):** вердикты различают `unverifiable_due_to_missing_data`
   (нейтрально) и `contradicted` (негативно) — отсутствие данных не штрафуется.
 - **Протокол фаз:** кураторские чек-поинты с фиксированным форматом отчёта

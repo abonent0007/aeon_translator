@@ -164,12 +164,14 @@ class EntityLinkingConfig:
     """Entity Linking к Wikidata (новое в v4.0; по умолчанию выключено)."""
 
     enabled: bool = False
+    offline: bool = False                   # True: только кэш, 0 сетевых вызовов
     contact_email: Optional[str] = None     # обязателен в User-Agent Wikidata
     rate_limit_sec: float = 1.0             # ≤1 запрос/сек (лимит куратора)
     cache_ttl_days: int = 7
     cache_path: str = "cache/wikidata.db"
     timeout_sec: float = 10.0
     max_links_per_atom: int = 5
+    max_attempts: int = 3                   # ретраи на timeout/5xx
 
 
 @dataclass(frozen=True)
@@ -272,12 +274,14 @@ def load_config() -> AeonConfig:
 
     entity_linking = EntityLinkingConfig(
         enabled=_env_bool("AEON_ENTITY_LINKING", False),
+        offline=_env_bool("AEON_WIKIDATA_OFFLINE", False),
         contact_email=_env_optional_str("AEON_CONTACT_EMAIL", None),
         rate_limit_sec=_env_float("AEON_WIKIDATA_RATE_LIMIT_SEC", 1.0),
         cache_ttl_days=_env_int("AEON_WIKIDATA_CACHE_TTL_DAYS", 7),
         cache_path=_env_str("AEON_WIKIDATA_CACHE_PATH", "cache/wikidata.db"),
         timeout_sec=_env_float("AEON_WIKIDATA_TIMEOUT_SEC", 10.0),
         max_links_per_atom=_env_int("AEON_MAX_LINKS_PER_ATOM", 5),
+        max_attempts=_env_int("AEON_WIKIDATA_MAX_ATTEMPTS", 3),
     )
 
     logging_cfg = LoggingConfig(
