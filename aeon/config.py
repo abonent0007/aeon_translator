@@ -146,6 +146,9 @@ class LLMConfig:
     temperature_default: float = 0.7
     temperature_json: float = 0.3
     temperature_verification: float = 0.1
+    max_attempts: int = 3
+    retry_backoff_base: float = 0.5
+    timeout_sec: float = 60.0
 
 
 @dataclass(frozen=True)
@@ -226,6 +229,9 @@ def load_config() -> AeonConfig:
         temperature_default=_env_float("AEON_LLM_TEMPERATURE_DEFAULT", 0.7),
         temperature_json=_env_float("AEON_LLM_TEMPERATURE_JSON", 0.3),
         temperature_verification=_env_float("AEON_LLM_TEMPERATURE_VERIFICATION", 0.1),
+        max_attempts=_env_int("AEON_LLM_MAX_ATTEMPTS", 3),
+        retry_backoff_base=_env_float("AEON_LLM_RETRY_BACKOFF_BASE", 0.5),
+        timeout_sec=_env_float("AEON_LLM_TIMEOUT_SEC", 60.0),
     )
 
     embeddings = EmbeddingsConfig(

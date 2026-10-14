@@ -18,7 +18,22 @@ import time
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
+from .config import CONFIG
+
 DEFAULT_LOG_FILE = Path(__file__).resolve().parent.parent / "logs" / "aeon.jsonl"
+
+
+def _default_log_path() -> Path:
+    """Путь лог-файла по умолчанию: AEON_LOG_FILE (относительный — от корня проекта)."""
+    path = Path(CONFIG.logging.log_file)
+    if not path.is_absolute():
+        path = Path(__file__).resolve().parent.parent / path
+    return path
+
+
+def _config_level() -> int:
+    """Уровень логирования из конфига (AEON_LOG_LEVEL)."""
+    return getattr(logging, str(CONFIG.logging.level).upper(), logging.INFO)
 
 # Стандартные атрибуты LogRecord — не попадают в extras.
 _RESERVED = {
@@ -54,17 +69,17 @@ class JsonLinesFormatter(logging.Formatter):
 def get_logger(
     name: str = "aeon",
     log_file: Optional[Union[str, Path]] = None,
-    level: int = logging.INFO,
+    level: Optional[int] = None,
 ) -> logging.Logger:
-    """Логгер с JSON-lines handler'ом (файл по умолчанию: logs/aeon.jsonl)."""
+    """Логгер с JSON-lines handler'ом (файл: CONFIG.logging.log_file)."""
     logger = logging.getLogger(name)
     if getattr(logger, "_aeon_json_configured", False):
         return logger
 
-    logger.setLevel(level)
+    logger.setLevel(level if level is not None else _config_level())
     logger.propagate = False
 
-    path = Path(log_file) if log_file is not None else DEFAULT_LOG_FILE
+    path = Path(log_file) if log_file is not None else _default_log_path()
     path.parent.mkdir(parents=True, exist_ok=True)
 
     handler = logging.FileHandler(path, encoding="utf-8")

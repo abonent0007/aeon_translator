@@ -45,6 +45,9 @@ def test_config_defaults_unchanged(clean_env):
     # LLM / embeddings — дефолты v3.0
     assert cfg.llm.model == "deepseek-chat"
     assert cfg.llm.base_url == "https://api.deepseek.com"
+    assert cfg.llm.max_attempts == 3
+    assert cfg.llm.retry_backoff_base == 0.5
+    assert cfg.llm.timeout_sec == 60.0
     assert cfg.embeddings.model == "multilingual_mini"
 
     # Entity Linking по умолчанию выключен (v3.0 не имел linking)
