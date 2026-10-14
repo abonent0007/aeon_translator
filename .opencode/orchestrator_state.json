@@ -196,17 +196,18 @@
           "action": "revisit expected_verdicts jointly with claims-contract decision (annotations_version bump if changed)"
         }
       ],
-      "deepseek_api_check_2_7_3": "Researched 2026-10-14: current API lineup V4: deepseek-flash (replaces deepseek-chat/V4-Flash; legacy deepseek-chat alias still served, billed flash price), deepseek-reasoner, deepseek-v4-pro(retained). Endpoint https://api.deepseek.com unchanged (OpenAI-compatible). Flash pricing off-peak: in $0.15/M (cache-hit $0.003) / out $0.60/M; peak (01-04, 06-10 UTC Mon-Fri) x2. Our defaults stale: model=deepseek-chat (works via alias), tariff 0.27/1.10 (pre-V4). Proposal (pending approval): config defaults -> deepseek-flash + 0.15/0.60 + capture prompt_cache_hit_tokens; optional peak-aware cost. Run cost recomputed vs new tariff would be lower.",
+      "deepseek_api_check_2_7_3": "VERIFIED 2026-10-14: /models live -> [deepseek-flash, deepseek-v4-pro]; deepseek-chat NOT listed (legacy alias, served in our 2.7.3 run); deepseek-reasoner absent from /models. Official pricing page (HTML parity): flash off-peak $0.15 in / $0.60 out, peak $0.30/$1.20, cache-hit $0.003/M; v4-pro $0.66/$1.98 off-peak, $1.32/$3.96 peak. Commit-5 UNBLOCKED.",
       "fix_order_2_7_3": [
         "1. commit: contracts docs (+ final review by curator)",
         "2. commit: fix extractor prompt (contract v1: semantic claims, domain dict, language enforcement, 2-3 few-shot)",
         "3. commit: fix detective (defensive-skip regex, quote-in-source NFC>=3, ratio threshold 0.7 config, build_claims helper, remove meta-glue in translator/runner/demo)",
         "4. commit: fix metrics accent-insensitive (NFKD strip combining for entity name compare only)",
-        "5. commit: config DeepSeek V4 (model deepseek-flash, tariffs 0.15/0.60, cache-hit capture, peak-hour flag) — BEFORE re-run for cost comparability",
+        "5. commit: config DeepSeek V4 (model=deepseek-flash VERIFIED via /models; tariffs 0.15/0.60 off-peak + peak-hour flag llm_peak_hour 01-04/06-10 UTC; prompt_cache_hit_tokens graceful .get(...,0) + test_usage_handles_missing_cache_field) — BEFORE re-run for cost comparability",
         "6. re-run gold-real on SAME gold; diff analysis",
         "7. only then: gold verdicts review decision (with source diff, if justified)"
       ],
-      "q3_confidence_task": "Do NOT lower min_confidence 0.85. Data task: distribution of grounded-claim confidences over 2.7.3 raw (avg/min/max/histogram); check ratio=1.0 & avg<0.85 cases (sappho seg3 0.83); min-based aggregator — only on data, separate decision."
+      "q3_confidence_task": "Do NOT lower min_confidence 0.85. Data task: distribution of grounded-claim confidences over 2.7.3 raw (avg/min/max/histogram); check ratio=1.0 & avg<0.85 cases (sappho seg3 0.83); min-based aggregator — only on data, separate decision.",
+      "contracts_notes_added": "Note1: n==0 -> neutral reason=no_semantic_claims + event detective_no_semantic_claims (medium) + test; Note2: extractor_v1 known-limitation (literary significance != entity status; mu_nin via linguistic layers); Note3: skip-regex (\\s|:) edge + test_defensive_skip_bare_instruction_word; Note4: cache-hit graceful -> commit 5 requirements."
     },
     "known_gaps": [
       "LLM quality not validated on real API (mock used throughout)",
