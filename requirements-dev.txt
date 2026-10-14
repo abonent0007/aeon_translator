@@ -1,0 +1,4 @@
+# Dev/test-зависимости AEON v4.0 (в runtime не нужны)
+# Установка: pip install -r requirements-dev.txt
+pytest>=9.0
+pytest-cov>=6.0
