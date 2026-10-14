@@ -135,6 +135,22 @@
       "token_tracking": "done (9b78e66): provider usage counters (calls/prompt/completion tokens), DeepSeekClient.usage, tariffs in LLMConfig (AEON_LLM_PRICE_IN/OUT_PER_M, defaults 0.27/1.10), runner stats + attach_raw_recorder (gold real_runs audit), report --dry-run/--raw-dir/cost-block. Dry-run: 52 calls (28 extract + 24 verify). Cost estimate: $0.03-0.25 (live measurement; stop >$2).",
       "findings_2_7_3": [
         {
+          "id": "detective_quote_not_verified",
+          "severity": "critical",
+          "impact": "detective accepts quote by NON-EMPTINESS only (detective.py:119); substring-in-source NOT checked — all past 'grounded' verdicts unvalidated by code",
+          "root_cause_hypothesis": "v3.0-era check: (quote or not require_quote)",
+          "action": "contracts/detective_v1.md: NFC quote-in-source + min length 3 + log detective_quote_not_in_source + not grounded. Commit 3.",
+          "curator_escalation": "CRITICAL (upgrade from hidden defect)"
+        },
+        {
+          "id": "extractor_prompt_v3_legacy",
+          "severity": "high",
+          "impact": "extractor prompt is v3.0-era (semantic-translation target: domain business/technology, entity concept/property/abstract, chain='HOW you arrived'); never revised since F0; explains ALL 2.7.3 symptoms (word-salad, instructions-in-chain, language leak)",
+          "root_cause_hypothesis": "reused without re-scoping for ancient-text NER/claims",
+          "action": "contracts/extractor_v1.md is NEW SPEC (not revision); commit 2 rewrites prompt + few-shot",
+          "curator_comment": "technical debt surfaced by reality; fix systematically"
+        },
+        {
           "id": "llm_prompt_contract_underspecified_meta",
           "severity": "high",
           "impact": "ONE CLASS of defects: 2.7.1 entity contract, 2.7.2 CVI rule, 2.7.3 claims composition — all 'LLM outputs without formal contract'; mock masked via implicit-knowledge canned answers",
@@ -148,7 +164,8 @@
           "impact": "detective accuracy 0.00 on gold verdict texts; exact-quote fine, claims not verifiable as composed",
           "root_cause_hypothesis": "explanation_chain (real) = grammar instructions; runner/translator append Intent:/Domain: meta-claims which LLM returns with empty quotes; grounded requires ALL rows quoted; even 7/7 case fails avg-conf 0.85",
           "action": "curator decision: claims contract (semantic-only claims? exclude meta rows from detective? per-row threshold?) + revisit gold expected_verdicts (annotator optimism pre-data)",
-          "not_a_bug": "components work as coded; the CONTRACT is underspecified (same pattern as entity contract)"
+          "not_a_bug": "components work as coded; the CONTRACT is underspecified (same pattern as entity contract)",
+          "curator_comment": "root cause deeper: extractor_prompt_v3_legacy; fix order 1-6 approved; contract v1 replaces behavior"
         },
         {
           "id": "entity_extraction_word_salad_and_cross_language_leak",
@@ -179,7 +196,17 @@
           "action": "revisit expected_verdicts jointly with claims-contract decision (annotations_version bump if changed)"
         }
       ],
-      "deepseek_api_check_2_7_3": "Researched 2026-10-14: current API lineup V4: deepseek-flash (replaces deepseek-chat/V4-Flash; legacy deepseek-chat alias still served, billed flash price), deepseek-reasoner, deepseek-v4-pro(retained). Endpoint https://api.deepseek.com unchanged (OpenAI-compatible). Flash pricing off-peak: in $0.15/M (cache-hit $0.003) / out $0.60/M; peak (01-04, 06-10 UTC Mon-Fri) x2. Our defaults stale: model=deepseek-chat (works via alias), tariff 0.27/1.10 (pre-V4). Proposal (pending approval): config defaults -> deepseek-flash + 0.15/0.60 + capture prompt_cache_hit_tokens; optional peak-aware cost. Run cost recomputed vs new tariff would be lower."
+      "deepseek_api_check_2_7_3": "Researched 2026-10-14: current API lineup V4: deepseek-flash (replaces deepseek-chat/V4-Flash; legacy deepseek-chat alias still served, billed flash price), deepseek-reasoner, deepseek-v4-pro(retained). Endpoint https://api.deepseek.com unchanged (OpenAI-compatible). Flash pricing off-peak: in $0.15/M (cache-hit $0.003) / out $0.60/M; peak (01-04, 06-10 UTC Mon-Fri) x2. Our defaults stale: model=deepseek-chat (works via alias), tariff 0.27/1.10 (pre-V4). Proposal (pending approval): config defaults -> deepseek-flash + 0.15/0.60 + capture prompt_cache_hit_tokens; optional peak-aware cost. Run cost recomputed vs new tariff would be lower.",
+      "fix_order_2_7_3": [
+        "1. commit: contracts docs (+ final review by curator)",
+        "2. commit: fix extractor prompt (contract v1: semantic claims, domain dict, language enforcement, 2-3 few-shot)",
+        "3. commit: fix detective (defensive-skip regex, quote-in-source NFC>=3, ratio threshold 0.7 config, build_claims helper, remove meta-glue in translator/runner/demo)",
+        "4. commit: fix metrics accent-insensitive (NFKD strip combining for entity name compare only)",
+        "5. commit: config DeepSeek V4 (model deepseek-flash, tariffs 0.15/0.60, cache-hit capture, peak-hour flag) — BEFORE re-run for cost comparability",
+        "6. re-run gold-real on SAME gold; diff analysis",
+        "7. only then: gold verdicts review decision (with source diff, if justified)"
+      ],
+      "q3_confidence_task": "Do NOT lower min_confidence 0.85. Data task: distribution of grounded-claim confidences over 2.7.3 raw (avg/min/max/histogram); check ratio=1.0 & avg<0.85 cases (sappho seg3 0.83); min-based aggregator — only on data, separate decision."
     },
     "known_gaps": [
       "LLM quality not validated on real API (mock used throughout)",
