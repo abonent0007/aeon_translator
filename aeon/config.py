@@ -159,6 +159,10 @@ class LLMConfig:
     price_in_per_m: float = 0.15
     price_out_per_m: float = 0.60
     price_cache_hit_per_m: float = 0.003
+    # 2.7.3-fix: deepseek-flash — thinking-модель по умолчанию; reasoning
+    # съедает max_tokens (finish_reason=length, content пуст — probe доказал).
+    # Отключаем thinking для flash (probe B: finish=stop, reasoning=0).
+    disable_thinking: bool = True
 
 
 @dataclass(frozen=True)
@@ -310,6 +314,7 @@ def load_config() -> AeonConfig:
         price_in_per_m=_env_float("AEON_LLM_PRICE_IN_PER_M", 0.15),
         price_out_per_m=_env_float("AEON_LLM_PRICE_OUT_PER_M", 0.60),
         price_cache_hit_per_m=_env_float("AEON_LLM_PRICE_CACHE_HIT_PER_M", 0.003),
+        disable_thinking=_env_bool("AEON_LLM_DISABLE_THINKING", True),
     )
 
     embeddings = EmbeddingsConfig(

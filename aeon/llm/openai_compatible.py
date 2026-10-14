@@ -74,6 +74,7 @@ class OpenAICompatibleProvider:
         temperature: float = 0.7,
         max_tokens: int = 2000,
         trace_id: Optional[str] = None,
+        extra_body: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Вызов chat completion с ретраями. "" если провайдер недоступен."""
         if self._client is None:
@@ -96,14 +97,18 @@ class OpenAICompatibleProvider:
                 trace_id=tid,
             )
 
+        create_kwargs: Dict[str, Any] = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        }
+        if extra_body:
+            create_kwargs["extra_body"] = extra_body
+
         try:
             response, _attempts, _delays = retry_call(
-                lambda: self._client.chat.completions.create(
-                    model=self.model,
-                    messages=messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                ),
+                lambda: self._client.chat.completions.create(**create_kwargs),
                 max_attempts=self.max_attempts,
                 base_delay=self.base_delay,
                 sleep=self._sleep,

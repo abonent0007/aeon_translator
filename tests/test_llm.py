@@ -24,7 +24,7 @@ class FakeCompletions:
     def __init__(self, owner):
         self.owner = owner
 
-    def create(self, *, model, messages, temperature, max_tokens):
+    def create(self, *, model, messages, temperature, max_tokens, **kwargs):
         self.owner.calls.append(
             {"model": model, "messages": messages,
              "temperature": temperature, "max_tokens": max_tokens}

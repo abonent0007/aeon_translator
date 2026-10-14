@@ -35,6 +35,7 @@ class DeepSeekClient:
         self.base_url = base_url or cfg.base_url
         self.model = model or cfg.model
         self.trace_id = trace_id
+        self._disable_thinking = bool(getattr(cfg, "disable_thinking", False))
 
         provider_kwargs = {}
         if sleep is not None:
@@ -86,11 +87,17 @@ class DeepSeekClient:
         """Базовый вызов LLM. "" если клиент недоступен."""
         if not self.available:
             return ""
+        extra_body = None
+        if self._disable_thinking and str(self.model or "").startswith("deepseek-flash"):
+            # 2.7.3-fix: flash — reasoning-модель; без отключения thinking
+            # content пуст (finish_reason=length — reasoning съедает max_tokens)
+            extra_body = {"thinking": {"type": "disabled"}}
         return self._provider.chat(
             messages,
             temperature=temperature,
             max_tokens=max_tokens,
             trace_id=trace_id,
+            extra_body=extra_body,
         )
 
     def _call_json(

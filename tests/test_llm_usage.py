@@ -9,8 +9,10 @@ from aeon.llm_client import DeepSeekClient
 class _StubCompletions:
     def __init__(self, responses):
         self._responses = list(responses)
+        self.last_kwargs = None
 
     def create(self, **kwargs):
+        self.last_kwargs = kwargs
         return self._responses.pop(0)
 
 
@@ -87,3 +89,40 @@ def test_peak_hour_windows():
     assert is_peak_hour(datetime(2026, 10, 12, 5, 0, tzinfo=timezone.utc)) is False  # Пн, между окнами
     assert is_peak_hour(datetime(2026, 10, 12, 6, 30, tzinfo=timezone.utc)) is True  # Пн
     assert is_peak_hour(datetime(2026, 10, 17, 2, 0, tzinfo=timezone.utc)) is False  # Сб
+
+
+def _stub_with_recording(response):
+    completions = _StubCompletions([response])
+    client = SimpleNamespace(chat=SimpleNamespace(completions=completions))
+    return client, completions
+
+
+def test_provider_passes_extra_body():
+    client, completions = _stub_with_recording(_response("x", 1, 1))
+    provider = OpenAICompatibleProvider(client=client)
+
+    provider.chat([{"role": "user", "content": "x"}],
+                  extra_body={"thinking": {"type": "disabled"}})
+
+    assert completions.last_kwargs["extra_body"] == {"thinking": {"type": "disabled"}}
+
+
+def test_deepseek_client_disables_thinking_for_flash():
+    """2.7.3-fix: flash — thinking-модель; шлём thinking=disabled."""
+    client, completions = _stub_with_recording(_response('{"ok": true}', 1, 1))
+    deepseek = DeepSeekClient(api_key="k", model="deepseek-flash")
+    deepseek._provider._client = client
+
+    deepseek._call([{"role": "user", "content": "x"}], temperature=0.0)
+
+    assert completions.last_kwargs["extra_body"] == {"thinking": {"type": "disabled"}}
+
+
+def test_deepseek_client_no_extra_body_for_chat_alias():
+    client, completions = _stub_with_recording(_response('{"ok": true}', 1, 1))
+    deepseek = DeepSeekClient(api_key="k", model="deepseek-chat")
+    deepseek._provider._client = client
+
+    deepseek._call([{"role": "user", "content": "x"}], temperature=0.0)
+
+    assert "extra_body" not in completions.last_kwargs
