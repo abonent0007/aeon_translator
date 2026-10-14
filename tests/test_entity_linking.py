@@ -81,12 +81,13 @@ class FakeTransport:
 
 
 def make_client(tmp_path, transport=None, cfg_updates=None, clock=None, **kwargs):
-    cfg = dataclasses.replace(
-        el.CONFIG.entity_linking,
-        enabled=True,
-        cache_path=str(tmp_path / "wikidata_test.db"),
-        **(cfg_updates or {}),
-    )
+    overrides = {
+        "enabled": True,
+        "cache_path": str(tmp_path / "wikidata_test.db"),
+        "contact_email": "tests@example.com",
+    }
+    overrides.update(cfg_updates or {})
+    cfg = dataclasses.replace(el.CONFIG.entity_linking, **overrides)
     clock = clock or FakeClock()
     client = WikidataClient(
         config=cfg,
@@ -345,3 +346,42 @@ def test_extract_external_ids():
     ids = extract_external_ids(entity)
 
     assert ids == {"wikidata": "Q2", "pleiades": "579885", "trismegistos": "12345"}
+
+
+def test_redirect_mapping_is_permanent(tmp_path):
+    """Маппинг merged Q-ID бессрочен: TTL кэша сущностей истёк — маппинг жив."""
+    entity_payload = {
+        "entities": {"Q2": {**ENTITY_PAYLOAD, "id": "Q2"}},
+        "redirects": [{"from": "Q1", "to": "Q2"}],
+    }
+    transport = FakeTransport(entity_payloads=[entity_payload, entity_payload])
+    client, clock = make_client(tmp_path, transport)
+
+    client.get_entity("Q1")
+    clock.advance(365 * 86400)  # год спустя: entity-кэш истёк, маппинг — нет
+    result = client.get_entity("Q1")
+
+    assert result.was_redirected is True
+    assert result.resolved_qid == "Q2"
+    assert len(transport.calls) == 2
+    # Повторный fetch — уже канонического Q2 (healing из кэша маппинга)
+    assert transport.calls[1]["params"]["ids"] == "Q2"
+    client.close()
+
+
+def test_link_mention_end_to_end(tmp_path):
+    transport = FakeTransport(
+        search_payloads=[{"search": [SEARCH_HIT]}],
+        entity_payloads=[{"entities": {"Q859": ENTITY_PAYLOAD}}],
+    )
+    client, _ = make_client(tmp_path, transport)
+
+    result = client.link_mention("Plato")
+
+    assert result.source_unavailable is False
+    assert result.entity is not None
+    assert result.entity.qid == "Q859"
+    assert result.external_ids == {"wikidata": "Q859", "pleiades": "579885"}
+    assert 0.0 < result.score <= 1.0
+    assert result.candidates[0].candidate.qid == "Q859"
+    client.close()

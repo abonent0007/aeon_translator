@@ -1,25 +1,29 @@
 """
-AEON Entity Linking — WikidataClient (2-ярусный доступ к Wikidata).
+AEON Entity Linking — WikidataClient (2-ярусный доступ к Wikidata) + скоринг.
 
 Ярусы:
   1. wbsearchentities — поиск кандидатов (Q-ID) по упоминанию;
   2. wbgetentities   — данные сущности (labels/descriptions/aliases/claims/
      sitelinks) + обработка merged/redirected Q-ID.
 
+Скоринг (шаг 1.2): при нескольких кандидатах — ранжирование по
+score_candidate() ∈ [0,1] (тип матча, точность, язык, наличие описания);
+link_mention() — сквозной путь: поиск → скоринг → fetch → external_ids.
+
 Инфраструктура:
   - SQLite-кэш (stdlib sqlite3): поиски (query,lang) и сущности (qid), TTL 7 дней;
-    отдельная таблица маппинга merged Q-ID old→new;
+    маппинг merged Q-ID old→new — БЕССРОЧНЫЙ (слияние — исторический факт);
   - rate limit ≤1 req/sec (threading.Lock + инъектируемые clock/sleep);
-  - ретраи на timeout/5xx (прочие 4xx — fail fast), общий механизм из aeon.llm.retries;
+  - ретраи на timeout/5xx (прочие 4xx — fail fast), механизм из aeon.llm.retries;
   - offline-режим: только кэш, 0 сетевых вызовов;
   - graceful degradation: недоступность → source_unavailable=True, без исключений;
-  - метрики: METRICS.record_network_call / record_cache;
+  - метрики: METRICS.record_network_call / record_cache(main|redirect);
   - JSON-lines события: wikidata_unavailable / wikidata_redirect_healed.
 
 Схема ответов проверена живым запросом 2026-10-14:
-  wbsearchentities hit: {id, label, description, match{type,...}} (без aliases);
+  wbsearchentities hit: {id, label, description, match{type,language,text}};
   wbgetentities: {entities: {...}, success: 1}; merged Q-ID → redirects;
-  ошибка API: HTTP 200 + {"error": {"code": "no-such-entity", ...}}.
+  ошибка API: HTTP 200 + {"error": {"code": "no-such-entity", ...}} (known quirk).
 """
 
 import json
@@ -113,6 +117,10 @@ def _requests_transport(
     )
 
 
+# Публичный алиас для других клиентов (crosswalk: Pleiades, Trismegistos)
+default_transport = _requests_transport
+
+
 # ═══════════════════════════════════════════════════════════════
 # SQLite-кэш (stdlib, без ORM)
 # ═══════════════════════════════════════════════════════════════
@@ -190,6 +198,7 @@ class WikidataCache:
             self._conn.commit()
 
     def get_redirect(self, old_qid: str) -> Optional[str]:
+        """Маппинг old→new. Без TTL: слияние Q-ID — неизменяемый исторический факт."""
         with self._lock:
             row = self._conn.execute(
                 "SELECT new_qid FROM qid_redirects WHERE old_qid=?", (old_qid,)
@@ -223,6 +232,7 @@ class SearchCandidate:
     label: str = ""
     description: str = ""
     match_type: str = ""
+    match_language: str = ""
     rank: int = 0
 
 
@@ -233,6 +243,28 @@ class SearchResult:
     candidates: List[SearchCandidate] = field(default_factory=list)
     source_unavailable: bool = False
     from_cache: bool = False
+    reason: str = ""
+
+
+@dataclass
+class ScoredCandidate:
+    """Кандидат с оценкой link_confidence ∈ [0,1]."""
+
+    candidate: SearchCandidate
+    score: float
+
+
+@dataclass
+class LinkResult:
+    """Сквозной результат link_mention: сущность + внешние ID + скор."""
+
+    entity: Optional["WikidataEntity"] = None
+    score: float = 0.0
+    external_ids: Dict[str, str] = field(default_factory=dict)
+    source_unavailable: bool = False
+    from_cache: bool = False
+    was_redirected: bool = False
+    candidates: List[ScoredCandidate] = field(default_factory=list)
     reason: str = ""
 
 
@@ -274,6 +306,78 @@ def extract_external_ids(entity: WikidataEntity) -> Dict[str, str]:
                 ids[name] = value
                 break
     return ids
+
+
+# ═══════════════════════════════════════════════════════════════
+# Скоринг кандидатов (шаг 1.2)
+# ═══════════════════════════════════════════════════════════════
+
+#: Веса типов совпадений (measure от wbsearchentities match.type).
+MATCH_TYPE_WEIGHTS = {
+    "label": 1.0,
+    "entity": 0.7,
+    "alias": 0.55,
+    "description": 0.25,
+}
+_UNKNOWN_MATCH_WEIGHT = 0.4
+
+#: Итоговые веса компонент скора (сумма = 1.0).
+SCORE_WEIGHTS = {"type": 0.40, "exactness": 0.35, "language": 0.15, "description": 0.10}
+
+
+def _normalize(text: Optional[str]) -> str:
+    return (text or "").strip().casefold()
+
+
+def score_candidate(
+    candidate: SearchCandidate, query: str, language: str = "en"
+) -> float:
+    """
+    Оценка кандидата ∈ [0,1]: монотонна по качеству совпадения.
+
+    Компоненты:
+      type        — вес match.type (label > entity > alias > description);
+      exactness   — точное совпадение label с запросом > префикс > прочее;
+      language    — язык матча совпадает с целевым;
+      description — у кандидата есть описание.
+    """
+    type_weight = MATCH_TYPE_WEIGHTS.get(candidate.match_type, _UNKNOWN_MATCH_WEIGHT)
+
+    label = _normalize(candidate.label)
+    normalized_query = _normalize(query)
+    if label and normalized_query and label == normalized_query:
+        exactness = 1.0
+    elif label and normalized_query and label.startswith(normalized_query):
+        exactness = 0.65
+    else:
+        exactness = 0.35
+
+    if not candidate.match_language or candidate.match_language == language:
+        language_match = 1.0
+    else:
+        language_match = 0.6
+
+    has_description = 1.0 if candidate.description else 0.5
+
+    score = (
+        SCORE_WEIGHTS["type"] * type_weight
+        + SCORE_WEIGHTS["exactness"] * exactness
+        + SCORE_WEIGHTS["language"] * language_match
+        + SCORE_WEIGHTS["description"] * has_description
+    )
+    return round(min(1.0, max(0.0, score)), 4)
+
+
+def rank_candidates(
+    candidates: List[SearchCandidate], query: str, language: str = "en"
+) -> List[ScoredCandidate]:
+    """Ранжирование кандидатов по score (desc), тайбрейк — исходный rank API."""
+    scored = [
+        ScoredCandidate(candidate=candidate, score=score_candidate(candidate, query, language))
+        for candidate in candidates
+    ]
+    scored.sort(key=lambda item: (-item.score, item.candidate.rank))
+    return scored
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -359,7 +463,12 @@ class WikidataClient:
             return EntityFetchResult(reason="empty_qid")
 
         requested = qid
-        canonical = self._cache.get_redirect(qid) or qid
+        redirect_mapping = self._cache.get_redirect(qid)
+        if redirect_mapping:
+            METRICS.record_cache(hit=True, namespace="redirect")
+        else:
+            METRICS.record_cache(hit=False, namespace="redirect")
+        canonical = redirect_mapping or qid
         was_redirected = canonical != requested
 
         cached = self._cache.get_entity(canonical)
@@ -379,7 +488,7 @@ class WikidataClient:
 
         payload = self._api_get({
             "action": "wbgetentities",
-            "ids": requested,
+            "ids": canonical,
             "props": "labels|descriptions|aliases|claims|sitelinks",
             "languages": language,
             "format": "json",
@@ -398,10 +507,11 @@ class WikidataClient:
 
         entities = payload.get("entities") or {}
         redirects = self._parse_redirects(payload.get("redirects"))
-        canonical = redirects.get(requested, requested)
+        canonical = redirects.get(canonical, canonical)
         was_redirected = canonical != requested
-        if was_redirected:
-            self._cache.put_redirect(requested, canonical)
+        if was_redirected and redirects:
+            for old_qid, new_qid in redirects.items():
+                self._cache.put_redirect(old_qid, new_qid)
             log_event(
                 self._logger,
                 "wikidata_redirect_healed",
@@ -424,6 +534,49 @@ class WikidataClient:
             was_redirected=was_redirected,
             requested_qid=requested,
             resolved_qid=canonical,
+        )
+
+    def link_mention(
+        self, mention: str, language: str = "en", limit: int = 5
+    ) -> LinkResult:
+        """
+        Сквозной linking: поиск → скоринг → fetch → external_ids.
+        Не бросает исключений; деградация выражается полями результата.
+        """
+        search_result = self.search(mention, language=language, limit=limit)
+        if search_result.source_unavailable:
+            return LinkResult(source_unavailable=True, reason="source_unavailable")
+        if not search_result.candidates:
+            return LinkResult(
+                reason=search_result.reason or "no_candidates",
+                from_cache=search_result.from_cache,
+            )
+
+        scored = rank_candidates(search_result.candidates, mention, language)
+        best = scored[0]
+
+        fetch = self.get_entity(best.candidate.qid, language=language)
+        if fetch.source_unavailable:
+            return LinkResult(
+                score=best.score,
+                candidates=scored,
+                source_unavailable=True,
+                reason="source_unavailable",
+            )
+        if fetch.entity is None:
+            return LinkResult(
+                score=best.score,
+                candidates=scored,
+                reason=fetch.reason or "fetch_failed",
+            )
+
+        return LinkResult(
+            entity=fetch.entity,
+            score=best.score,
+            external_ids=extract_external_ids(fetch.entity),
+            was_redirected=fetch.was_redirected,
+            from_cache=search_result.from_cache and fetch.from_cache,
+            candidates=scored,
         )
 
     def close(self) -> None:
@@ -485,6 +638,7 @@ class WikidataClient:
             label=item.get("label", ""),
             description=item.get("description", ""),
             match_type=match.get("type", ""),
+            match_language=match.get("language", ""),
             rank=rank,
         )
 

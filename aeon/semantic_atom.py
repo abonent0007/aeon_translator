@@ -18,6 +18,16 @@ class Entity:
     confidence: float = 1.0
     span: str = ""               # исходный текст сущности
 
+    # ── Entity Linking (v4.0) ──
+    external_ids: Dict[str, str] = field(default_factory=dict)
+    external_labels: Dict[str, str] = field(default_factory=dict)
+    link_confidence: float = 0.0
+    source_unavailable: bool = False   # источник недоступен (1.3 не штрафует)
+
+    # ── Фрагменты (задел v4.0) ──
+    is_fragment: bool = False
+    completeness_score: float = 1.0
+
 
 @dataclass
 class Relation:
@@ -73,6 +83,10 @@ class SemanticAtom:
     fact_grounded: bool = True
     contradiction_flags: List[str] = field(default_factory=list)
     hallucination_risk: float = 0.0
+
+    # ── Фрагменты (задел v4.0) ──
+    is_fragment: bool = False
+    completeness_score: float = 1.0
 
     # ── AEON-native токены ──
     semantic_tokens: List[str] = field(default_factory=list)
@@ -240,3 +254,47 @@ class SemanticAtom:
         ent_str = f" | {len(self.entities)} ent" if self.entities else ""
         emb_str = f" | {len(self.embedding)}D" if self.embedding else ""
         return f"Atom({self.meaning_hash[:8]}... | {self.intent} | {self.domain}{ent_str}{emb_str})"
+
+
+# ═══════════════════════════════════════════════════════════════
+# Фрагменты (задел v4.0): лакуны и полнота
+# ═══════════════════════════════════════════════════════════════
+
+#: Порог: ниже — атом считается фрагментарным.
+FRAGMENT_THRESHOLD = 0.5
+
+#: Явные маркеры физических пропусков (лакун) в тексте.
+LACUNA_MARKERS = (
+    "[...]", "[…]", "[lacuna]", "[---]",
+    "…", "⟨", "⟩", "⢢", "⸣",
+)
+
+#: Ключевые поля атома для расчёта полноты (5 полей).
+COMPLETENESS_FIELDS = ("intent", "domain", "entities", "semantic_roles", "evidence")
+
+
+def detect_lacunae(text: str) -> bool:
+    """True, если текст содержит явные маркеры физических пропусков."""
+    if not text:
+        return False
+    return any(marker in text for marker in LACUNA_MARKERS)
+
+
+def compute_completeness(
+    *,
+    intent: str,
+    domain: str,
+    entities: list,
+    semantic_roles: dict,
+    evidence: list,
+) -> float:
+    """
+    Доля заполненных ключевых полей атома (0..1).
+
+    Поля (5): intent / domain / entities / semantic_roles / evidence.
+    «Заполнено» = непустое значение (строка/список/словарь).
+    Пример: заполнены только intent и evidence → 0.4.
+    """
+    values = (intent, domain, entities, semantic_roles, evidence)
+    filled = sum(1 for value in values if value)
+    return round(filled / len(values), 4)

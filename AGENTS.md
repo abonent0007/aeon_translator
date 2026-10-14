@@ -39,9 +39,21 @@ v3.0 → v4.0 (Фаза 0: фундамент; Фаза 1: Entity Linking + Veri
 - **Entity Linking:** opt-in (`AEON_ENTITY_LINKING=1`, default off);
   Wikidata Action API (2 яруса: `wbsearchentities` → `wbgetentities`);
   UA `AEON-Translator/4.0 (research; contact: ...)`; rate limit ≤1 rps;
-  SQLite-кэш 7 дней + маппинг merged Q-ID (old→new); offline-режим
-  (`AEON_WIKIDATA_OFFLINE=1`) — только кэш; недоступность источника →
-  `source_unavailable=True`, без исключений.
+  SQLite-кэш 7 дней; offline-режим (`AEON_WIKIDATA_OFFLINE=1`) — только кэш;
+  недоступность источника → `source_unavailable=True`, без исключений.
+  При `enabled=True` contact_email обязателен (валидация конфига).
+- **Wikidata quirk (проверено живьём 2026-10-14):** ошибки API приходят
+  с HTTP 200 + `{"error": {"code", "info"}}` — каждый новый клиент
+  (Pleiades и др.) обязан явно различать HTTP-ошибки и API-error-payload.
+- **Маппинг merged Q-ID:** бессрочный (без TTL) — слияние Q-ID неизменяемый
+  исторический факт. Кэш-метрики: `cache_hit_rate` — только основные lookup'ы
+  (search/entity); redirect — отдельные счётчики (`redirect_cache_hit_rate`).
+- **Фрагменты:** `is_fragment = detect_lacunae(text) or completeness_score < 0.5`;
+  `completeness_score` — доля заполненных из 5 полей
+  (intent/domain/entities/semantic_roles/evidence), поля есть у атома и Entity.
+- **Crosswalk:** Pleiades — защитный парсер (только `.get()`), live-тесты под
+  маркером `network`; Trismegistos — заглушка (публичного API нет: SSL-мисконфиг
+  + 403 анти-бот; датасеты — Фаза 2 backlog).
 - **Фрагменты (задел):** вердикты различают `unverifiable_due_to_missing_data`
   (нейтрально) и `contradicted` (негативно) — отсутствие данных не штрафуется.
 - **Протокол фаз:** кураторские чек-поинты с фиксированным форматом отчёта

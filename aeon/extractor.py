@@ -8,10 +8,20 @@ import re
 import json
 from typing import List, Dict, Optional
 import numpy as np
-from .semantic_atom import SemanticAtom, Entity, Relation
+from .semantic_atom import (
+    SemanticAtom,
+    Entity,
+    Relation,
+    FRAGMENT_THRESHOLD,
+    compute_completeness,
+    detect_lacunae,
+)
 from .llm_client import DeepSeekClient
 from .embeddings import EmbeddingEngine, get_embedding_engine
 from .logging_config import get_logger, log_event
+from .config import CONFIG
+from .entity_linking import LinkResult, WikidataClient
+from .crosswalk import PleiadesClient
 
 
 class MeaningExtractor:
@@ -127,9 +137,13 @@ class MeaningExtractor:
     }
 
     def __init__(self, llm_client: Optional[DeepSeekClient] = None,
-                 embedding_engine: Optional[EmbeddingEngine] = None):
+                 embedding_engine: Optional[EmbeddingEngine] = None,
+                 entity_linker: Optional[WikidataClient] = None,
+                 pleiades_client: Optional[PleiadesClient] = None):
         self.llm = llm_client or DeepSeekClient()
         self.embeddings = embedding_engine or get_embedding_engine()
+        self._entity_linker = entity_linker
+        self._pleiades = pleiades_client
 
     # ═══════════════════════════════════════════════════════════
     # Главные методы извлечения
@@ -158,6 +172,22 @@ class MeaningExtractor:
         # 5. Семантические токены
         tokens = structure.get("semantic_tokens", [])
 
+        # 6. Фрагменты: лакуны + доля заполненных полей (задел v4.0)
+        completeness = compute_completeness(
+            intent=structure.get("intent", "statement"),
+            domain=structure.get("domain", "general"),
+            entities=entities,
+            semantic_roles=roles,
+            evidence=evidence,
+        )
+        is_fragment = detect_lacunae(text) or completeness < FRAGMENT_THRESHOLD
+
+        # 7. Entity Linking (опционально; enabled=False → 0 сетевых вызовов)
+        self._link_entities(entities, detected_lang)
+        for entity in entities:
+            entity.is_fragment = is_fragment
+            entity.completeness_score = completeness
+
         return SemanticAtom(
             meaning_hash=hashlib.sha256(text.encode()).hexdigest()[:16],
             source_text=text,
@@ -174,7 +204,9 @@ class MeaningExtractor:
             evidence=evidence,
             confidence_breakdown=confidence_bd,
             language_origin=detected_lang,
-            semantic_tokens=tokens
+            semantic_tokens=tokens,
+            is_fragment=is_fragment,
+            completeness_score=completeness,
         )
 
     def extract_from_code(self, code: str, language: str = "python") -> SemanticAtom:
@@ -296,6 +328,46 @@ Return a JSON object with these fields:
                 span=e.get("span", "")
             ))
         return entities
+
+    # ═══════════════════════════════════════════════════════════
+    # Entity Linking (v4.0)
+    # ═══════════════════════════════════════════════════════════
+
+    WIKIDATA_LANGUAGES = {"english": "en", "russian": "ru", "chinese": "zh"}
+
+    def _link_entities(self, entities: List[Entity], language: str) -> None:
+        """Связывает сущности с Wikidata (+ Pleiades enrichment). Graceful."""
+        if not entities:
+            return
+
+        linker = self._entity_linker
+        if linker is None:
+            if not CONFIG.entity_linking.enabled:
+                return
+            linker = WikidataClient()
+            self._entity_linker = linker
+            if self._pleiades is None:
+                self._pleiades = PleiadesClient()
+
+        wd_language = self.WIKIDATA_LANGUAGES.get(language, "en")
+        limit = CONFIG.entity_linking.max_links_per_atom
+
+        for entity in entities[:limit]:
+            result: LinkResult = linker.link_mention(entity.name, language=wd_language)
+            if result.source_unavailable:
+                entity.source_unavailable = True
+                continue
+            if result.entity is None:
+                continue
+
+            entity.external_ids = dict(result.external_ids)
+            entity.link_confidence = result.score
+
+            pleiades_id = entity.external_ids.get("pleiades")
+            if pleiades_id and self._pleiades is not None:
+                place_result = self._pleiades.get_place(pleiades_id)
+                if place_result.place is not None and place_result.place.title:
+                    entity.external_labels["pleiades"] = place_result.place.title
 
     # ═══════════════════════════════════════════════════════════
     # Языковая детекция
