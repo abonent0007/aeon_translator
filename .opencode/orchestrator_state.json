@@ -207,7 +207,8 @@
         "7. only then: gold verdicts review decision (with source diff, if justified)"
       ],
       "q3_confidence_task": "Do NOT lower min_confidence 0.85. Data task: distribution of grounded-claim confidences over 2.7.3 raw (avg/min/max/histogram); check ratio=1.0 & avg<0.85 cases (sappho seg3 0.83); min-based aggregator — only on data, separate decision.",
-      "contracts_notes_added": "Note1: n==0 -> neutral reason=no_semantic_claims + event detective_no_semantic_claims (medium) + test; Note2: extractor_v1 known-limitation (literary significance != entity status; mu_nin via linguistic layers); Note3: skip-regex (\\s|:) edge + test_defensive_skip_bare_instruction_word; Note4: cache-hit graceful -> commit 5 requirements."
+      "contracts_notes_added": "Note1: n==0 -> neutral reason=no_semantic_claims + event detective_no_semantic_claims (medium) + test; Note2: extractor_v1 known-limitation (literary significance != entity status; mu_nin via linguistic layers); Note3: skip-regex (\\s|:) edge + test_defensive_skip_bare_instruction_word; Note4: cache-hit graceful -> commit 5 requirements.",
+      "commit_2b": "DONE: SemanticAtom.chain_language='en'/anchor_language=None/extractor_contract='v1'; writer metadata; reader _normalize_contract_metadata defaults v3.0-legacy + event v2_legacy_contract_defaulted; migration v1 metadata marked legacy; validator soft typechecks; schema aeon_v2.json props; translator/demo set anchor_language=pack.iso_code; tests +5 (29 in test_format_v2). Evidence: NEW plato v2 metadata {en, grc, v1}; OLD sappho_real.aeon.json loads -> {en, None, v3.0-legacy}."
     },
     "known_gaps": [
       "LLM quality not validated on real API (mock used throughout)",
@@ -317,7 +318,8 @@
     "Step 3.5 (Variant Readings) DONE: aeon/variants/ (apparatus/prompts/selector/engine), sidecar-JSON apparatus (semver, attribution обязателен), Detective mode 'reading' (context-agreement), selector экономит LLM (unanimous / no_context / veto / unanimous_after_veto), порог 0.5, work-guard ConfigError, translator+ demo интеграция (--variant-readings/--variant-work), v2 traces.variant_readings + pipeline steps, 27 tests, coverage per-module 91-100%.",
     "RU-audit (3.3 stop-condition) CLOSED: examples/greek/plato_apologia_17a.txt was a RU summary used as grc input since Phase 1; scope = only 2 Plato files; genuine grc transcription replaced it (own transcription, PD), both RU files moved to examples/greek/legacy/ via git mv; regression tests/test_examples_corpus.py (greek files need >=50 greek codepoints; latin files >=50 latin, <=5 greek); LICENSE.md updated; historical defect noted: pre-3.3 Plato demo/v2-size measurements were on RU text (scientifically meaningless, superseded).",
     "Step 3.3 (Gold-standard) IMPLEMENTED (pending acceptance): gold/ corpus (28 records/6 texts, 13 markers/21 entities) + aeon/gold harness (loader/metrics/runner/report, stdlib only) + pytest markers gold_mock/gold_real + metrics.md baseline. Q-IDs verified live (Achilles Q41746, Athenians Q120096553, Zeus Q34201, Sappho Q17892, Caesar Q1048, Gaul Q38060, Belgae Q337104, Aquitani Q1255605, Gauls Q273854, Achaeans Q3514911, Garonne Q5077, Seine Q1471); unverified -> null. DEEPSEEK_API_KEY detected (.env present) -> defer_2_7=true per policy; 2.7 becomes next priority after 3.3 acceptance.",
-    "3.3 ACCEPTED. Clarifications: mixed-marker [слова ...] decision (A)=supplement documented (B/C rejected: matching); offsets tooling committed (tools/annotate_offsets.py + test); gold/metrics.md mock-baseline = self-consistency not quality (explicit); test_mock_false_allowed_with_key added; demo real-path fixes (llm.calls guard, llm_model in v2 metadata). 2.7 in_progress per curator; sub-steps reported separately (2.7.1 smoke → stop)."
+    "3.3 ACCEPTED. Clarifications: mixed-marker [слова ...] decision (A)=supplement documented (B/C rejected: matching); offsets tooling committed (tools/annotate_offsets.py + test); gold/metrics.md mock-baseline = self-consistency not quality (explicit); test_mock_false_allowed_with_key added; demo real-path fixes (llm.calls guard, llm_model in v2 metadata). 2.7 in_progress per curator; sub-steps reported separately (2.7.1 smoke → stop).",
+    "commit_2b done: v2 contract metadata trio (chain/anchor/contract-era) + legacy default on read; build_claims (commit 3) will apply video-skip more aggressively for v3.0-legacy chain per curator."
   ],
   "backlog": [
     "2.7 Real API verification when key available (Sappho reconstruction, layers/focus quality); budget options (a)/(b); parallelism tuning",
@@ -325,7 +327,8 @@
     "Offline: real Pleiades dump download/convert when user has network access; TS dataset if ever public; duckdb/pandas never (stdlib only)",
     "Linguistics: contradiction resolution via LLM (variant C); focus disagreement semantic arbitration; la heuristic config",
     "CI: network-marker non-blocking job",
-    "Phase 3: .aeon v2, CLI/web endpoints, README v4, morphology (Morpheus/CLTK), gold-standard corpus, search-layer sigma unification"
+    "Phase 3: .aeon v2, CLI/web endpoints, README v4, morphology (Morpheus/CLTK), gold-standard corpus, search-layer sigma unification",
+    "gold mock fixtures (gold/fixtures/mock_responses.json) — align with extractor contract v1 (entities taxonomy/semantic claims) after 2.7 re-run"
   ],
   "config_wiring": {
     "canonical_access": "CONFIG.verification.<agent> is canonical; flat CONFIG.<agent> is a convenience alias",
