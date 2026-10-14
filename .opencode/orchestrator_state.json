@@ -81,7 +81,17 @@
     "step_2_7": {
       "status": "in_progress",
       "blocker": null,
-      "trigger": "satisfied: DEEPSEEK_API_KEY present in .env (~2026-10-14)"
+      "trigger": "satisfied: DEEPSEEK_API_KEY present in .env (~2026-10-14)",
+      "substeps": {
+        "2.7.1_smoke": "PASS (2026-10-14): plato full real, no exceptions; mock=false, llm_model=deepseek-chat; CVI 0.9465 verified; 16.2s/atom (~5 calls, ~3.2s/call); detective exact-quote 7/7 on Greek with diacritics. FINDING: extractor returned 8 entities incl. pronouns/words (ὑμεῖς, ἐγώ, ἀληθές, οὐδέν) vs gold 1 — entity-extraction quality signal for 2.7.3; entity_linking OFF.",
+        "2.7.2_sappho": "pending",
+        "2.7.3_gold_real": "pending",
+        "2.7.4_detective_greek": "pending (preview: exact-quote OK in smoke)",
+        "2.7.5_calibration": "pending (separate commit policy)",
+        "2.7.6_focus": "pending",
+        "2.7.7_cost": "pending (token tracking not implemented)",
+        "2.7.8_closure": "pending"
+      }
     },
     "known_gaps": [
       "LLM quality not validated on real API (mock used throughout)",
