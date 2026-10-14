@@ -29,6 +29,7 @@ SOURCE = [
     "aeon.linguistics",
     "aeon.focus",
     "aeon.offline",
+    "aeon.variants",
 ]
 
 

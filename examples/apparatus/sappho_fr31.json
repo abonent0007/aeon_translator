@@ -1,0 +1,25 @@
+{
+  "work": "Sappho fr. 31",
+  "apparatus_version": "1.0.0",
+  "editions": ["Voigt 1971", "Lobel-Page 1955", "Diehl 1925"],
+  "loci": [
+    {
+      "line": 1,
+      "context": "φαίνεταί μοι κῆνος ἴσος θέοισιν",
+      "readings": [
+        {"text": "ἔμμεν᾽ ὤνηρ, ὄττις ἐνάντιός τοι",
+         "editions": ["Voigt 1971", "Lobel-Page 1955"]},
+        {"text": "ἔμμεναι ὤνηρ ὄττις ἐνάντιός τοι",
+         "editions": ["Diehl 1925"]}
+      ]
+    },
+    {
+      "line": 13,
+      "context": "…τὸ δὲ λέπτον δ᾽ αὔτικα χρῶι πῦρ ὐπαδεδρόμηκεν…",
+      "readings": [
+        {"text": "ἴδρως κακχέεται", "editions": ["Voigt 1971", "Lobel-Page 1955"]},
+        {"text": "τρόμος δὲ παῖσαν ἄγρει", "editions": ["Diehl 1925"]}
+      ]
+    }
+  ]
+}

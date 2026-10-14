@@ -75,7 +75,9 @@ class AeonTranslator:
         language_pack: Optional["LanguagePack"] = None,
         reconstruct: bool = False,
         linguistic_layers: Optional[List[str]] = None,
-        focus: Optional[List[str]] = None
+        focus: Optional[List[str]] = None,
+        variant_readings: Optional[str] = None,
+        variant_work: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Универсальный перевод смысла с верификацией.
@@ -101,6 +103,13 @@ class AeonTranslator:
         linguistic_layers: Chain-of-Linguistics (шаг 2.4), напр.
         ["lexical", "syntactic", ...] или ["all"]; None (default) — выключено;
         результат — result["linguistics"] (status/layers/llm_calls/trace_id).
+
+        variant_readings: путь к apparatus JSON (шаг 3.5) — выбор среди
+        attested readings для contested loci; результат — result["variant_readings"]
+        (selections по loci, квота llm_calls). Порядок фиксирован:
+        reconstruct (1.6) → variant (1.9, на более полном контексте).
+        variant_work: work-guard — все значимые токены apparatus.work обязаны
+        присутствовать в variant_work, иначе ConfigError; None — без проверки.
         """
         if verify_mode is None:
             verify_mode = "full" if verify else "off"
@@ -270,6 +279,24 @@ class AeonTranslator:
             if focus_run.all_disagree:
                 print("   ⚠️ роли расходятся в формулировках (all_disagree=True)")
 
+        # ══ Шаг 1.9: Variant Readings (опционально, шаг 3.5) ══
+        variant_result = None
+        if variant_readings:
+            from .variants import VariantEngine, load_apparatus
+
+            print(f"\n📜 VARIANT READINGS: {variant_readings}")
+            apparatus = load_apparatus(variant_readings)
+            variant_engine = VariantEngine(llm_client=self.llm,
+                                           verifier=self.verification)
+            variant_run = variant_engine.run(atom, apparatus,
+                                             work_hint=variant_work,
+                                             trace_id=atom.meaning_hash)
+            variant_result = variant_run.to_dict()
+            for selection in variant_run.selections:
+                chosen_text = selection.chosen.text[:45] if selection.chosen else "—"
+                print(f"   • line {selection.locus.line}: {selection.status} "
+                      f"[{selection.confidence:.2f}] {chosen_text}")
+
         return {
             "source": {"content": original_content, "form": source_form, "language": source_language},
             "semantic_atom": atom,
@@ -281,6 +308,7 @@ class AeonTranslator:
             "verified": verification_result is not None,
             "linguistics": linguistics_result,
             "focus": focus_result,
+            "variant_readings": variant_result,
         }
 
     # ═══════════════════════════════════════════════════════════

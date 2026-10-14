@@ -46,8 +46,9 @@
     "phase3_recommended_first": ["3.1 .aeon v2", "3.3 gold-standard corpus", "3.5 variant readings mode"]
   },
   "phase3": {
-    "status": "step_3.1_done",
+    "status": "step_3.5_done",
     "step_3_1": "done (aeon/format writer/reader/validator/versioning; D1 frozen v1 fixture (e8cf5ca); D2 meaning_hash только в legacy; D3 snapshot при создании атома; D4 +4 теста; mock-guard + force_unsafe аудит-лог; --save-aeon/--load-aeon в demo). Facts: format tests = 24 (tests/test_format_v2.py; suite 317), v2 size: plato_full(--layers=all --focus=all) = 17.3KB, plato(focus=historian) = 15.7KB (<50KB, limit 200KB with margin; structured-only confirmed). NameError-fix (chain_result/focus_run) в 50ea764 + регрессионный test_demo_save_aeon_without_optional_steps.",
+    "step_3_5": "done (aeon/variants apparatus/prompts/selector/engine + schemas/apparatus_v1.json + examples/apparatus/sappho_fr31.json; tests/test_variants.py = 27, suite 344; coverage aeon.variants 91-100%, TOTAL 93%). Решения: rule3 измеримо (fewer editorial marks, fallback -1); work-guard = все значимые токены apparatus.work ⊆ variant_work (default: stem файла в demo) → ConfigError; unanimous_after_veto → support=издания выбранного, vetoed dict; пустой context → no_context; editions скрыты от LLM; порог 0.5 (AEON_VARIANTS_MIN_CONFIDENCE); порядок reconstruct(1.6)→variant(1.9) подтверждён тестом порядка LLM-вызовов. Demo e2e: variant-only / reconstruct+variant+save/load (steps=[extract,reconstruction,variant_readings], traces=[reconstruction,variant_readings]) / work-mismatch не падает. Фикс бага: work_tokens regex включал '_' → plato_apologia_17a не разбивался; теперь [^\\W_]+.",
     "order": ["3.1 aeon_v2", "3.5 variant readings", "3.3 gold-standard", "3.2 morphology (after gold+2.7)", "3.6 web (after 2.7)", "3.4/3.7/3.8 backlog"],
     "schema_draft": "schemas/aeon_v2.json — awaiting curator verification BEFORE 3.1 implementation",
     "design_doc": "docs/phase3_design.md",
@@ -85,11 +86,12 @@
     "Phases 1, 2.0-2.5 complete (details in git/AGENTS.md).",
     "2.5 refinements: demo mock line now 'illustrative, not calibrated'; --focus=all,esoteric FIXED (all previously overwrote the list; extras now appended; test added); all_disagree mechanism documented (pairs of INSIGHTS from different roles; claim tokens >3 chars; Jaccard>=0.5 and claims differ; example VIII vs VI век → True; semantic arbitration backlog).",
     "Phase 2.6 (Offline Adapters): aeon/offline/ (base/pleiades/trismegistos stub/registry). JSONL dump format (line1 meta + record per line; streaming, stdlib only). Additions A-E: (A) atomic load transaction+rollback (test_load_rollback_on_malformed_batch); (B) indexes after load (test_indexes_present_after_load); (C) idempotency same->skip/new->replace+offline_dump_upgraded (2 tests); (D) .gitignore: data/ patterns with README exceptions (data/{pleiades,trismegistos}/README.md in repo); (E) provenance with license+license_file_sha256 from bundle, missing -> OfflineDumpError (test). Staleness: >AEON_OFFLINE_MAX_AGE_DAYS(90) -> offline_dump_stale (test). Chain: PleiadesClient.get_place offline-first via offline_adapter attr, source='offline_pleiades'; offline miss + allow_live_fallback=False -> reason 'offline_miss_no_fallback', 0 HTTP (tests). Metrics: offline namespace + offline_dump_age_days gauge. Trismegistos stub (no_public_dataset). Real Pleiades dump unreachable from this environment (host blocked) - adapter works against user-provided converted dump; license verification comes from bundle LICENSE (sha256), not from our memory.",
-    "Coverage: offline package >=88%, TOTAL 93%; runner incl. aeon.offline."
+    "Coverage: offline package >=88%, TOTAL 93%; runner incl. aeon.offline, aeon.variants.",
+    "Step 3.5 (Variant Readings) DONE: aeon/variants/ (apparatus/prompts/selector/engine), sidecar-JSON apparatus (semver, attribution обязателен), Detective mode 'reading' (context-agreement), selector экономит LLM (unanimous / no_context / veto / unanimous_after_veto), порог 0.5, work-guard ConfigError, translator+ demo интеграция (--variant-readings/--variant-work), v2 traces.variant_readings + pipeline steps, 27 tests, coverage per-module 91-100%."
   ],
   "backlog": [
     "2.7 Real API verification when key available (Sappho reconstruction, layers/focus quality); budget options (a)/(b); parallelism tuning",
-    "Variant readings mode (Sappho) - separate mode (2.6+)",
+    "Variant readings mode (Sappho) - DONE in step 3.5 (aeon/variants, 27 tests)",
     "Offline: real Pleiades dump download/convert when user has network access; TS dataset if ever public; duckdb/pandas never (stdlib only)",
     "Linguistics: contradiction resolution via LLM (variant C); focus disagreement semantic arbitration; la heuristic config",
     "CI: network-marker non-blocking job",

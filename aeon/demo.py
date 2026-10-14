@@ -293,6 +293,11 @@ DEMO_RESPONSES = {
         {"text": "τρόμος δὲ παῖσαν ἄγρει", "confidence": 0.55,
          "evidence": "продолжение строфы; менее надёжно"},
     ], "status": "ok"},
+    "select ONE reading": {
+        "chosen_index": 0, "confidence": 0.71,
+        "reasoning": "грамматика и контекст согласуются с первым кандидатом; "
+                     "illustrative, not calibrated",
+    },
     "LEXICAL": {"findings": [
         {"kind": "lemma", "value": "μῆνις", "span": [15, 21],
          "confidence": 0.85, "note": "acc. sg."},
@@ -336,6 +341,8 @@ def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
                     use_real: bool, language: str | None = None,
                     reconstruct: bool = False, layers: str | None = None,
                     focus: str | None = None,
+                    variant_readings: str | None = None,
+                    variant_work: str | None = None,
                     offline_pleiades: str | None = None,
                     save_aeon: str | None = None) -> None:
     """Demo: атом + trace верификации + метрики (мок с задержкой или реальный LLM)."""
@@ -386,6 +393,7 @@ def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
             reconstruction = None
             chain_result = None
             focus_run = None
+            variant_run = None
             if verify_mode != "off":
                 claims = atom.explanation_chain + [
                     f"Intent: {atom.intent}", f"Domain: {atom.domain}"
@@ -487,6 +495,35 @@ def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
                 if focus_run.all_disagree:
                     print("  ⚠️ all_disagree=True (роли расходятся в формулировках)")
 
+        if variant_readings:
+            from aeon.config import ConfigError
+            from aeon.variants import VariantEngine, load_apparatus
+
+            work_hint = variant_work or path.stem
+            with METRICS.timeit("atom_network"):
+                try:
+                    apparatus = load_apparatus(variant_readings)
+                    variant_engine = VariantEngine(llm_client=llm,
+                                                   verifier=verification)
+                    variant_run = variant_engine.run(atom, apparatus,
+                                                     work_hint=work_hint,
+                                                     trace_id=atom.meaning_hash)
+                except (ConfigError, ValueError) as exc:
+                    print(f"\n📜 VARIANT READINGS: {exc}")
+                    variant_run = None
+            if variant_run is not None:
+                print(f"\n📜 VARIANT READINGS (work={variant_run.work}, "
+                      f"llm_calls={variant_run.llm_calls}):")
+                for selection in variant_run.selections:
+                    chosen_text = (selection.chosen.text[:60]
+                                   if selection.chosen else "—")
+                    print(f"  • line {selection.locus.line:<4} "
+                          f"{selection.status:<22} conf={selection.confidence:.2f} "
+                          f"{chosen_text}")
+                    for vetoed_text, editions in selection.editions_vetoed.items():
+                        print(f"      veto: {vetoed_text[:40]!r} "
+                              f"({', '.join(editions)})")
+
         if offline_pleiades:
             from aeon.offline import OfflineDumpError, get_adapter
 
@@ -537,6 +574,10 @@ def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
                 requested.append("focus")
                 if focus_run is not None:
                     executed.append("focus")
+            if variant_readings:
+                requested.append("variant_readings")
+                if variant_run is not None:
+                    executed.append("variant_readings")
             doc = dump_v2(
                 atom,
                 source={"content": text, "form": "text", "language": "auto"},
@@ -546,6 +587,8 @@ def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
                     "reconstruction": (reconstruction.to_dict() if reconstruct
                                        and reconstruction else None),
                     "focus": (focus_run.to_dict() if focus and focus_run else None),
+                    "variant_readings": (variant_run.to_dict()
+                                         if variant_run else None),
                 },
                 metadata={
                     "language_pack": (language_pack.iso_code
@@ -587,6 +630,10 @@ def main():
                         help="Chain-of-Linguistics (шаг 2.4): 'all' или 'lexical,syntactic,...'")
     parser.add_argument("--focus", type=str, default=None,
                         help="Multi-focus (шаг 2.5): 'all' (без esoteric) или 'historian,philosopher,...'")
+    parser.add_argument("--variant-readings", type=str, default=None,
+                        help="Apparatus criticus JSON (шаг 3.5): выбор среди attested readings")
+    parser.add_argument("--variant-work", type=str, default=None,
+                        help="Ожидаемая работа (work-guard); default: имя текстового файла")
     parser.add_argument("--offline-pleiades", type=str, default=None,
                         help="Путь к JSONL-дампу Pleiades (offline adapter, шаг 2.6)")
     parser.add_argument("--save-aeon", type=str, default=None,
@@ -614,6 +661,8 @@ def main():
         run_verify_demo(args.text, args.verify, args.latency_ms, args.real,
                         language=args.language, reconstruct=args.reconstruct,
                         layers=args.layers, focus=args.focus,
+                        variant_readings=args.variant_readings,
+                        variant_work=args.variant_work,
                         offline_pleiades=args.offline_pleiades,
                         save_aeon=args.save_aeon)
         return

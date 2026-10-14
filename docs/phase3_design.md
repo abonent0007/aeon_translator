@@ -57,6 +57,16 @@ readings (3.5 заполняет слот, не расширяя формат); 
    при наличии в тексте и лакун, и вариантов — оба блока в `traces`.
    Если max(confidence выбора) < 0.5 → `no_selection_possible` (аналог 2.3).
 
+**Реализовано (шаг 3.5 ✅):** `aeon/variants/` (apparatus/prompts/selector/
+engine), `schemas/apparatus_v1.json`, `examples/apparatus/sappho_fr31.json`;
+Detective mode `reading` (context-agreement); экономия LLM (unanimous /
+пустой контекст / veto / `unanimous_after_veto`); порог
+`AEON_VARIANTS_MIN_CONFIDENCE` (0.5); work-guard — все значимые токены
+`apparatus.work` ⊆ `variant_work` (demo: `--variant-work` иначе stem файла),
+иначе `ConfigError`; `translate(..., variant_readings, variant_work)` →
+`result["variant_readings"]`; `.aeon v2`: `traces.variant_readings` + pipeline
+steps; tests = 27 (`tests/test_variants.py`).
+
 ## Preflight 3.3 — gold-standard corpus (answers)
 1. **Источник разметки:** (c) гибрид; фактически старт — ручная аннотация
    5 отрывков (treebanks AGDT/PROIEL — опционально при доступе из сети).

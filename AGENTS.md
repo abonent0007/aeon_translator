@@ -4,7 +4,7 @@
 Semantic processor: переводит смысл между формами (текст/код/эмоция/голос/изображение)
 с верификацией, entity linking и анализом древних текстов.
 Статус: **Фаза 0 ✅, Фаза 1 ✅, Фаза 2 ✅ (2.0–2.6, known gap: 2.7 по ключу),
-Фаза 3 — шаг 3.1 ✅** (`.aeon v2`). Впереди: 3.5 variant readings → 3.3 gold-standard.
+Фаза 3 — шаги 3.1 ✅ (`.aeon v2`) и 3.5 ✅ (variant readings)**. Впереди: 3.3 gold-standard.
 
 ## Architecture (Фаза 1)
 ```
@@ -281,6 +281,36 @@ v2-дефолты). Frozen fixture `tests/fixtures/aeon_v1/legacy.aeon`
 Demo: `--save-aeon PATH` / `--load-aeon PATH`. Сохраняются только
 структурированные результаты (raw LLM — backlog `--save-raw`).
 
+## Variant Readings (шаг 3.5)
+Пакет `aeon/variants/` (`apparatus`/`prompts`/`selector`/`engine`) + sidecar-схема
+`schemas/apparatus_v1.json` + пример `examples/apparatus/sappho_fr31.json`.
+Философия: LLM только ВЫБИРАЕТ между внешне засвидетельствованными readings
+(генерация запрещена); attribution обязателен — reading без editions или с
+изданием вне `apparatus.editions` → `ApparatusError` (stdlib-валидатор, semver).
+
+Селектор (`ReadingSelector`) — порядок решений (экономия LLM):
+unanimous (тексты идентичны) → 0 вызовов, `editions_support` = union;
+пустой context → `no_selection_possible` (reason «пустой контекст»);
+Detective pre-filter (**mode `reading`**, context-agreement; шаблон = hypothesis):
+`contradicted` → vetoed (`editions_vetoed: {reading: [editions]}`); 0 осталось →
+all_vetoed; 1 осталось → `unanimous_after_veto` (0 вызовов; support — издания
+выбранного); иначе LLM: readings нумеруются БЕЗ editions, rule 3 измеримо
+(fewer editorial marks, тай-брейк `chosen_index: -1`), temp 0.0; conf < порога →
+`no_selection_possible`. Порог `AEON_VARIANTS_MIN_CONFIDENCE` (default **0.5**):
+выбор среди засвидетельствованного (риск ниже создания 0.75) и уже отфильтрован
+Детективом.
+
+**Work-guard:** ВСЕ значимые токены (≥4 симв., casefold; `_` — разделитель)
+`apparatus.work` должны присутствовать в expected_work (`variant_work`, в demo —
+`--variant-work` иначе stem текстового файла); mismatch → `ConfigError`
+(не warn — молча неверный аппарат опаснее падения).
+
+Порядок фиксирован: reconstruct (1.6) → variant (1.9) — восстановление lacunae
+делает контекст полнее. API: `translate(..., variant_readings=PATH,
+variant_work=...)` → `result["variant_readings"]`; demo
+`--variant-readings PATH`; `.aeon v2`: `traces.variant_readings` + pipeline steps
+(`variant_readings` в steps_requested/executed). Тесты: 27 (`tests/test_variants.py`).
+
 ## Tech Stack
 - Python 3.11 (Windows dev), приоритет stdlib
 - LLM: DeepSeek (OpenAI-совместимый), фасад `aeon.llm.DeepSeekClient`
@@ -305,7 +335,9 @@ Demo: `--save-aeon PATH` / `--load-aeon PATH`. Сохраняются тольк
   `--language` — ISO-код пака: нормализация + маркеры;
   `--reconstruct` — Fragment Hypothesis Engine: гипотезы / no_reconstruction;
   `--layers=all|lexical,syntactic,...` — Chain-of-Linguistics;
-  `--focus=all|historian,philosopher,...` — Multi-focus (all без esoteric))
+  `--focus=all|historian,philosopher,...` — Multi-focus (all без esoteric);
+  `--variant-readings PATH` (+`--variant-work`) — Variant Readings (шаг 3.5):
+  выбор среди attested readings, пример `examples/apparatus/sappho_fr31.json`)
 - verify_mode в API: `translator.translate(..., verify_mode="off|basic|full", language_pack=None)`
   (legacy `verify=True` ≡ `verify_mode="full"`)
 - Реестр паков: `python -c "from aeon.language import registry; print(registry.list_available())"`

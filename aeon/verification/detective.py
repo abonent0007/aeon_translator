@@ -72,6 +72,9 @@ class DetectiveAgent(BaseVerifier):
           - hypothesis — context-agreement: согласованность кандидата
             с СОХРАНИВШИМСЯ контекстом (exact-quote утраченного невозможен).
         Режим берётся из mode-аргумента или context.mode (default "claim").
+        Третий семантический режим "reading" (шаг 3.5, variant readings):
+        контекстное согласование кандидата-чтения с сохранившимся контекстом —
+        использует тот же шаблон, что "hypothesis".
         """
         selected_mode = mode or getattr(context, "mode", "claim")
         if not self.llm.available:
@@ -79,7 +82,8 @@ class DetectiveAgent(BaseVerifier):
         if not context.claims:
             return self._emit(context, self._neutral("нет утверждений для проверки", 0.5))
 
-        template = (HYPOTHESIS_PROMPT_TEMPLATE if selected_mode == "hypothesis"
+        template = (HYPOTHESIS_PROMPT_TEMPLATE
+                    if selected_mode in ("hypothesis", "reading")
                     else PROMPT_TEMPLATE)
         prompt = _build_prompt(context.source_text, context.claims, template)
         result = self.llm._call_json([
