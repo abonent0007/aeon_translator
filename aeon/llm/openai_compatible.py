@@ -46,6 +46,10 @@ class OpenAICompatibleProvider:
         self.base_delay = base_delay
         self._sleep = sleep
         self._logger = get_logger("aeon.llm")
+        # Cost-tracking (2.7.7): накопительные счётчики за жизнь провайдера.
+        self.calls = 0
+        self.prompt_tokens = 0
+        self.completion_tokens = 0
 
         if client is not None:
             self._client = client
@@ -125,6 +129,12 @@ class OpenAICompatibleProvider:
             ) from exc
 
         latency_ms = round((time.perf_counter() - t0) * 1000, 1)
+        usage = getattr(response, "usage", None)
+        tokens_in = int(getattr(usage, "prompt_tokens", 0) or 0) if usage else 0
+        tokens_out = int(getattr(usage, "completion_tokens", 0) or 0) if usage else 0
+        self.calls += 1
+        self.prompt_tokens += tokens_in
+        self.completion_tokens += tokens_out
         log_event(
             self._logger,
             "llm_call",
@@ -134,6 +144,8 @@ class OpenAICompatibleProvider:
             attempts=len(retry_delays) + 1,
             retries=len(retry_delays),
             ok=True,
+            tokens_in=tokens_in,
+            tokens_out=tokens_out,
             trace_id=tid,
         )
         return response.choices[0].message.content

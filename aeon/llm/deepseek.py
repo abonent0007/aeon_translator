@@ -66,6 +66,15 @@ class DeepSeekClient:
     def client(self):
         return self._provider.client
 
+    @property
+    def usage(self) -> dict:
+        """Накопительные токены/вызовы (cost-tracking, 2.7.7)."""
+        return {
+            "calls": self._provider.calls,
+            "prompt_tokens": self._provider.prompt_tokens,
+            "completion_tokens": self._provider.completion_tokens,
+        }
+
     def _call(
         self,
         messages: list,

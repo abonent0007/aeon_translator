@@ -149,6 +149,10 @@ class LLMConfig:
     max_attempts: int = 3
     retry_backoff_base: float = 0.5
     timeout_sec: float = 60.0
+    # Тариф USD/1M токенов для cost-tracking (2.7.7); дефолт deepseek-chat
+    # (cache-miss, актуально на 2026-10); настраивается через AEON_LLM_PRICE_*.
+    price_in_per_m: float = 0.27
+    price_out_per_m: float = 1.10
 
 
 @dataclass(frozen=True)
@@ -285,6 +289,8 @@ def load_config() -> AeonConfig:
         max_attempts=_env_int("AEON_LLM_MAX_ATTEMPTS", 3),
         retry_backoff_base=_env_float("AEON_LLM_RETRY_BACKOFF_BASE", 0.5),
         timeout_sec=_env_float("AEON_LLM_TIMEOUT_SEC", 60.0),
+        price_in_per_m=_env_float("AEON_LLM_PRICE_IN_PER_M", 0.27),
+        price_out_per_m=_env_float("AEON_LLM_PRICE_OUT_PER_M", 1.10),
     )
 
     embeddings = EmbeddingsConfig(

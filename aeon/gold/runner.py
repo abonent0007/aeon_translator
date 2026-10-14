@@ -11,6 +11,7 @@ gold-запись содержит expected_verdicts).
 """
 
 import json
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -54,15 +55,49 @@ def _offline_embeddings():
     return engine
 
 
+def attach_raw_recorder(llm: Any, raw_dir) -> Path:
+    """Патч `llm._call`: каждый сырой ответ → <raw_dir>/llm_calls.jsonl (аудит).
+
+    Работает и для MockLLM, и для DeepSeekClient: перехватывает нижний уровень
+    `_call` (через который идёт и `_call_json`), поэтому записываются ВСЕ вызовы.
+    """
+    directory = Path(raw_dir)
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / "llm_calls.jsonl"
+    original = llm._call
+
+    def recording(messages, *args, **kwargs):
+        raw = original(messages, *args, **kwargs)
+        with path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps({"messages": messages, "raw": raw},
+                                    ensure_ascii=False) + "\n")
+        return raw
+
+    llm._call = recording
+    return path
+
+
 def run_dataset(dataset: GoldDataset, *, mode: str = "mock",
                 latency_ms: float = 0.0, with_verdicts: bool = True,
-                llm: Any = None) -> Dict[str, List[GoldPrediction]]:
-    """Прогон по всем записям датасета → {text_id: [GoldPrediction, ...]}."""
+                llm: Any = None, raw_dir: Optional[str] = None,
+                stats: Optional[Dict[str, Any]] = None
+                ) -> Dict[str, List[GoldPrediction]]:
+    """Прогон по всем записям датасета → {text_id: [GoldPrediction, ...]}.
+
+    raw_dir — сохранять сырые LLM-ответы (аудит real-прогонов);
+    stats — заполняется in-place: calls/prompt_tokens/completion_tokens/latency_sec.
+    """
     from ..extractor import MeaningExtractor
     from ..language import get as get_pack
     from ..verification import VerificationEngine
 
     llm = llm if llm is not None else _make_llm(mode, latency_ms)
+    if raw_dir:
+        attach_raw_recorder(llm, raw_dir)
+    usage_before = dict(getattr(llm, "usage", {}) or {})
+    mock_calls_before = len(getattr(llm, "calls", None) or [])
+    started = time.perf_counter()
+
     predictions: Dict[str, List[GoldPrediction]] = {}
     packs: Dict[str, Any] = {}
 
@@ -99,4 +134,21 @@ def run_dataset(dataset: GoldDataset, *, mode: str = "mock",
             completeness=float(atom.completeness_score),
             verdicts=verdicts,
         ))
+
+    if stats is not None:
+        usage_after = dict(getattr(llm, "usage", {}) or {})
+        stats["latency_sec"] = round(time.perf_counter() - started, 2)
+        stats["mode"] = mode
+        if usage_after:
+            stats["calls"] = int(usage_after.get("calls", 0)
+                                 - usage_before.get("calls", 0))
+            stats["prompt_tokens"] = int(usage_after.get("prompt_tokens", 0)
+                                         - usage_before.get("prompt_tokens", 0))
+            stats["completion_tokens"] = int(
+                usage_after.get("completion_tokens", 0)
+                - usage_before.get("completion_tokens", 0))
+        else:  # MockLLM: считаем по списку вызовов, токены не имитируем
+            stats["calls"] = len(getattr(llm, "calls", None) or []) - mock_calls_before
+            stats["prompt_tokens"] = 0
+            stats["completion_tokens"] = 0
     return predictions

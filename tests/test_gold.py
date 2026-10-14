@@ -137,6 +137,45 @@ def test_gold_offsets_tool_and_dataset_valid():
     assert len(checked.records) == 28
 
 
+def test_gold_report_dry_run_plan(dataset):
+    """Dry-run (2.7.3, стоп №4): план вызовов без API."""
+    from aeon.gold.report import planned_calls
+
+    plan = planned_calls(dataset)
+
+    assert plan["extract_calls"] == 28
+    assert plan["verdict_records"] == 8      # Plato 3 + Sappho 5
+    assert plan["verify_calls"] == 24
+    assert plan["total"] == 52
+
+
+def test_cost_block_formats_zero():
+    from aeon.gold.report import format_cost_block
+
+    block = format_cost_block({"calls": 0, "latency_sec": 0.0}, {})
+
+    assert "cost: $0.0000" in block
+    assert "LLM-вызовов: 0" in block
+
+
+def test_runner_raw_recorder(tmp_path, dataset):
+    """Аудит real-прогонов: сырые ответы пишутся в llm_calls.jsonl."""
+    from aeon.gold.runner import _make_llm, attach_raw_recorder
+
+    subset = type(dataset)(records=[r for r in dataset.records
+                                    if r.text_id == "plato_apologia_17a"],
+                           annotations_dir=dataset.annotations_dir)
+    llm = _make_llm("mock", 0.0)
+    path = attach_raw_recorder(llm, tmp_path / "raw")
+
+    run_dataset(subset, llm=llm, with_verdicts=False)
+
+    lines = path.read_text(encoding="utf-8").strip().splitlines()
+    assert len(lines) == 3  # 3 сегмента = 3 extract-вызова
+    payload = json.loads(lines[0])
+    assert "raw" in payload and "messages" in payload
+
+
 # ── metrics ──
 
 

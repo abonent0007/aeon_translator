@@ -1,21 +1,53 @@
 """
-gold-report (шаг 3.3): markdown-отчёт метрик.
+gold-report (шаг 3.3): markdown-отчёт метрик + cost/latency (2.7.7).
 
 Использование:
     python -m aeon.gold.report --dataset gold/annotations/ --mode mock
-    python -m aeon.gold.report --dataset gold/annotations/ --mode real
+    python -m aeon.gold.report --dataset gold/annotations/ --mode real \
+        --raw-dir gold/real_runs/<ts> [--out report.md]
+    python -m aeon.gold.report --dataset gold/annotations/ --dry-run
 """
 
 import argparse
 from typing import Any, Dict
 
+from ..config import CONFIG
 from .loader import load_dataset
 from .metrics import evaluate_dataset
-from .runner import run_dataset
+from .runner import _make_llm, run_dataset
 
 
 def _fmt(value: Any) -> str:
     return f"{value:.2f}" if isinstance(value, float) else str(value)
+
+
+def planned_calls(dataset) -> Dict[str, int]:
+    """Dry-run: сколько LLM-вызовов потребует real-прогон (без вызовов API)."""
+    verdict_records = [record for record in dataset.records
+                       if record.expected_verdicts is not None]
+    return {
+        "segments": len(dataset.records),
+        "extract_calls": len(dataset.records),
+        "verdict_records": len(verdict_records),
+        "verify_calls": len(verdict_records) * 3,
+        "total": len(dataset.records) + len(verdict_records) * 3,
+    }
+
+
+def format_cost_block(stats: Dict[str, Any], usage: Dict[str, Any]) -> str:
+    """Cost/latency-блок (2.7.7): факт из usage-счётчиков провайдера."""
+    cost = ((usage.get("prompt_tokens", 0) / 1_000_000) * CONFIG.llm.price_in_per_m
+            + (usage.get("completion_tokens", 0) / 1_000_000) * CONFIG.llm.price_out_per_m)
+    return "\n".join([
+        "",
+        "## Cost / latency (2.7.7)",
+        "",
+        f"- LLM-вызовов: {stats.get('calls', 0)}",
+        f"- tokens in/out: {usage.get('prompt_tokens', 0)}/{usage.get('completion_tokens', 0)}",
+        f"- **cost: ${cost:.4f}** (тариф {CONFIG.llm.price_in_per_m}/"
+        f"{CONFIG.llm.price_out_per_m} USD за 1M in/out — дефолт, env-настраиваемый)",
+        f"- latency: {stats.get('latency_sec', 'n/a')} s total",
+    ]) + "\n"
 
 
 def build_report(dataset, predictions: Dict[str, Any]) -> str:
@@ -81,12 +113,34 @@ def main(argv=None) -> int:
                         help="директория с *.jsonl аннотациями")
     parser.add_argument("--mode", choices=["mock", "real"], default="mock")
     parser.add_argument("--latency-ms", type=float, default=0.0)
+    parser.add_argument("--dry-run", action="store_true",
+                        help="оценка числа LLM-вызовов без запросов к API")
+    parser.add_argument("--raw-dir", default=None,
+                        help="сохранять сырые LLM-ответы (аудит real-прогонов)")
     parser.add_argument("--out", default=None, help="записать markdown в файл")
     args = parser.parse_args(argv)
 
     dataset = load_dataset(args.dataset)
-    predictions = run_dataset(dataset, mode=args.mode, latency_ms=args.latency_ms)
+
+    if args.dry_run:
+        plan = planned_calls(dataset)
+        print("DRY-RUN (без вызовов API):")
+        print(f"  extract: {plan['extract_calls']} вызовов "
+              f"({plan['segments']} сегментов)")
+        print(f"  verify:  {plan['verify_calls']} вызовов "
+              f"({plan['verdict_records']} записей × 3 агента)")
+        print(f"  ИТОГО:   {plan['total']} вызовов; стоимость измеряется "
+              f"live (tracking 2.7.7); стоп-порог: >$2 → стоп")
+        return 0
+
+    llm = _make_llm(args.mode, args.latency_ms)
+    stats: Dict[str, Any] = {}
+    predictions = run_dataset(dataset, llm=llm, raw_dir=args.raw_dir, stats=stats)
     report = build_report(dataset, predictions)
+    usage = dict(getattr(llm, "usage", {}) or {})
+    report += format_cost_block(stats, usage)
+    if args.raw_dir:
+        report += f"\nRaw-ответы: `{args.raw_dir}`\n"
     print(report)
     if args.out:
         from pathlib import Path
