@@ -109,15 +109,17 @@
           "impact": "llm_returned_none maps both 'LLM honestly declined (status no_reconstruction_possible)' and 'unparseable/empty hypotheses'",
           "root_cause_hypothesis": "engine checks only parsed hypotheses list; ignores result['status']",
           "action": "post-2.7.3: distinguish reason='llm_declined' when status declares refusal",
-          "not_a_bug": "terminal outcome identical; observability/докладность only"
+          "not_a_bug": "terminal outcome identical; observability/докладность only",
+          "curator_note": "fix low-hanging; commit together with CVI fix (semantic accuracy theme)"
         },
         {
           "id": "cvi_overclaims_on_fragment_texts",
-          "severity": "medium",
+          "severity": "high",
           "impact": "sappho: detective unverifiable (5/7), expert neutral 0.30, logician coherent 1.00 -> CVI=1.00, verdict=verified",
           "root_cause_hypothesis": "CVI = mean confidence of POSITIVE verdicts only; single-positive case yields 1.00 without coverage penalty",
           "action": "2.7.5 calibration material: consider positive-coverage factor for fragments",
-          "not_a_bug": "formula as documented; question is fitness on fragment texts"
+          "not_a_bug": "formula as documented; question is fitness on fragment texts",
+          "curator_note": "logical aggregator defect, not calibration; fix REQUIRED before 2.7.3; approved fix pending review"
         }
       ]
     },
