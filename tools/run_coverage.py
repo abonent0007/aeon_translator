@@ -27,6 +27,7 @@ SOURCE = [
     "aeon.language",
     "aeon.fragments",
     "aeon.linguistics",
+    "aeon.focus",
 ]
 
 

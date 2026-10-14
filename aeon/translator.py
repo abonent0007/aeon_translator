@@ -74,7 +74,8 @@ class AeonTranslator:
         verify_mode: Optional[str] = None,
         language_pack: Optional["LanguagePack"] = None,
         reconstruct: bool = False,
-        linguistic_layers: Optional[List[str]] = None
+        linguistic_layers: Optional[List[str]] = None,
+        focus: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """
         Универсальный перевод смысла с верификацией.
@@ -92,6 +93,10 @@ class AeonTranslator:
         reconstruct: True и atom.is_fragment → Fragment Hypothesis Engine
         (шаг 2.3): гипотезы восстановления в metadata["reconstruction"];
         default False — поведение Ф2.2 без изменений.
+
+        respectively: `translate(..., focus=None|["all"]|[роли])` — default off
+        (backward compat); "all" = historian+philosopher+linguist (esoteric —
+        только явно); результат — result["focus"].
 
         linguistic_layers: Chain-of-Linguistics (шаг 2.4), напр.
         ["lexical", "syntactic", ...] или ["all"]; None (default) — выключено;
@@ -221,6 +226,7 @@ class AeonTranslator:
 
         # ══ Шаг 1.7: Linguistic Layers (опционально, шаг 2.4) ══
         linguistics_result = None
+        chain_result = None
         if linguistic_layers:
             from .linguistics import ChainOfLinguistics
 
@@ -240,6 +246,24 @@ class AeonTranslator:
             if chain_result.status != "ok":
                 print(f"   ⚠️ status: {chain_result.status}")
 
+        # ══ Шаг 1.8: Multi-focus (опционально, шаг 2.5) ══
+        focus_result = None
+        if focus:
+            from .focus import MultiFocusOrchestrator
+
+            print(f"\n🎭 MULTI-FOCUS: {', '.join(focus)}")
+            orchestrator = MultiFocusOrchestrator(llm_client=self.llm)
+            focus_run = orchestrator.run(
+                atom, roles=focus, pack=language_pack,
+                linguistic_layers=chain_result, trace_id=atom.meaning_hash,
+            )
+            focus_result = focus_run.to_dict()
+            for analysis in focus_run.roles:
+                print(f"   • {analysis.role:<11} conf={analysis.confidence:.2f}"
+                      f" insights={len(analysis.insights)}")
+            if focus_run.all_disagree:
+                print("   ⚠️ роли расходятся в формулировках (all_disagree=True)")
+
         return {
             "source": {"content": original_content, "form": source_form, "language": source_language},
             "semantic_atom": atom,
@@ -250,6 +274,7 @@ class AeonTranslator:
             "embedding_powered": self.embeddings.loaded,
             "verified": verification_result is not None,
             "linguistics": linguistics_result,
+            "focus": focus_result,
         }
 
     # ═══════════════════════════════════════════════════════════

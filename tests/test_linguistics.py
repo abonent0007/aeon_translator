@@ -202,3 +202,55 @@ def test_lexical_layer_direct_call(mock_llm):
     assert isinstance(result.findings[0], Finding)
     assert result.trace_id == "t-2"
     assert result.handoff["lemmas"] == ["μῆνις"]
+
+
+def test_lexical_syntactic_contradiction_actually_triggers(mock_llm, monkeypatch):
+    """Явный триггер: lexical=verb vs syntactic=noun по одному span (curator 2.4)."""
+    events = []
+    monkeypatch.setattr(
+        "aeon.linguistics.orchestrator.log_event",
+        lambda logger, msg, **kw: events.append({"msg": msg, **kw}),
+    )
+    mock_llm.responses = {
+        "LEXICAL": {"findings": [
+            {"kind": "pos_tag", "value": "verb", "span": [0, 5],
+             "confidence": 0.85, "note": ""},
+        ], "confidence": 0.82, "handoff": {"lemmas": ["x"]}},
+        "SYNTACTIC": {"findings": [
+            {"kind": "pos_tag", "value": "noun", "span": [0, 5],
+             "confidence": 0.8, "note": ""},
+        ], "confidence": 0.8, "handoff": {"clauses": ["main"]}},
+    }
+    chain = ChainOfLinguistics(llm_client=mock_llm)
+
+    result = chain.run(TEXT, layers=["lexical", "syntactic"], trace_id="t-1")
+
+    conflict_events = [e for e in events if e["msg"] == "layer_contradiction"]
+    assert conflict_events, "детектор обязан сработать на verb vs noun"
+    assert result.layers[1].confidence == round(0.8 * 0.7, 4)
+
+
+def test_handoff_truncation_logged(mock_llm, monkeypatch):
+    """Handoff >1500 символов: truncate + событие handoff_truncated (2.4 suspicion #2)."""
+    events = []
+    monkeypatch.setattr(
+        "aeon.linguistics.base.log_event",
+        lambda logger, msg, **kw: events.append({"msg": msg, **kw}),
+    )
+    big_handoff = {"lemmas": ["λ" * 40] * 60}  # JSON заметно >1500 символов
+    mock_llm.responses = {
+        "LEXICAL": {"findings": [], "confidence": 0.8, "handoff": big_handoff},
+        "SYNTACTIC": {"findings": [
+            {"kind": "pos_tag", "value": "noun", "span": [0, 5],
+             "confidence": 0.8, "note": ""},
+        ], "confidence": 0.8, "handoff": {}},
+    }
+    chain = ChainOfLinguistics(llm_client=mock_llm)
+
+    chain.run(TEXT, layers=["lexical", "syntactic"], trace_id="t-1")
+
+    truncated = [e for e in events if e["msg"] == "handoff_truncated"]
+    assert len(truncated) == 1
+    assert truncated[0]["original_len"] > 1500
+    syntactic_prompt = _prompt_of(mock_llm, "SYNTACTIC")
+    assert "λ" * 40 in syntactic_prompt  # данные дошли (усечённо)

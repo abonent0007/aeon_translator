@@ -309,6 +309,20 @@ DEMO_RESPONSES = {
         {"kind": "speech_act", "value": "invocation (prayer to Muse)",
          "span": None, "confidence": 0.8, "note": "эпическая формула"},
     ], "confidence": 0.8, "handoff": {"speech_acts": ["invocation"], "implicatures": []}},
+    "HISTORIAN": {"insights": [
+        {"claim": "Илиада сложилась в рамках устной эпической традиции VIII в. до н.э.",
+         "angle": "historical_context", "confidence": 0.7, "source_refs": ["Q6691"]},
+    ], "confidence": 0.7, "evidence": ["эпические формулы"]},
+    "PHILOSOPHER": {"insights": [
+        {"claim": "Гнев (μῆνις) Ахилла — тема этической ответственности",
+         "angle": "philosophical", "confidence": 0.65, "source_refs": []},
+    ], "confidence": 0.65, "evidence": ["концепт μῆνις"]},
+    "LINGUIST": {"insights": [
+        {"claim": "Формула «μῆνιν ἄειδε» — маркер устной традиции",
+         "angle": "language_history", "confidence": 0.75, "source_refs": []},
+    ], "confidence": 0.75, "evidence": ["формульность"]},
+    "ESOTERIC": {"insights": [], "confidence": 0.3,
+                 "evidence": ["нет исторически засвидетельствованной символики"]},
 }
 
 
@@ -320,7 +334,8 @@ def _offline_embeddings():
 
 def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
                     use_real: bool, language: str | None = None,
-                    reconstruct: bool = False, layers: str | None = None) -> None:
+                    reconstruct: bool = False, layers: str | None = None,
+                    focus: str | None = None) -> None:
     """Demo: атом + trace верификации + метрики (мок с задержкой или реальный LLM)."""
     from pathlib import Path
 
@@ -442,6 +457,31 @@ def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
                         print(f"      {finding.kind}={finding.value!r} "
                               f"conf={finding.confidence:.2f}")
 
+        if focus:
+            from aeon.config import ConfigError
+            from aeon.focus import MultiFocusOrchestrator
+
+            role_list = (None if focus == "all"
+                         else [part.strip() for part in focus.split(",") if part.strip()])
+            orchestrator = MultiFocusOrchestrator(llm_client=llm)
+            with METRICS.timeit("atom_network"):
+                try:
+                    focus_run = orchestrator.run(atom, roles=role_list, pack=language_pack,
+                                                 trace_id=atom.meaning_hash)
+                except ConfigError as exc:
+                    print(f"\n🎭 MULTI-FOCUS: {exc}")
+                    focus_run = None
+            if focus_run is not None:
+                print(f"\n🎭 MULTI-FOCUS (status={focus_run.status}, "
+                      f"llm_calls={focus_run.llm_calls}):")
+                for analysis in focus_run.roles:
+                    print(f"  • {analysis.role:<11} conf={analysis.confidence:.2f} "
+                          f"insights={len(analysis.insights)}")
+                    for insight in analysis.insights[:2]:
+                        print(f"      [{insight.angle}] {insight.claim[:70]}")
+                if focus_run.all_disagree:
+                    print("  ⚠️ all_disagree=True (роли расходятся в формулировках)")
+
     METRICS.record_atom()
     print_separator("METRICS")
     print(METRICS.format_summary())
@@ -466,12 +506,14 @@ def main():
                         help="Fragment Hypothesis Engine (шаг 2.3): гипотезы восстановления")
     parser.add_argument("--layers", type=str, default=None,
                         help="Chain-of-Linguistics (шаг 2.4): 'all' или 'lexical,syntactic,...'")
+    parser.add_argument("--focus", type=str, default=None,
+                        help="Multi-focus (шаг 2.5): 'all' (без esoteric) или 'historian,philosopher,...'")
     args = parser.parse_args()
 
     if args.text:
         run_verify_demo(args.text, args.verify, args.latency_ms, args.real,
                         language=args.language, reconstruct=args.reconstruct,
-                        layers=args.layers)
+                        layers=args.layers, focus=args.focus)
         return
 
     print("""

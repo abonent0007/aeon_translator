@@ -73,6 +73,14 @@ RESPONSES = {
         {"kind": "speech_act", "value": "statement",
          "span": None, "confidence": 0.8, "note": ""},
     ], "confidence": 0.8, "handoff": {"speech_acts": ["statement"]}},
+    "HISTORIAN": {"insights": [
+        {"claim": "Сократ — историческая фигура V века до н.э.",
+         "angle": "historical_context", "confidence": 0.7, "source_refs": []},
+    ], "confidence": 0.7, "evidence": []},
+    "PHILOSOPHER": {"insights": [
+        {"claim": "«Я знаю, что ничего не знаю» — сократическая ирония",
+         "angle": "philosophical", "confidence": 0.65, "source_refs": []},
+    ], "confidence": 0.65, "evidence": []},
 }
 
 
@@ -215,3 +223,36 @@ def test_backward_compat_no_layers(translator):
         or "SYNTACTIC" in call["messages"][-1]["content"]
     ]
     assert layer_calls == []
+
+
+def test_translator_focus_roles(translator):
+    result = translator.translate(TEXT, source_language="russian",
+                                  focus=["historian", "philosopher"])
+
+    focus = result["focus"]
+    assert focus is not None
+    assert focus["status"] == "ok"
+    assert set(focus["insights_by_role"]) == {"historian", "philosopher"}
+    assert focus["llm_calls"] == 2
+
+
+def test_translator_focus_unknown_role_raises(translator):
+    import pytest
+
+    from aeon.config import ConfigError
+
+    with pytest.raises(ConfigError, match="Неизвестные роли"):
+        translator.translate(TEXT, source_language="russian", focus=["shaman"])
+
+
+def test_focus_disabled_by_default(translator):
+    """Backward compat 2.5: без флага — 0 вызовов ролей."""
+    result = translator.translate(TEXT, source_language="russian")
+
+    assert result["focus"] is None
+    role_calls = [
+        call for call in translator.llm.calls
+        if "HISTORIAN" in call["messages"][-1]["content"]
+        or "PHILOSOPHER" in call["messages"][-1]["content"]
+    ]
+    assert role_calls == []

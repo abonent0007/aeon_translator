@@ -122,9 +122,16 @@ class LinguisticLayer(ABC):
             prompt += "\n\nLANGUAGE-SPECIFIC HINTS:\n" + hints
         if context.previous is not None:
             previous_handoff = json.dumps(context.previous.handoff, ensure_ascii=False)
+            if len(previous_handoff) > 1500:
+                log_event(
+                    self._logger, "handoff_truncated",
+                    layer=self.name, from_layer=context.previous.layer,
+                    original_len=len(previous_handoff), trace_id=context.trace_id,
+                )
+                previous_handoff = previous_handoff[:1500]
             prompt += (
                 f"\n\nPREVIOUS LAYER OUTPUT ({context.previous.layer}):\n"
-                + previous_handoff[:1500]
+                + previous_handoff
             )
         text = context.normalized_text or context.original_text
         return prompt + "\n\nTEXT UNDER ANALYSIS:\n" + text

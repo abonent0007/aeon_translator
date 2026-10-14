@@ -3,9 +3,9 @@
 ## Overview
 Semantic processor: переводит смысл между формами (текст/код/эмоция/голос/изображение)
 с верификацией, entity linking и анализом древних текстов.
-Статус: **Фаза 0 ✅, Фаза 1 ✅, Фаза 2 — шаги 2.0 ✅, 2.1 ✅, 2.2 ✅, 2.3 ✅, 2.4 ✅**
-(Language Pack Infra, Ancient Greek, Latin, Fragment Hypotheses, Linguistic Layers).
-Впереди: 2.5 Multi-focus, 2.6 Offline adapters, 2.7 Real API.
+Статус: **Фаза 0 ✅, Фаза 1 ✅, Фаза 2 — шаги 2.0 ✅ … 2.5 ✅**
+(Language Pack Infra, Ancient Greek, Latin, Fragment Hypotheses, Linguistic
+Layers, Multi-focus). Впереди: 2.6 Offline adapters, 2.7 Real API.
 
 ## Architecture (Фаза 1)
 ```
@@ -181,6 +181,44 @@ demo `--layers=all|lexical,syntactic,...`.
 (extract+3 verify+4 слоя); на mock 200ms ≈1.6s, реально ≈14–16s < 30s;
 гибрид (в: объединить слои попарно) — backlog после реальных замеров.
 
+## Multi-focus Analysis (шаг 2.5)
+Пакет `aeon/focus/`: `base.py` (ABC `FocusRole`, `Insight`, `FocusAnalysis`,
+`FocusContext`), `prompts.py`, роли (`historian`/`philosopher`/`linguist`/
+`esoteric`), `orchestrator.py` (`MultiFocusOrchestrator`), `aggregator.py`
+(`MultiFocusResult`, `all_disagree`).
+
+Роли НЕЗАВИСИМЫ (стоп-точка №3): `FocusContext` не содержит результатов
+других ролей — «заражение» исключено структурно; общий вход — только
+Atom (+ pack + linguistic layers). >1 роли — параллельно
+(ThreadPoolExecutor; вызовы I/O-bound), 1 роль — sequential.
+Alias `"all"` = historian+philosopher+linguist; `esoteric` — ТОЛЬКО явно.
+
+**Why esoteric is opt-in (стоп-точка №1):** эзотерический фокус — самый
+рискованный (нумерология/скрытые коды/конспирология легко имитируют
+«анализ»). Промпт содержит жёсткие guardrails: только исторически
+засвидетельствованные символические системы; запрещены numerology/hidden
+codes/conspiracy; спекуляции — confidence ≤0.4; пустой список insights —
+валидный ответ. Демо esoteric по умолчанию не показывает.
+
+Агрегатор НЕ арбитрирует противоречия (фича: разные углы видят разное);
+`all_disagree` — эвристика: две роли об одном предмете (Jaccard ≥0.5
+значимых слов), но формулировки разные; семантический арбитраж (LLM) —
+backlog. Зеркало детектора противоречий слоёв (3 строки, БЕЗ LLM: индекс
+`(span, kind)` → сравнение value.casefold() — `linguistics/orchestrator.py`).
+
+Интеграция: `translate(..., focus=None|["all"]|[роли])` — default off
+(backward compat), результат в `result["focus"]`; demo `--focus=...`.
+Неизвестная роль → `ConfigError` с понятным сообщением.
+
+Бюджет (стоп-точка №4): 4 роли ≈ +8s последовательно / ≈2s параллельно;
+worst atom (extract+3 verify+4 layers+4 focus) ≈ 12 вызовов ≈ 30–40s реально —
+варианты (а) отключение layers при focus=all, (б) параллелить всё —
+backlog 2.7 [не оптимизируем до реальных замеров].
+
+Прочее (подозрения 2.4): handoff >1500 симв. → truncate + событие
+`handoff_truncated` (тест есть); demo/test mock-значения (0.80–0.82,
+insights) — **illustrative, не калиброванные** (реальный LLM даст разброс).
+
 ## Tech Stack
 - Python 3.11 (Windows dev), приоритет stdlib
 - LLM: DeepSeek (OpenAI-совместимый), фасад `aeon.llm.DeepSeekClient`
@@ -204,7 +242,8 @@ demo `--layers=all|lexical,syntactic,...`.
   (mock 200ms/вызов; `--real` — с DEEPSEEK_API_KEY; `--verify=off|basic|full`;
   `--language` — ISO-код пака: нормализация + маркеры;
   `--reconstruct` — Fragment Hypothesis Engine: гипотезы / no_reconstruction;
-  `--layers=all|lexical,syntactic,...` — Chain-of-Linguistics)
+  `--layers=all|lexical,syntactic,...` — Chain-of-Linguistics;
+  `--focus=all|historian,philosopher,...` — Multi-focus (all без esoteric))
 - verify_mode в API: `translator.translate(..., verify_mode="off|basic|full", language_pack=None)`
   (legacy `verify=True` ≡ `verify_mode="full"`)
 - Реестр паков: `python -c "from aeon.language import registry; print(registry.list_available())"`
