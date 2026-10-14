@@ -136,7 +136,9 @@ ReconstructionResult — все JSON-сериализуемы; .aeon v2 — Ф3)
    Отключение верификации запрещено: `FragmentsConfig` → ConfigError
    (`AEON_FRAGMENT_VERIFY_HYPOTHESES=0`).
 Остальные reason: `no_markers`, `llm_unavailable`, `llm_parse_error`,
-`llm_returned_none`.
+`llm_declined` (**честный отказ LLM** — JSON `status=no_reconstruction_possible`,
+НЕ ошибка: при gold-real считается отдельно от failures), `llm_returned_none`
+(пустой ответ без объяснения).
 
 Флаги: `translate(..., reconstruct=False)` (default off — backward compat
 Ф2.2; при `True` и `atom.is_fragment` результат в
@@ -397,10 +399,16 @@ RU-конспектом → заменён подлинной grc-транскр
   `completeness_score` — качество ИЗВЛЕЧЕНИЯ (5 полей); агрегат `needs_attention`.
 - **Verification 2.0 (точная формула CVI — для воспроизводимости):** negatives
   доминируют → `contradicted` (conf = max по негативным); нет positives →
-  `abstained` (conf 0.0); **CVI = среднее confidence ПОЛОЖИТЕЛЬНЫХ вердиктов**
+  `abstained` (conf 0.0); **«один верификатор не сертифицирует» (fix 2.7.2):**
+  `len(positives) < 2` при ≥1 нейтрале → `abstained` (reason
+  `insufficient_positives`; CVI сохраняется для диагностики; действует и в
+  2-агентном basic-режиме); **CVI = среднее confidence ПОЛОЖИТЕЛЬНЫХ вердиктов**
   (round 4; нейтральные/abstained в среднее НЕ входят); CVI < 0.50
   (`abstention_threshold`) → `abstained`; needs_review при CVI < 0.85
-  (=1−`legacy.risk_verified_max`). Пример: mean(0.91, 0.90) = 0.905 →
+  (=1−`legacy.risk_verified_max`) и только у `verified` (при
+  `insufficient_positives` — False: система уверена, что данных мало; review
+  зарезервирован за вердиктом с оговорками). В `combined` есть `reason`
+  (`negative_dominates`/`no_positives`/`insufficient_positives`/`below_threshold`/""). Пример: mean(0.91, 0.90) = 0.905 →
   в выводе `{cvi:.2f}` отображается «0.91». Per-agent abstention (detective
   conf<0.85, logician coherence<0.60); logician при <2 claims — abstained.
 - **verify_atom:** legacy-ключи (consistency/grounding/hallucination_risk/

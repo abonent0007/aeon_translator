@@ -77,6 +77,28 @@ def test_engine_returns_no_reconstruction_if_under_threshold(mock_llm):
     assert result.no_reconstruction.reason == "max_confidence_below_threshold"
 
 
+def test_reconstruct_honest_decline_reason(mock_llm):
+    """Fix 2.7.2: честный отказ (status=no_reconstruction_possible) → llm_declined —
+    НЕ ошибка; пустой ответ без status остаётся llm_returned_none."""
+    mock_llm.responses = {"You reconstruct": {
+        "hypotheses": [], "status": "no_reconstruction_possible"}}
+    engine, _ = make_engine(mock_llm)
+
+    result = engine.reconstruct(make_atom("ἄειδε θεά [...] πόλις ἐστίν"),
+                                pack=AncientGreekPack())
+
+    assert result.status == "no_reconstruction_possible"
+    assert result.no_reconstruction.reason == "llm_declined"
+
+    mock_llm.responses = {"You reconstruct": {"hypotheses": []}}
+    engine2, _ = make_engine(mock_llm)
+
+    result2 = engine2.reconstruct(make_atom("ἄειδε θεά [...] πόλις ἐστίν"),
+                                  pack=AncientGreekPack())
+
+    assert result2.no_reconstruction.reason == "llm_returned_none"
+
+
 def test_engine_caps_at_4(mock_llm):
     mock_llm.responses = reconstruct_responses(5)
     engine, _ = make_engine(mock_llm)

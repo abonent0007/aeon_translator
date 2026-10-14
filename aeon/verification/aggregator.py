@@ -1,12 +1,19 @@
 """
 AEON Verification 2.0 — CVI-агрегатор (комбинированный вердикт).
 
-Правила свёртки (кураторские):
+Правила свёртки (кураторские; уточнены fix 2.7.2):
   1. любой negative (contradicted/incoherent) → итог contradicted;
-  2. нет positives (все neutral/abstained) ИЛИ overall_confidence <
-     abstention_threshold → abstained («Я не знаю»);
-  3. иначе → verified; overall_confidence = среднее по положительным
-     (нейтральные НЕ штрафуют); needs_review при conf < review_threshold.
+  2. нет positives (все neutral/abstained) → abstained («Я не знаю»);
+  3. **«один верификатор не сертифицирует»:** при `len(positives) < 2`
+     и наличии хотя бы одного нейтрала → abstained (reason
+     `insufficient_positives`) — одиночный позитив, разбавленный нейтральными,
+     не даёт verified даже в 2-агентном basic-режиме;
+  4. CVI = среднее по положительным (нейтральные НЕ штрафуют);
+     CVI < abstention_threshold → abstained; иначе verified,
+     needs_review при CVI < review_threshold.
+
+`needs_review` остаётся False при `insufficient_positives`: система уверена,
+что данных мало — review-флаг зарезервирован за verified с оговорками.
 """
 
 from dataclasses import dataclass, field
@@ -30,6 +37,7 @@ class CombinedVerdict:
     overall_confidence: float
     abstained: bool
     needs_review: bool
+    reason: str = ""
     verdicts: Dict[str, Verdict] = field(default_factory=dict)
     reasoning_trace: List[Dict[str, Any]] = field(default_factory=list)
 
@@ -39,6 +47,7 @@ class CombinedVerdict:
             "overall_confidence": self.overall_confidence,
             "abstained": self.abstained,
             "needs_review": self.needs_review,
+            "reason": self.reason,
             "verdicts": {name: verdict.to_dict() for name, verdict in self.verdicts.items()},
             "reasoning_trace": list(self.reasoning_trace),
         }
@@ -70,6 +79,7 @@ class Aggregator:
                 overall_confidence=round(max(float(v.confidence) for v in negatives), 4),
                 abstained=False,
                 needs_review=False,
+                reason="negative_dominates",
                 verdicts=dict(verdicts),
                 reasoning_trace=trace,
             )
@@ -81,11 +91,24 @@ class Aggregator:
                 overall_confidence=0.0,
                 abstained=True,
                 needs_review=False,
+                reason="no_positives",
                 verdicts=dict(verdicts),
                 reasoning_trace=trace,
             )
 
         overall = round(sum(float(v.confidence) for v in positives) / len(positives), 4)
+
+        neutrals = [v for v in verdicts.values() if not is_positive(v.verdict)]
+        if len(positives) < 2 and len(neutrals) >= 1:
+            return CombinedVerdict(
+                verdict=VERDICT_ABSTAINED,
+                overall_confidence=overall,
+                abstained=True,
+                needs_review=False,
+                reason="insufficient_positives",
+                verdicts=dict(verdicts),
+                reasoning_trace=trace,
+            )
 
         if overall < self.cfg.abstention_threshold:
             return CombinedVerdict(
@@ -93,6 +116,7 @@ class Aggregator:
                 overall_confidence=overall,
                 abstained=True,
                 needs_review=False,
+                reason="below_threshold",
                 verdicts=dict(verdicts),
                 reasoning_trace=trace,
             )

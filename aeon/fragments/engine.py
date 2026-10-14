@@ -102,6 +102,12 @@ class FragmentHypothesisEngine:
                 **base,
             )
 
+        if (not result.get("hypotheses")
+                and str(result.get("status") or "") == "no_reconstruction_possible"):
+            # Честный отказ LLM (status-refusal) — НЕ ошибка: терминальный
+            # вердикт, отличаем от пустого безымянного ответа (см. 2.7.2).
+            return self._no("llm_declined", **base)
+
         hypotheses = self._parse_hypotheses(result, markers)
         if not hypotheses:
             return self._no("llm_returned_none", **base)
