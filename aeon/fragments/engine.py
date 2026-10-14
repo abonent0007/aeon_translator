@@ -216,7 +216,7 @@ class FragmentHypothesisEngine:
                 f"with the surviving context"
             )
             verdict = verifier.detective.verify(VerificationContext(
-                source_text=source_text, claims=[claim],
+                source_text=source_text, claims=[claim], mode="hypothesis",
             ))
             hypothesis.verification = verdict.to_dict()
             hypothesis.verified = verdict.verdict == VERDICT_GROUNDED

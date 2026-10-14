@@ -110,6 +110,15 @@ class AncientGreekPack(LanguagePack):
 
     unicode_ranges = ((0x0370, 0x03FF), (0x1F00, 0x1FFF))
 
+    def linguistic_hints(self, layer: str):
+        """Языковые подсказки для слоёв (шаг 2.4): оптатив, средний залог, двойственное."""
+        if layer in ("lexical", "syntactic"):
+            return ("Ancient Greek specifics: check optative mood, middle voice, "
+                    "dual number, particles (μέν/δέ/γάρ/οὖν), augment and reduplication.")
+        if layer == "semantic":
+            return "Watch metaphor, participial ambiguity and aspect (aorist vs present)."
+        return None
+
     def detect_markers(self, text: str) -> List[Marker]:
         """Статические токены + контекстная классификация [ ... ]."""
         markers = self._markers_from_special_tokens(text)

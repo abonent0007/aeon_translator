@@ -249,3 +249,23 @@ def test_agents_abstain_without_llm(mock_llm):
     assert make_detective(mock_llm).verify(ctx(["c1"])).verdict == VERDICT_ABSTAINED
     assert make_logician(mock_llm).verify(ctx(["c1", "c2"])).verdict == VERDICT_ABSTAINED
     assert make_expert(mock_llm).verify(ctx(["c1"])).verdict == VERDICT_ABSTAINED
+
+
+def test_detective_prompt_mode_selected_by_context(mock_llm):
+    """mode выбирает шаблон: exact-quote (claim) vs context-agreement (hypothesis)."""
+    mock_llm.responses = {"Detective": {"claims": [
+        {"claim": "c", "quote": "q", "contradicts": False,
+         "confidence": 0.9, "reasoning": "ok"},
+    ]}}
+    agent = make_detective(mock_llm)
+
+    agent.verify(ctx(["c"]))  # default: claim-mode
+    claim_prompt = mock_llm.calls[-1]["messages"][-1]["content"]
+    assert "EXACT substring" in claim_prompt
+    assert "SURVIVING CONTEXT" not in claim_prompt
+
+    agent.verify(VerificationContext(
+        source_text="exact source text", claims=["c"], mode="hypothesis",
+    ))
+    hypothesis_prompt = mock_llm.calls[-1]["messages"][-1]["content"]
+    assert "SURVIVING CONTEXT" in hypothesis_prompt

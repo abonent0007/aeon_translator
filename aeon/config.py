@@ -213,6 +213,14 @@ class FragmentsConfig:
 
 
 @dataclass(frozen=True)
+class LinguisticsConfig:
+    """Chain-of-Linguistics (шаг 2.4)."""
+
+    layer_min_confidence: float = 0.3   # ниже — цепочка останавливается (halt)
+    available_layers: tuple = ("lexical", "syntactic", "semantic", "pragmatic")
+
+
+@dataclass(frozen=True)
 class AeonConfig:
     """Полная конфигурация AEON v4.0."""
 
@@ -226,6 +234,7 @@ class AeonConfig:
     entity_linking: EntityLinkingConfig = field(default_factory=EntityLinkingConfig)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
     fragments: FragmentsConfig = field(default_factory=FragmentsConfig)
+    linguistics: LinguisticsConfig = field(default_factory=LinguisticsConfig)
 
     # ── удобный доступ (CONFIG.detective.min_confidence) ──
 
@@ -331,6 +340,10 @@ def load_config() -> AeonConfig:
         verify_hypotheses=_env_bool("AEON_FRAGMENT_VERIFY_HYPOTHESES", True),
     )
 
+    linguistics_cfg = LinguisticsConfig(
+        layer_min_confidence=_env_float("AEON_LAYER_MIN_CONFIDENCE", 0.3),
+    )
+
     return AeonConfig(
         llm=llm,
         embeddings=embeddings,
@@ -340,6 +353,7 @@ def load_config() -> AeonConfig:
         entity_linking=entity_linking,
         logging=logging_cfg,
         fragments=fragments_cfg,
+        linguistics=linguistics_cfg,
     )
 
 

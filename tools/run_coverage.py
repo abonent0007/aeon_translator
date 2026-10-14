@@ -26,6 +26,7 @@ SOURCE = [
     "aeon.testing",
     "aeon.language",
     "aeon.fragments",
+    "aeon.linguistics",
 ]
 
 

@@ -31,23 +31,57 @@ Return ONLY valid JSON:
 "confidence": 0.9, "reasoning": "..."}]}'''
 
 
-def _build_prompt(source: str, claims: List[str]) -> str:
+HYPOTHESIS_PROMPT_TEMPLATE = '''You are a source grounding verifier ("Detective").
+For EACH candidate restoration check whether the SURVIVING CONTEXT
+supports it or at least does not contradict it.
+
+SURVIVING SOURCE TEXT:
+"{SOURCE}"
+
+CANDIDATES:
+{CLAIMS_BLOCK}
+
+Rules:
+- "contradicts": true ONLY if the surviving context makes the candidate
+  impossible (conflicting words, grammar or facts in preserved text);
+- "quote": the CLOSEST surviving-context fragment (EXACT substring)
+  speaking for/against the candidate ("" if the context is silent);
+- "confidence": 0.0-1.0; "reasoning": one short sentence.
+
+Return ONLY valid JSON:
+{"claims": [{"claim": "...", "quote": "...", "contradicts": false,
+"confidence": 0.9, "reasoning": "..."}]}'''
+
+
+def _build_prompt(source: str, claims: List[str],
+                  template: str = PROMPT_TEMPLATE) -> str:
     claims_block = "\n".join(f"- {claim}" for claim in claims)
-    return PROMPT_TEMPLATE.replace("{SOURCE}", source).replace("{CLAIMS_BLOCK}", claims_block)
+    return template.replace("{SOURCE}", source).replace("{CLAIMS_BLOCK}", claims_block)
 
 
 class DetectiveAgent(BaseVerifier):
-    """Source grounding: цитаты из исходного текста."""
+    """Source grounding: exact-quote (claim) / context-agreement (hypothesis)."""
 
     name = "detective"
 
-    def verify(self, context: VerificationContext) -> Verdict:
+    def verify(self, context: VerificationContext,
+               mode: str = "") -> Verdict:
+        """
+        Два режима промпта (curator fix 2.3):
+          - claim      — exact-quote: точная подстрока из SOURCE;
+          - hypothesis — context-agreement: согласованность кандидата
+            с СОХРАНИВШИМСЯ контекстом (exact-quote утраченного невозможен).
+        Режим берётся из mode-аргумента или context.mode (default "claim").
+        """
+        selected_mode = mode or getattr(context, "mode", "claim")
         if not self.llm.available:
             return self._emit(context, self._abstained("LLM недоступен"))
         if not context.claims:
             return self._emit(context, self._neutral("нет утверждений для проверки", 0.5))
 
-        prompt = _build_prompt(context.source_text, context.claims)
+        template = (HYPOTHESIS_PROMPT_TEMPLATE if selected_mode == "hypothesis"
+                    else PROMPT_TEMPLATE)
+        prompt = _build_prompt(context.source_text, context.claims, template)
         result = self.llm._call_json([
             {"role": "system", "content": "You are a grounding verifier. Return only valid JSON."},
             {"role": "user", "content": prompt},

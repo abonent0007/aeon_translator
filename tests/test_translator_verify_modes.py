@@ -34,6 +34,14 @@ STRUCTURE = {
 
 RESPONSES = {
     "Analyze the following text": STRUCTURE,
+    "Reconstruction candidate 'восстановление-1'": {"claims": [
+        {"claim": "r1", "quote": "контекст", "contradicts": False,
+         "confidence": 0.9, "reasoning": "ok"},
+    ]},
+    "Reconstruction candidate 'восстановление-2'": {"claims": [
+        {"claim": "r2", "quote": "контекст", "contradicts": False,
+         "confidence": 0.88, "reasoning": "ok"},
+    ]},
     "Detective": {"claims": [
         {"claim": "c1", "quote": "Я знаю, что ничего не знаю.", "contradicts": False,
          "confidence": 0.92, "reasoning": "exact quote"},
@@ -49,6 +57,22 @@ RESPONSES = {
         {"text": "восстановление-1", "confidence": 0.8, "evidence": "контекст-1"},
         {"text": "восстановление-2", "confidence": 0.6, "evidence": "контекст-2"},
     ], "status": "ok"},
+    "LEXICAL": {"findings": [
+        {"kind": "lemma", "value": "Σωκράτης", "span": [0, 8],
+         "confidence": 0.85, "note": ""},
+    ], "confidence": 0.82, "handoff": {"lemmas": ["Σωκράτης"]}},
+    "SYNTACTIC": {"findings": [
+        {"kind": "pos_tag", "value": "noun", "span": [0, 8],
+         "confidence": 0.8, "note": ""},
+    ], "confidence": 0.8, "handoff": {"clauses": ["simple clause"]}},
+    "SEMANTIC": {"findings": [
+        {"kind": "proposition", "value": "Сократ признаёт незнание",
+         "span": None, "confidence": 0.82, "note": ""},
+    ], "confidence": 0.82, "handoff": {"propositions": ["p1"]}},
+    "PRAGMATIC": {"findings": [
+        {"kind": "speech_act", "value": "statement",
+         "span": None, "confidence": 0.8, "note": ""},
+    ], "confidence": 0.8, "handoff": {"speech_acts": ["statement"]}},
 }
 
 
@@ -156,3 +180,38 @@ def test_reconstruct_flag_on_non_fragment(translator):
     result = translator.translate(TEXT, source_language="russian", reconstruct=True)
 
     assert result["metadata"]["reconstruction"] is None
+
+
+def test_translator_linguistic_layers_all(translator):
+    result = translator.translate(TEXT, source_language="russian",
+                                  linguistic_layers=["all"])
+
+    linguistics = result["linguistics"]
+    assert linguistics is not None
+    assert linguistics["status"] == "ok"
+    assert [layer["layer"] for layer in linguistics["layers"]] == [
+        "lexical", "syntactic", "semantic", "pragmatic",
+    ]
+    assert linguistics["llm_calls"] == 4
+
+
+def test_translator_linguistic_layers_subset(translator):
+    result = translator.translate(TEXT, source_language="russian",
+                                  linguistic_layers=["lexical"])
+
+    linguistics = result["linguistics"]
+    assert [layer["layer"] for layer in linguistics["layers"]] == ["lexical"]
+    assert linguistics["llm_calls"] == 1
+
+
+def test_backward_compat_no_layers(translator):
+    """Без флага: linguistics=None и 0 вызовов слоёв (default off)."""
+    result = translator.translate(TEXT, source_language="russian")
+
+    assert result["linguistics"] is None
+    layer_calls = [
+        call for call in translator.llm.calls
+        if "LEXICAL" in call["messages"][-1]["content"]
+        or "SYNTACTIC" in call["messages"][-1]["content"]
+    ]
+    assert layer_calls == []

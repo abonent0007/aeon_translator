@@ -47,6 +47,7 @@ class VerificationContext:
     claims: List[str] = field(default_factory=list)
     entity_names: List[str] = field(default_factory=list)
     entity_records: List[Any] = field(default_factory=list)  # Entity (v4.0)
+    mode: str = "claim"   # "claim" (exact-quote) | "hypothesis" (context-agreement)
     trace_id: Optional[str] = None
 
 

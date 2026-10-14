@@ -73,7 +73,8 @@ class AeonTranslator:
         verify: bool = False,
         verify_mode: Optional[str] = None,
         language_pack: Optional["LanguagePack"] = None,
-        reconstruct: bool = False
+        reconstruct: bool = False,
+        linguistic_layers: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """
         Универсальный перевод смысла с верификацией.
@@ -91,6 +92,10 @@ class AeonTranslator:
         reconstruct: True и atom.is_fragment → Fragment Hypothesis Engine
         (шаг 2.3): гипотезы восстановления в metadata["reconstruction"];
         default False — поведение Ф2.2 без изменений.
+
+        linguistic_layers: Chain-of-Linguistics (шаг 2.4), напр.
+        ["lexical", "syntactic", ...] или ["all"]; None (default) — выключено;
+        результат — result["linguistics"] (status/layers/llm_calls/trace_id).
         """
         if verify_mode is None:
             verify_mode = "full" if verify else "off"
@@ -214,6 +219,27 @@ class AeonTranslator:
 
         print(f"✓ Сгенерировано")
 
+        # ══ Шаг 1.7: Linguistic Layers (опционально, шаг 2.4) ══
+        linguistics_result = None
+        if linguistic_layers:
+            from .linguistics import ChainOfLinguistics
+
+            print(f"\n🔬 ЛИНГВИСТИЧЕСКИЕ СЛОИ: {', '.join(linguistic_layers)}")
+            chain = ChainOfLinguistics(llm_client=self.llm)
+            chain_result = chain.run(
+                content,
+                original_text=original_content,
+                layers=linguistic_layers,
+                pack=language_pack,
+                trace_id=atom.meaning_hash,
+            )
+            linguistics_result = chain_result.to_dict()
+            for layer_result in chain_result.layers:
+                print(f"   • {layer_result.layer:<9} conf={layer_result.confidence:.2f}"
+                      f" findings={len(layer_result.findings)}")
+            if chain_result.status != "ok":
+                print(f"   ⚠️ status: {chain_result.status}")
+
         return {
             "source": {"content": original_content, "form": source_form, "language": source_language},
             "semantic_atom": atom,
@@ -222,7 +248,8 @@ class AeonTranslator:
             "meaning_preserved": atom.extraction_confidence,
             "llm_powered": self.llm.available,
             "embedding_powered": self.embeddings.loaded,
-            "verified": verification_result is not None
+            "verified": verification_result is not None,
+            "linguistics": linguistics_result,
         }
 
     # ═══════════════════════════════════════════════════════════

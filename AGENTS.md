@@ -3,9 +3,9 @@
 ## Overview
 Semantic processor: переводит смысл между формами (текст/код/эмоция/голос/изображение)
 с верификацией, entity linking и анализом древних текстов.
-Статус: **Фаза 0 ✅, Фаза 1 ✅, Фаза 2 — шаги 2.0 ✅, 2.1 ✅, 2.2 ✅, 2.3 ✅**
-(Language Pack Infra, Ancient Greek, Latin, Fragment Hypotheses).
-Впереди: 2.4 Linguistic Layers, 2.5 Multi-focus, 2.6 Offline adapters, 2.7 Real API.
+Статус: **Фаза 0 ✅, Фаза 1 ✅, Фаза 2 — шаги 2.0 ✅, 2.1 ✅, 2.2 ✅, 2.3 ✅, 2.4 ✅**
+(Language Pack Infra, Ancient Greek, Latin, Fragment Hypotheses, Linguistic Layers).
+Впереди: 2.5 Multi-focus, 2.6 Offline adapters, 2.7 Real API.
 
 ## Architecture (Фаза 1)
 ```
@@ -150,6 +150,37 @@ ReconstructionResult — все JSON-сериализуемы; .aeon v2 — Ф3)
 `AEON_FRAGMENT_MIN_CONFIDENCE=0.75`, `AEON_FRAGMENT_DENSITY_THRESHOLD=0.005`,
 `AEON_FRAGMENT_VERIFY_HYPOTHESES=1` — только True).
 
+## Linguistic Layers (шаг 2.4)
+Пакет `aeon/linguistics/`: `base.py` (ABC `LinguisticLayer`, `Finding`,
+`LayerResult`, `LayerContext`), `prompts.py` (промпты слоёв — ЗДЕСЬ, не в
+паках), четыре слоя (`lexical`/`syntactic`/`semantic`/`pragmatic`),
+`orchestrator.py` (`ChainOfLinguistics`).
+
+Порядок фиксирован: lexical → syntactic → semantic → pragmatic.
+Зависимости строгие (`ConfigError`): syntactic→lexical, semantic→syntactic,
+pragmatic→semantic; lexical — standalone. Alias `"all"` — все четыре.
+Halt: confidence слоя < `CONFIG.linguistics.layer_min_confidence` (0.3) →
+`halted_at_<layer>`, частичный результат сохраняется; `llm_calls` суммируется.
+Противоречия слоёв (стоп-точка №2, вариант B): детектируются по
+span+kind-классу (`pos_tag`/`role`), логируются событием
+`layer_contradiction`, цепочка продолжается с понижением confidence ×0.7;
+LLM-разрешение (+1 вызов, вариант C) — backlog.
+
+Промпты ≤30 строк, temp 0.0, strict JSON. Языковые hints — хук
+`pack.linguistic_hints(layer)` (grc: оптатив/средний залог/двойственное;
+la: аблатив/герундий/депоненты); промпты языково-неспецифичны.
+Handoff-контракт: `lexical` → {lemmas, morphology}; `syntactic` →
+{clauses, deviations}; `semantic` → {propositions, ambiguities};
+`pragmatic` → {speech_acts, implicatures}; предыдущий handoff инлайнится
+в промпт следующего слоя (≤1500 симв.).
+
+Интеграция: `translate(..., linguistic_layers=None|["all"]|[слои])` —
+default off (backward compat Ф1–2.3); результат в `result["linguistics"]`;
+demo `--layers=all|lexical,syntactic,...`.
+Бюджет (стоп-точка №1): 4 вызова на цепочку; худший атом ≈ 8 LLM-вызовов
+(extract+3 verify+4 слоя); на mock 200ms ≈1.6s, реально ≈14–16s < 30s;
+гибрид (в: объединить слои попарно) — backlog после реальных замеров.
+
 ## Tech Stack
 - Python 3.11 (Windows dev), приоритет stdlib
 - LLM: DeepSeek (OpenAI-совместимый), фасад `aeon.llm.DeepSeekClient`
@@ -172,7 +203,8 @@ ReconstructionResult — все JSON-сериализуемы; .aeon v2 — Ф3)
 - Demo верификации: `python -m aeon.demo --text examples/latin/caesar_bg_1_1.txt --verify=full --language=la`
   (mock 200ms/вызов; `--real` — с DEEPSEEK_API_KEY; `--verify=off|basic|full`;
   `--language` — ISO-код пака: нормализация + маркеры;
-  `--reconstruct` — Fragment Hypothesis Engine: гипотезы / no_reconstruction)
+  `--reconstruct` — Fragment Hypothesis Engine: гипотезы / no_reconstruction;
+  `--layers=all|lexical,syntactic,...` — Chain-of-Linguistics)
 - verify_mode в API: `translator.translate(..., verify_mode="off|basic|full", language_pack=None)`
   (legacy `verify=True` ≡ `verify_mode="full"`)
 - Реестр паков: `python -c "from aeon.language import registry; print(registry.list_available())"`

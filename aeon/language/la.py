@@ -125,6 +125,14 @@ class LatinPack(LanguagePack):
 
     unicode_ranges = ((0x0080, 0x00FF), (0x0100, 0x017F), (0x0180, 0x024F))
 
+    def linguistic_hints(self, layer: str):
+        """Языковые подсказки для слоёв (шаг 2.4): аблатив, герундий, депоненты."""
+        if layer in ("lexical", "syntactic"):
+            return ("Latin specifics: check ablative constructions (absolute), "
+                    "gerund/gerundive, deponent verbs, supine; word order is free "
+                    "(case endings carry syntax).")
+        return None
+
     def detect_markers(self, text: str) -> List[Marker]:
         """Статические токены + cruces (†…†) + контекстные [ ... ]."""
         markers = self._markers_from_special_tokens(text)

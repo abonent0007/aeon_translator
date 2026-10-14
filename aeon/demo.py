@@ -264,6 +264,14 @@ DEMO_RESPONSES = {
         "extraction_confidence": 0.88,
         "semantic_tokens": ["мудрость", "незнание", "суд"],
     },
+    "Reconstruction candidate 'ἴδρως": {"claims": [
+        {"claim": "cand-1", "quote": "…τὸ δὲ λέπτον", "contradicts": False,
+         "confidence": 0.9, "reasoning": "surviving context brackets the gap"},
+    ]},
+    "Reconstruction candidate 'τρόμος": {"claims": [
+        {"claim": "cand-2", "quote": "…χρῶι πῦρ ὐπαδεδρόμηκεν…", "contradicts": False,
+         "confidence": 0.86, "reasoning": "continuation plausible in context"},
+    ]},
     "Detective": {"claims": [
         {"claim": "Сократ признаёт собственное незнание",
          "quote": "Я знаю, что ничего не знаю.", "contradicts": False,
@@ -285,6 +293,22 @@ DEMO_RESPONSES = {
         {"text": "τρόμος δὲ παῖσαν ἄγρει", "confidence": 0.55,
          "evidence": "продолжение строфы; менее надёжно"},
     ], "status": "ok"},
+    "LEXICAL": {"findings": [
+        {"kind": "lemma", "value": "μῆνις", "span": [15, 21],
+         "confidence": 0.85, "note": "acc. sg."},
+    ], "confidence": 0.82, "handoff": {"lemmas": ["μῆνις"], "morphology": ["acc.sg"]}},
+    "SYNTACTIC": {"findings": [
+        {"kind": "role", "value": "object", "span": [15, 21],
+         "confidence": 0.8, "note": "accusative object of ἄειδε"},
+    ], "confidence": 0.8, "handoff": {"clauses": ["imperative clause"], "deviations": []}},
+    "SEMANTIC": {"findings": [
+        {"kind": "proposition", "value": "поющий призывает воспеть гнев Ахилла",
+         "span": None, "confidence": 0.82, "note": ""},
+    ], "confidence": 0.82, "handoff": {"propositions": ["invocation of the wrath"], "ambiguities": []}},
+    "PRAGMATIC": {"findings": [
+        {"kind": "speech_act", "value": "invocation (prayer to Muse)",
+         "span": None, "confidence": 0.8, "note": "эпическая формула"},
+    ], "confidence": 0.8, "handoff": {"speech_acts": ["invocation"], "implicatures": []}},
 }
 
 
@@ -296,7 +320,7 @@ def _offline_embeddings():
 
 def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
                     use_real: bool, language: str | None = None,
-                    reconstruct: bool = False) -> None:
+                    reconstruct: bool = False, layers: str | None = None) -> None:
     """Demo: атом + trace верификации + метрики (мок с задержкой или реальный LLM)."""
     from pathlib import Path
 
@@ -393,6 +417,31 @@ def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
                 print(f"  density: {reconstruction.fragment_density:.5f}"
                       f" | маркеров: {reconstruction.markers_count}")
 
+        if layers:
+            from aeon.config import ConfigError
+            from aeon.linguistics import ChainOfLinguistics
+
+            layer_list = (None if layers == "all"
+                          else [part.strip() for part in layers.split(",") if part.strip()])
+            chain = ChainOfLinguistics(llm_client=llm)
+            with METRICS.timeit("atom_network"):
+                try:
+                    chain_result = chain.run(text, original_text=text,
+                                             layers=layer_list, pack=language_pack,
+                                             trace_id=atom.meaning_hash)
+                except ConfigError as exc:
+                    print(f"\n🔬 LINGUISTIC LAYERS: {exc}")
+                    chain_result = None
+            if chain_result is not None:
+                print(f"\n🔬 LINGUISTIC LAYERS (status={chain_result.status}, "
+                      f"llm_calls={chain_result.llm_calls}):")
+                for layer_result in chain_result.layers:
+                    print(f"  • {layer_result.layer:<9} conf={layer_result.confidence:.2f} "
+                          f"findings={len(layer_result.findings)}")
+                    for finding in layer_result.findings[:2]:
+                        print(f"      {finding.kind}={finding.value!r} "
+                              f"conf={finding.confidence:.2f}")
+
     METRICS.record_atom()
     print_separator("METRICS")
     print(METRICS.format_summary())
@@ -415,11 +464,14 @@ def main():
                         help="ISO-код языкового пака для нормализации/маркеров (например, grc)")
     parser.add_argument("--reconstruct", action="store_true",
                         help="Fragment Hypothesis Engine (шаг 2.3): гипотезы восстановления")
+    parser.add_argument("--layers", type=str, default=None,
+                        help="Chain-of-Linguistics (шаг 2.4): 'all' или 'lexical,syntactic,...'")
     args = parser.parse_args()
 
     if args.text:
         run_verify_demo(args.text, args.verify, args.latency_ms, args.real,
-                        language=args.language, reconstruct=args.reconstruct)
+                        language=args.language, reconstruct=args.reconstruct,
+                        layers=args.layers)
         return
 
     print("""

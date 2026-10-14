@@ -15,7 +15,7 @@ import unicodedata
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 
 @dataclass(frozen=True)
@@ -74,6 +74,15 @@ class LanguagePack(ABC):
         word-эвристику (маркеры-слова/окончания). По умолчанию — 0.
         """
         return 0.0
+
+    def linguistic_hints(self, layer: str) -> Optional[str]:
+        """
+        Опциональные языковые подсказки для слоя Chain-of-Linguistics
+        (шаг 2.4). Промпты слоёв — в aeon/linguistics/prompts.py;
+        паки лишь ДОПОЛНЯЮТ их (например, grc: оптатив/средний залог).
+        По умолчанию — None (подсказок нет).
+        """
+        return None
 
     def validate(self) -> None:
         """Проверка контракта пака (fail-fast при регистрации/get)."""

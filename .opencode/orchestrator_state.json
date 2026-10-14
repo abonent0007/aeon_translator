@@ -1,61 +1,57 @@
 {
   "project": "C:\\Users\\User\\Documents\\aeon_translator-main\\aeon_translator-main",
-  "original_request": "AEON v4.0 'Deep Analyst'. Phase 1 COMPLETE. Phase 2 in progress (2.0-2.3 done).",
-  "enriched_request": "Phase 2: 2.0-2.3 done (Language Pack Infra, Ancient Greek, Latin, Fragment Hypotheses). Next: 2.4 Linguistic Layers -> 2.5 Multi-focus -> 2.6 Offline adapters -> 2.7 Real API + parallelization.",
+  "original_request": "AEON v4.0 'Deep Analyst'. Phase 1 COMPLETE. Phase 2 in progress (2.0-2.4 done).",
+  "enriched_request": "Phase 2: 2.0-2.4 done (Language Pack Infra, Ancient Greek, Latin, Fragment Hypotheses, Linguistic Layers). Next: 2.5 Multi-focus -> 2.6 Offline adapters -> 2.7 Real API + parallelization.",
   "plan": [
     {"step": "0.1", "status": "done"}, {"step": "0.2", "status": "done"},
     {"step": "0.3", "status": "done"}, {"step": "0.4", "status": "done"},
     {"step": "1.1", "status": "done"}, {"step": "1.2", "status": "done"},
     {"step": "1.3", "status": "done"}, {"step": "1.4", "status": "done"},
     {"step": "2.0", "status": "done"}, {"step": "2.1", "status": "done"},
-    {"step": "2.2", "status": "done"}, {"step": "2.3", "status": "done"}
+    {"step": "2.2", "status": "done"}, {"step": "2.3", "status": "done"},
+    {"step": "2.4", "status": "done"}
   ],
-  "current_step": 12,
-  "next_step": "2.4",
+  "current_step": 13,
+  "next_step": "2.5",
   "phase": "phase2_executing",
   "phase2": {
-    "step_2.3": "done (Fragment Hypothesis Engine: aeon/fragments/ package, per-hypothesis Detective verification, no_reconstruction reasons, translator reconstruct flag + demo --reconstruct, bare '…' fix in packs)",
+    "step_2.4": "done (Linguistic Layers: aeon/linguistics/, strict deps ConfigError, halt 0.3, contradiction variant B, pack hints, translator result['linguistics'], demo --layers)",
     "language_packs_registered": ["grc", "la"],
-    "remaining": ["2.4 Linguistic Layers", "2.5 Multi-focus", "2.6 Offline adapters", "2.7 Real API + parallelization"]
+    "remaining": ["2.5 Multi-focus", "2.6 Offline adapters", "2.7 Real API + parallelization"]
   },
   "completed_at": null,
   "user_preferences": {
     "embeddings": "pluggable; MiniLM/LaBSE defaults",
-    "llm_keys": "user adds DEEPSEEK_API_KEY to .env; tests on mocks; .env ABSENT",
+    "llm_keys": "user adds DEEPSEEK_API_KEY; tests on mocks; .env ABSENT",
     "ancient_packs": "grc + la DONE; morphology -> Phase 3",
     "reference_texts": "examples/greek (5) + examples/latin (5) + LICENSE.md",
-    "fragment_hypotheses": "2-4 hypotheses + ranking + no_reconstruction_possible + per-hypothesis Detective",
-    "multi_focus": "opt-in flag, default off",
+    "fragment_hypotheses": "2-4 + ranking + no_reconstruction + grounded-only Detective (mode=hypothesis)",
+    "multi_focus": "opt-in flag, default off (2.5)",
+    "linguistic_layers": "opt-in, strict deps, halt at confidence <0.3; variants/hybrid batching in backlog",
     "checkpoints": "curator verifies step reports with fixed format"
   },
   "known_deltas": [
-    "Phase 1 + 2.0-2.2 complete (details in git history; CVI formula, quirks, packs documented in AGENTS.md).",
-    "LanguagePack contract evolution (2.2, commit 3891cc2): detect_heuristic(text)->float default 0; default-impl verified by test_grc_inherits_default_heuristic; documented in AGENTS.",
-    "Detect algorithm refinement (2.2 #4): TWO-PHASE - (1) unicode-ranges max-hits wins (alphabet decides), (2) heuristic at tie/absence; deterministic alphabetical tie-break + detect_ambiguous log (candidates/winner/method).",
-    "la heuristic refinement (2.2 #3): DISTINCT function words (repeat 'in' doesn't score); tests: in_vitro / et_al / per_se / english-repeats -> None. Threshold/weights hardcoded Classical -> backlog (AEON_LA_DETECT_THRESHOLD idea).",
-    "la limitation (2.2 #5): heuristic tuned for Classical Latin; Medieval/Neo-Latin may underdetect (documented).",
-    "Phase 2.3 (this commit): aeon/fragments/ (hypothesis/ranking/engine/__init__); flow: pack markers -> density -> cruces-only early no_reconstruction -> LLM 2-4 hypotheses -> cap 4 -> max<0.5 threshold -> per-hypothesis Detective -> drop contradicted -> all_contradicted. reasons: cruces_without_external_evidence | max_confidence_below_threshold | all_contradicted | no_markers | llm_unavailable | llm_parse_error | llm_returned_none.",
-    "Stop-point decisions 2.3: #1 variants=contested readings -> backlog F2.4+ (Sappho runs normal fragment path); #2 each hypothesis -> Detective (N calls; ~+2s/hypothesis real; batching if >30s - backlog 2.7); #3 reconstruct prompt = pack prompts + DEFAULT_RECONSTRUCT_PROMPT (<=30 lines each); #4 no_reconstruction = TERMINAL verdict + reason as structured signal for external sources (F2.6).",
-    "Bare ellipsis '…' added to grc/la lacuna tokens (spec alignment; Sappho uses bare '…'); prose-ellipsis false-positive risk noted.",
-    "translator metadata['reconstruction'] = to_dict() (JSON-serializable; .aeon v2 storage - F3). Config: CONFIG.fragments + AEON_FRAGMENT_* env.",
-    "Coverage runner includes aeon.fragments now (TOTAL ~93%).",
-    "FIX 2.3 (curator: Sappho false-positive): demo-мок возвращал canned 'grounded' на любой claim (артефакт мока, не движка) + РЕАЛЬНАЯ дыра: движок пропускал не-grounded вердикты (neutral/abstained). Исправлено: строгий фильтр grounded-only (claim = согласованность с сохранившимся контекстом); min_confidence 0.5 -> 0.75 (акт создания); verify_hypotheses нельзя отключить (ConfigError); temp 0.0; reasons + no_verified_hypotheses; demo-мок заменён на реальное восстановление Sapph. 31 ст.13 (ἴδρως κακχέεται) + пометка 'canned-ответы'; 5 новых тестов.",
-    "Serialization clarification (curator #4): to_dict() JSON only; .aeon v1 не трогали; .aeon v2 storage - Ф3. Determinism (#5): temp 0.0 + stable ranking; полная воспроизводимость - требование к провайдеру (backlog)."
+    "Phase 1 + 2.0-2.3 complete (details in git history; CVI formula, quirks, packs, fragment engine in AGENTS.md).",
+    "Serialization clarification (curator #4): to_dict() JSON only; .aeon v1 не трогали; .aeon v2 storage - Ф3. Determinism (#5): temp 0.0 + stable ranking; полная воспроизводимость - требование к провайдеру (backlog).",
+    "Detective TWO prompt modes (curator refinement): context.mode 'claim' (exact-quote) vs 'hypothesis' (context-agreement); engine sets mode='hypothesis'; stubs unchanged (mode via context); test_detective_prompt_mode_selected_by_context.",
+    "MockLLM hardening (curator refinement): claim-specific keys ABOVE generic 'Detective' key (routing pattern + test_mock_llm_claim_specific_routing); demo/translator mocks updated with candidate-specific grounded rows; canned risk documented.",
+    "Phase 2.4 (Linguistics): aeon/linguistics/ (base/prompts/4 слоя/orchestrator). Строгие зависимости (ConfigError: syntactic->lexical->...), halt 0.3 (AEON_LAYER_MIN_CONFIDENCE), alias 'all'. Contradictions: вариант B (log layer_contradiction + confidence x0.7) — вариант C (LLM-разрешение) в backlog. Промпты в linguistics/prompts.py + pack.linguistic_hints (grc: оптатив/средний/двойственное; la: аблатив/герундий/депоненты). Handoff контракт: lexical{lemmas,morphology} -> syntactic{clauses,deviations} -> semantic{propositions,ambiguities} -> pragmatic{speech_acts,implicatures}; инлайн <=1500 симв. Бюджет: 4 вызова на цепочку; worst atom ~8 вызовов (~14-16s real < 30s); гибрид-бэтчинг (в) — backlog после реальных замеров.",
+    "Sappho reconstruction (canned) needs re-verification with REAL API when key available: pipeline validated, LLM quality NOT tested (backlog 2.7).",
+    "Coverage: linguistics все модули >=89% (base 89%, orchestrator 99%); TOTAL 93%; runner incl. aeon.linguistics."
   ],
   "backlog": [
-    "2.4 Linguistic Layers (lexical->syntactic->semantic->pragmatic); variant readings mode (kind=variant, choose between editions) for contested readings",
-    "2.5 Multi-focus (opt-in flag, roles: historian/philosopher/linguist/esoteric)",
-    "2.6 Pleiades offline dump adapter + Trismegistos datasets adapter + per-file corpus licenses",
-    "2.7 Real API verification when key available; hypothesis-verification batching/parallelism if >30s/atom",
+    "2.5 Multi-focus (opt-in flag, roles: historian/philosopher/linguist/esoteric); variant readings mode (Sappho contested readings) can ride along",
+    "2.6 Pleiades offline dump adapter + Trismegistos datasets adapter",
+    "2.7 Real API verification when key available (incl. Sappho reconstruction re-verify); parallelism tuning; hybrid layer batching (в) after real measurements",
+    "Linguistics: contradiction resolution via LLM (+1 call, variant C); density thresholds tuning",
     "la heuristic: move threshold/weights to config (AEON_LA_DETECT_THRESHOLD); Medieval/Neo-Latin tuning",
-    "fragment density threshold tuning on real corpora",
     "CI: network-marker non-blocking job",
-    "Phase 3: .aeon v2 (verification trace, entity links, hypotheses), CLI/web endpoints, README v4, morphology (Morpheus/CLTK optional), search-layer sigma unification"
+    "Phase 3: .aeon v2 (verification trace, entity links, hypotheses, linguistics), CLI/web endpoints, README v4, morphology (Morpheus/CLTK), search-layer sigma unification"
   ],
   "config_wiring": {
     "canonical_access": "CONFIG.verification.<agent> is canonical; flat CONFIG.<agent> is a convenience alias",
-    "wired_in": ["llm", "logging", "entity_linking", "crosswalk", "scoring weights", "verification", "language packs", "fragments (CONFIG.fragments -> engine; translator reconstruct flag; demo --reconstruct)"],
-    "not_wired_yet": ["similarity levels (optional, later)", "language packs -> extractor/verifier prompts (2.4+)"]
+    "wired_in": ["llm", "logging", "entity_linking", "crosswalk", "scoring weights", "verification", "language packs", "fragments", "linguistics (CONFIG.linguistics -> orchestrator halt threshold; translator linguistic_layers; demo --layers)"],
+    "not_wired_yet": ["similarity levels (optional, later)", "language packs -> extractor/verifier prompts (deliberate: prompts live in layers/packs own hooks)"]
   },
   "legacy_config_used_by": ["verification legacy projection (risk bands) + Aggregator review_threshold"],
   "created_at": "2026-10-14T10:30:33+03:00",
@@ -66,6 +62,6 @@
     "wikidata_schema_check": "live script; zero drift",
     "pleiades_trismegistos_check": "live scripts; outcomes in known_deltas",
     "network_live_tests": "tests/test_network_live.py (marker network)",
-    "coverage_runner": "tools/run_coverage.py (incl. aeon.language + aeon.fragments)"
+    "coverage_runner": "tools/run_coverage.py (incl. language, fragments, linguistics)"
   }
 }
