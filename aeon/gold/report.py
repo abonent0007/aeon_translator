@@ -50,6 +50,35 @@ def format_cost_block(stats: Dict[str, Any], usage: Dict[str, Any]) -> str:
     ]) + "\n"
 
 
+def format_run_details(dataset, stats: Dict[str, Any]) -> str:
+    """Per-text run-таблица + failures (2.7.3)."""
+    lines = ["", "## Per-text runs", "",
+             "| text_id | segments | extract (план) | verify (план) | calls | "
+             "latency s | cost $ |",
+             "|---|---|---|---|---|---|---|"]
+    total_cost = 0.0
+    for text_id, records in sorted(dataset.by_text().items()):
+        verdict_records = sum(1 for record in records
+                              if record.expected_verdicts is not None)
+        entry = stats.get("per_text", {}).get(text_id, {})
+        cost = ((entry.get("prompt_tokens", 0) / 1_000_000) * CONFIG.llm.price_in_per_m
+                + (entry.get("completion_tokens", 0) / 1_000_000) * CONFIG.llm.price_out_per_m)
+        total_cost += cost
+        lines.append(
+            f"| {text_id} | {len(records)} | {len(records)} | "
+            f"{verdict_records * 3} | {entry.get('calls', 0)} | "
+            f"{entry.get('latency_sec', 0)} | ${cost:.4f} |")
+    lines.append(f"| **TOTAL** | **{len(dataset.records)}** | | | "
+                 f"**{stats.get('calls', 0)}** | **{stats.get('latency_sec', 'n/a')}** | "
+                 f"**${total_cost:.4f}** |")
+    failures = stats.get("failures", [])
+    if failures:
+        lines += ["", "## Failures", ""]
+        lines += [f"- {failure['text_id']} seg {failure['segment_id']}: "
+                  f"{failure['error']}" for failure in failures]
+    return "\n".join(lines) + "\n"
+
+
 def build_report(dataset, predictions: Dict[str, Any]) -> str:
     evaluation = evaluate_dataset(dataset, predictions)
     lines = [
@@ -137,6 +166,7 @@ def main(argv=None) -> int:
     stats: Dict[str, Any] = {}
     predictions = run_dataset(dataset, llm=llm, raw_dir=args.raw_dir, stats=stats)
     report = build_report(dataset, predictions)
+    report += format_run_details(dataset, stats)
     usage = dict(getattr(llm, "usage", {}) or {})
     report += format_cost_block(stats, usage)
     if args.raw_dir:
@@ -145,7 +175,9 @@ def main(argv=None) -> int:
     if args.out:
         from pathlib import Path
 
-        Path(args.out).write_text(report, encoding="utf-8")
+        output = Path(args.out)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(report, encoding="utf-8")
         print(f"📄 записано: {args.out}")
     return 0
 

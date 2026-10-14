@@ -176,6 +176,37 @@ def test_runner_raw_recorder(tmp_path, dataset):
     assert "raw" in payload and "messages" in payload
 
 
+def test_runner_resilient_on_segment_failure(dataset, monkeypatch):
+    """Resilience (2.7.3): падение на сегменте НЕ роняет прогон."""
+    from aeon.extractor import MeaningExtractor
+    from aeon.gold.runner import _make_llm
+
+    subset = type(dataset)(records=[r for r in dataset.records
+                                    if r.text_id == "plato_apologia_17a"],
+                           annotations_dir=dataset.annotations_dir)
+    original = MeaningExtractor.extract_from_text
+    state = {"calls": 0}
+
+    def flaky(self, text, source_lang="auto"):
+        state["calls"] += 1
+        if state["calls"] == 2:
+            raise RuntimeError("simulated edge-case")
+        return original(self, text, source_lang)
+
+    monkeypatch.setattr(MeaningExtractor, "extract_from_text", flaky)
+    llm = _make_llm("mock", 0.0)
+    stats = {}
+
+    predictions = run_dataset(subset, llm=llm, stats=stats)
+
+    plato = predictions["plato_apologia_17a"]
+    assert len(plato) == 3                      # прогон продолжился
+    assert plato[1].failed and "simulated" in plato[1].error
+    assert not plato[0].failed and not plato[2].failed
+    assert stats["failures"][0]["segment_id"] == 2
+    assert stats["per_text"]["plato_apologia_17a"]["calls"] >= 2
+
+
 # ── metrics ──
 
 

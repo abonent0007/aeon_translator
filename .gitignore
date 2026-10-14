@@ -52,6 +52,9 @@ data/trismegistos/*
 !data/pleiades/README.md
 !data/trismegistos/README.md
 
+# gold real runs (сырые LLM-ответы не коммитим; отчёты — да)
+gold/real_runs/
+
 # IDE
 .vscode/
 .idea/
