@@ -11,7 +11,12 @@ from aeon.language.grc import AncientGreekPack
 from aeon.language.la import LatinPack
 from aeon.semantic_atom import SemanticAtom
 from aeon.verification.base import Verdict
-from aeon.verification.verdicts import VERDICT_CONTRADICTED, VERDICT_GROUNDED
+from aeon.verification.verdicts import (
+    VERDICT_ABSTAINED,
+    VERDICT_CONTRADICTED,
+    VERDICT_GROUNDED,
+    VERDICT_UNVERIFIABLE_MISSING_DATA,
+)
 
 EXAMPLES = Path(__file__).resolve().parent.parent / "examples"
 
@@ -204,14 +209,14 @@ def test_hypotheses_pass_detective_each(mock_llm):
     assert result.hypotheses[0].verification["verdict"] == VERDICT_GROUNDED
 
 
-def test_verify_hypotheses_can_be_disabled(mock_llm):
-    mock_llm.responses = reconstruct_responses(2)
-    engine, stub = make_engine(mock_llm)
+def test_fragment_config_rejects_verify_disabled():
+    """Отключение верификации гипотез запрещено (curator fix 2.3)."""
+    import pytest
 
-    engine.reconstruct(make_atom("текст [...] конец"), pack=AncientGreekPack(),
-                       verify_hypotheses=False)
+    from aeon.config import ConfigError, FragmentsConfig
 
-    assert stub.calls == []
+    with pytest.raises(ConfigError, match="VERIFY_HYPOTHESES"):
+        FragmentsConfig(verify_hypotheses=False)
 
 
 def test_no_reconstruction_serializable(mock_llm):
@@ -246,3 +251,82 @@ def test_llm_unavailable_returns_no_reconstruction(mock_llm):
 
     assert result.status == "no_reconstruction_possible"
     assert result.no_reconstruction.reason == "llm_unavailable"
+
+
+def test_engine_sappho_hallucination_rejected(mock_llm):
+    """Гипотеза без опоры в source (Детектив neutral) НЕ попадает в финал."""
+    mock_llm.responses = reconstruct_responses(2)
+    stub = StubVerifier(Verdict(VERDICT_UNVERIFIABLE_MISSING_DATA, 0.4, "detective"))
+    engine = FragmentHypothesisEngine(llm_client=mock_llm, verifier=stub)
+
+    result = engine.reconstruct(make_atom("текст [...] конец"), pack=AncientGreekPack())
+
+    assert result.status == "no_reconstruction_possible"
+    assert result.no_reconstruction.reason == "no_verified_hypotheses"
+    assert result.hypotheses == []
+
+
+def test_engine_hypothesis_requires_detective_grounded(mock_llm):
+    """Только grounded проходит; abstained — нет (curator fix 2.3)."""
+    mock_llm.responses = reconstruct_responses(2)
+    stub = StubVerifier(Verdict(VERDICT_ABSTAINED, 0.0, "detective"))
+    engine = FragmentHypothesisEngine(llm_client=mock_llm, verifier=stub)
+
+    result = engine.reconstruct(make_atom("текст [...] конец"), pack=AncientGreekPack())
+
+    assert result.status == "no_reconstruction_possible"
+    assert result.no_reconstruction.reason == "no_verified_hypotheses"
+    assert len(stub.calls) == 2  # обе гипотезы проверялись
+
+
+def test_engine_no_verified_hypotheses_returns_no_reconstruction(mock_llm):
+    """Смесь neutral + abstained (без contradicted) → no_verified_hypotheses."""
+    mock_llm.responses = reconstruct_responses(2)
+
+    class SeqVerifier:
+        def __init__(self):
+            self.detective = self
+            self.calls = []
+
+        def verify(self, context):
+            self.calls.append(context.claims[0])
+            verdict = (VERDICT_UNVERIFIABLE_MISSING_DATA
+                       if len(self.calls) == 1 else VERDICT_ABSTAINED)
+            return Verdict(verdict, 0.4, "detective")
+
+    engine = FragmentHypothesisEngine(llm_client=mock_llm, verifier=SeqVerifier())
+
+    result = engine.reconstruct(make_atom("текст [...] конец"), pack=AncientGreekPack())
+
+    assert result.no_reconstruction.reason == "no_verified_hypotheses"
+
+
+def test_engine_mixed_verdicts_keep_only_grounded(mock_llm):
+    """Смесь: grounded проходит, contradicted/neutral отброшены."""
+    mock_llm.responses = reconstruct_responses(3)
+
+    class SeqVerifier:
+        def __init__(self):
+            self.detective = self
+            self.calls = []
+            self._verdicts = [VERDICT_GROUNDED, VERDICT_CONTRADICTED,
+                              VERDICT_UNVERIFIABLE_MISSING_DATA]
+
+        def verify(self, context):
+            self.calls.append(context.claims[0])
+            return Verdict(self._verdicts.pop(0), 0.9, "detective")
+
+    engine = FragmentHypothesisEngine(llm_client=mock_llm, verifier=SeqVerifier())
+
+    result = engine.reconstruct(make_atom("текст [...] конец"), pack=AncientGreekPack())
+
+    assert result.status == "ok"
+    assert len(result.hypotheses) == 1
+    assert result.hypotheses[0].verification["verdict"] == VERDICT_GROUNDED
+
+
+def test_fragment_min_confidence_default_075():
+    """Порог реконструкции 0.75 — выше abstention верификации (curator fix 2.3)."""
+    from aeon.config import CONFIG
+
+    assert CONFIG.fragments.min_confidence == 0.75

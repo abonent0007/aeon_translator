@@ -197,10 +197,19 @@ class LoggingConfig:
 class FragmentsConfig:
     """Fragment Hypothesis Engine (шаг 2.3)."""
 
-    max_hypotheses: int = 4            # 2–4 в промпте; серверный cap
-    min_confidence: float = 0.5        # max(conf) ниже → no_reconstruction
+    max_hypotheses: int = 4
+    #: Порог ниже, чем abstention верификации: реконструкция — акт СОЗДАНИЯ,
+    #: цена ошибки выше (curator fix 2.3: 0.75, не 0.5).
+    min_confidence: float = 0.75
     density_threshold: float = 0.005   # markers_count / len(text): ниже — «разреженный»
-    verify_hypotheses: bool = True     # каждая гипотеза → Detective
+    verify_hypotheses: bool = True     # только True — отключение запрещено
+
+    def __post_init__(self):
+        if not self.verify_hypotheses:
+            raise ConfigError(
+                "AEON_FRAGMENT_VERIFY_HYPOTHESES=0 запрещён: реконструкция без "
+                "верификации гипотез = completion bias (curator fix 2.3)."
+            )
 
 
 @dataclass(frozen=True)
@@ -317,7 +326,7 @@ def load_config() -> AeonConfig:
 
     fragments_cfg = FragmentsConfig(
         max_hypotheses=_env_int("AEON_FRAGMENT_MAX_HYPOTHESES", 4),
-        min_confidence=_env_float("AEON_FRAGMENT_MIN_CONFIDENCE", 0.5),
+        min_confidence=_env_float("AEON_FRAGMENT_MIN_CONFIDENCE", 0.75),
         density_threshold=_env_float("AEON_FRAGMENT_DENSITY_THRESHOLD", 0.005),
         verify_hypotheses=_env_bool("AEON_FRAGMENT_VERIFY_HYPOTHESES", True),
     )

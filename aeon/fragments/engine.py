@@ -59,9 +59,15 @@ class FragmentHypothesisEngine:
 
     # ── публичное API ──
 
-    def reconstruct(self, atom: SemanticAtom, pack=None,
-                    verify_hypotheses: Optional[bool] = None) -> ReconstructionResult:
-        """Гипотезы восстановления для фрагментарного атома."""
+    def reconstruct(self, atom: SemanticAtom, pack=None) -> ReconstructionResult:
+        """
+        Гипотезы восстановления для фрагментарного атома.
+
+        Верификация гипотез ОБЯЗАТЕЛЬНА (Детектив, строгий `grounded`):
+        отключение запрещено — реконструкция без проверки = completion bias
+        (curator fix 2.3). Temperature 0.0 — детерминизм, насколько позволяет
+        провайдер (полная воспроизводимость — требование к провайдеру).
+        """
         text = atom.source_text or ""
         markers = self._collect_markers(text, pack)
         base = {
@@ -87,7 +93,7 @@ class FragmentHypothesisEngine:
         result = self.llm._call_json([
             {"role": "system", "content": "You reconstruct fragmentary text. Return only valid JSON."},
             {"role": "user", "content": prompt},
-        ], temperature=0.2)
+        ], temperature=0.0)
 
         if result.get("parse_error"):
             return self._no(
@@ -109,11 +115,10 @@ class FragmentHypothesisEngine:
                 **base,
             )
 
-        do_verify = self.cfg.verify_hypotheses if verify_hypotheses is None else verify_hypotheses
-        if do_verify:
-            hypotheses = self._verify_hypotheses(hypotheses, text)
-            if not hypotheses:
-                return self._no("all_contradicted", **base)
+        verified = self._verify_hypotheses(hypotheses, text)
+        if not verified:
+            return self._no(self._empty_reason(hypotheses), **base)
+        hypotheses = verified
 
         log_event(self._logger, "reconstruction_done", status="ok",
                   hypotheses=len(hypotheses), markers=len(markers),
@@ -193,17 +198,34 @@ class FragmentHypothesisEngine:
 
     def _verify_hypotheses(self, hypotheses: List[Hypothesis],
                            source_text: str) -> List[Hypothesis]:
+        """
+        Строгий фильтр (curator fix 2.3): проходит ТОЛЬКО `grounded`;
+        neutral/abstained/contradicted отбрасываются — реконструкция без
+        подтверждения контекстом = completion bias.
+
+        Claim — согласованность кандидата с СОХРАНИВШИМСЯ контекстом
+        (exact-quote утраченного текста невозможен по определению).
+        """
         from ..verification import VerificationContext
-        from ..verification.verdicts import VERDICT_CONTRADICTED
+        from ..verification.verdicts import VERDICT_GROUNDED
 
         verifier = self._get_verifier()
-        kept: List[Hypothesis] = []
         for hypothesis in hypotheses:
+            claim = (
+                f"Reconstruction candidate {hypothesis.text!r} is consistent "
+                f"with the surviving context"
+            )
             verdict = verifier.detective.verify(VerificationContext(
-                source_text=source_text, claims=[hypothesis.text],
+                source_text=source_text, claims=[claim],
             ))
             hypothesis.verification = verdict.to_dict()
-            hypothesis.verified = verdict.verdict != VERDICT_CONTRADICTED
-            if hypothesis.verified:
-                kept.append(hypothesis)
-        return kept
+            hypothesis.verified = verdict.verdict == VERDICT_GROUNDED
+        return [hypothesis for hypothesis in hypotheses if hypothesis.verified]
+
+    @staticmethod
+    def _empty_reason(hypotheses: List[Hypothesis]) -> str:
+        """all_contradicted — если ВСЕ отвергнуты; иначе — нет подтверждённых."""
+        verdicts = [h.verification.get("verdict") for h in hypotheses]
+        if verdicts and all(verdict == "contradicted" for verdict in verdicts):
+            return "all_contradicted"
+        return "no_verified_hypotheses"

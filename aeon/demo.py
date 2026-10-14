@@ -280,10 +280,10 @@ DEMO_RESPONSES = {
     "Logician": {"contradictions": [], "coherence": 0.9,
                  "reasoning": "внутренних противоречий нет"},
     "You reconstruct": {"hypotheses": [
-        {"text": "Ἀθῆναι", "confidence": 0.62,
-         "evidence": "контекст πόλις ἐστίν ограничивает топоним"},
-        {"text": "Σπάρτη", "confidence": 0.41,
-         "evidence": "менее вероятный топоним в контексте"},
+        {"text": "ἴδρως κακχέεται", "confidence": 0.78,
+         "evidence": "Sapph. 31, ст. 13 (Voigt): восстановление по контексту строфы"},
+        {"text": "τρόμος δὲ παῖσαν ἄγρει", "confidence": 0.55,
+         "evidence": "продолжение строфы; менее надёжно"},
     ], "status": "ok"},
 }
 
@@ -330,7 +330,8 @@ def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
             llm = None
     if llm is None:
         llm = MockLLM(responses=DEMO_RESPONSES, latency_ms=latency_ms)
-        print(f"LLM: MockLLM (латентность {latency_ms:g} ms/вызов — имитация сети)")
+        print(f"LLM: MockLLM (латентность {latency_ms:g} ms/вызов — имитация сети; "
+              f"canned-ответы, не реальный LLM)")
 
     extractor = MeaningExtractor(llm_client=llm, embedding_engine=_offline_embeddings())
     verification = VerificationEngine(llm_client=llm)

@@ -38,7 +38,9 @@
     "Stop-point decisions 2.3: #1 variants=contested readings -> backlog F2.4+ (Sappho runs normal fragment path); #2 each hypothesis -> Detective (N calls; ~+2s/hypothesis real; batching if >30s - backlog 2.7); #3 reconstruct prompt = pack prompts + DEFAULT_RECONSTRUCT_PROMPT (<=30 lines each); #4 no_reconstruction = TERMINAL verdict + reason as structured signal for external sources (F2.6).",
     "Bare ellipsis '…' added to grc/la lacuna tokens (spec alignment; Sappho uses bare '…'); prose-ellipsis false-positive risk noted.",
     "translator metadata['reconstruction'] = to_dict() (JSON-serializable; .aeon v2 storage - F3). Config: CONFIG.fragments + AEON_FRAGMENT_* env.",
-    "Coverage runner includes aeon.fragments now (TOTAL ~93%)."
+    "Coverage runner includes aeon.fragments now (TOTAL ~93%).",
+    "FIX 2.3 (curator: Sappho false-positive): demo-мок возвращал canned 'grounded' на любой claim (артефакт мока, не движка) + РЕАЛЬНАЯ дыра: движок пропускал не-grounded вердикты (neutral/abstained). Исправлено: строгий фильтр grounded-only (claim = согласованность с сохранившимся контекстом); min_confidence 0.5 -> 0.75 (акт создания); verify_hypotheses нельзя отключить (ConfigError); temp 0.0; reasons + no_verified_hypotheses; demo-мок заменён на реальное восстановление Sapph. 31 ст.13 (ἴδρως κακχέεται) + пометка 'canned-ответы'; 5 новых тестов.",
+    "Serialization clarification (curator #4): to_dict() JSON only; .aeon v1 не трогали; .aeon v2 storage - Ф3. Determinism (#5): temp 0.0 + stable ranking; полная воспроизводимость - требование к провайдеру (backlog)."
   ],
   "backlog": [
     "2.4 Linguistic Layers (lexical->syntactic->semantic->pragmatic); variant readings mode (kind=variant, choose between editions) for contested readings",

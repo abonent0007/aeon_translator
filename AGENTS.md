@@ -116,30 +116,39 @@ ReconstructionResult — все JSON-сериализуемы; .aeon v2 — Ф3)
 Поток `FragmentHypothesisEngine.reconstruct(atom, pack=None)`:
 1. маркеры: `pack.detect_markers` (приоритет) → fallback
    `semantic_atom.LACUNA_MARKERS` (pack=None);
-2. `fragment_density = markers_count / max(len(text), 1)` (+ конфиг
-   `AEON_FRAGMENT_DENSITY_THRESHOLD`, default 0.005);
+2. `fragment_density = markers_count / max(len(text), 1)` — **не влияет на
+   is_fragment**, только результат/логирование (и кандидат на приоритизацию);
+   конфиг `AEON_FRAGMENT_DENSITY_THRESHOLD` (default 0.005);
 3. только-cruces → `no_reconstruction_possible(reason=
-   "cruces_without_external_evidence")` без LLM (стоп-точка №4: терминальный
-   вердикт + reason — структурированный сигнал внешним источникам, Ф2.6;
-   в СМЕШАННОМ тексте lacunae реконструируются, cruces исключаются из
-   `markers_addressed`);
-4. LLM: pack-промпт `reconstruct` (или DEFAULT, ≤30 строк) → 2–4 гипотезы;
-   серверная защита: cap=4, `max(confidence) < 0.5` →
-   `reason="max_confidence_below_threshold"`;
-5. верификация (стоп-точка №2): **каждая** гипотеза → Детектив (N вызовов);
-   contradicted → отброшена; пусто → `reason="all_contradicted"`.
+   "cruces_without_external_evidence")` без LLM (терминальный вердикт +
+   reason — структурированный сигнал внешним источникам, Ф2.6; в СМЕШАННОМ
+   тексте lacunae реконструируются, cruces исключаются из `markers_addressed`);
+4. LLM (temperature **0.0** — детерминизм, насколько позволяет провайдер):
+   pack-промпт `reconstruct` (или DEFAULT, ≤30 строк) → 2–4 гипотезы;
+   серверная защита: cap=4, `max(confidence) < 0.75`
+   (`AEON_FRAGMENT_MIN_CONFIDENCE`) → `reason="max_confidence_below_threshold"`
+   (реконструкция — акт СОЗДАНИЯ: цена ошибки выше, порог выше abstention 0.50);
+5. **верификация ОБЯЗАТЕЛЬНА** (curator fix 2.3): каждая гипотеза → Детектив
+   (N вызовов), claim = «кандидат согласуется с сохранившимся контекстом»
+   (exact-quote утраченного невозможен); **проходит ТОЛЬКО `grounded`** —
+   neutral/abstained/contradicted отбрасываются; пусто →
+   `all_contradicted` (все отвергнуты) или `no_verified_hypotheses` (прочие).
+   Отключение верификации запрещено: `FragmentsConfig` → ConfigError
+   (`AEON_FRAGMENT_VERIFY_HYPOTHESES=0`).
 Остальные reason: `no_markers`, `llm_unavailable`, `llm_parse_error`,
 `llm_returned_none`.
 
 Флаги: `translate(..., reconstruct=False)` (default off — backward compat
 Ф2.2; при `True` и `atom.is_fragment` результат в
 `metadata["reconstruction"]`); demo `--reconstruct`.
-Варианты чтения (contested readings ≠ лакуны) — backlog Ф2.4+ (стоп-точка
-№1: Sappho идёт обычным fragment-путём).
+Сериализация: `to_dict()` JSON-совместим; хранение в `.aeon v2` — Ф3
+(v1 формат не трогали).
+Варианты чтения (contested readings ≠ лакуны) — backlog Ф2.4+ (Sappho идёт
+обычным fragment-путём; demo-мок использует реальное восстановление ст. 13).
 
 Конфиг: `CONFIG.fragments` (`AEON_FRAGMENT_MAX_HYPOTHESES=4`,
-`AEON_FRAGMENT_MIN_CONFIDENCE=0.5`, `AEON_FRAGMENT_DENSITY_THRESHOLD=0.005`,
-`AEON_FRAGMENT_VERIFY_HYPOTHESES=1`).
+`AEON_FRAGMENT_MIN_CONFIDENCE=0.75`, `AEON_FRAGMENT_DENSITY_THRESHOLD=0.005`,
+`AEON_FRAGMENT_VERIFY_HYPOTHESES=1` — только True).
 
 ## Tech Stack
 - Python 3.11 (Windows dev), приоритет stdlib
