@@ -83,9 +83,14 @@ def log_event(
     confidence: Optional[float] = None,
     sources: Optional[list] = None,
     reasoning: Optional[str] = None,
+    trace_id: Optional[str] = None,
     **fields: Any,
 ) -> None:
-    """Структурное событие (верификация/анализ): именованные поля + extras."""
+    """Структурное событие (верификация/анализ): именованные поля + extras.
+
+    trace_id связывает события одного прогона (например, трёх верификаторов
+    одного атома на шаге 1.3). Параметр опционален — обратная совместимость.
+    """
     extra: Dict[str, Any] = dict(fields)
     if agent is not None:
         extra["agent"] = agent
@@ -97,4 +102,6 @@ def log_event(
         extra["sources"] = sources
     if reasoning is not None:
         extra["reasoning"] = reasoning
+    if trace_id is not None:
+        extra["trace_id"] = trace_id
     logger.info(msg, extra=extra)

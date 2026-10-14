@@ -23,6 +23,7 @@ def test_json_lines_format(tmp_path):
         confidence=0.87,
         sources=["Q859"],
         reasoning="exact quote found",
+        trace_id="run-1",
     )
 
     lines = _read_lines(tmp_path / "log.jsonl")
@@ -36,6 +37,7 @@ def test_json_lines_format(tmp_path):
     assert event["confidence"] == 0.87
     assert event["sources"] == ["Q859"]
     assert event["reasoning"] == "exact quote found"
+    assert event["trace_id"] == "run-1"
     assert event["ts"].endswith("Z")
 
 

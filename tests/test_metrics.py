@@ -22,6 +22,8 @@ def test_empty_snapshot_is_na():
     assert s["network_calls_per_atom"] is None
     assert s["cache_hit_rate"] is None
     assert s["avg_time_per_atom_sec"] is None
+    assert s["avg_time_per_atom_local"] is None
+    assert s["avg_time_per_atom_network"] is None
 
 
 def test_timeit_records_timings():
@@ -30,10 +32,16 @@ def test_timeit_records_timings():
         pass
     with m.timeit("atom"):
         pass
+    with m.timeit("atom_local"):
+        pass
+    with m.timeit("atom_network"):
+        pass
 
     s = m.snapshot()
     assert s["avg_time_per_atom_sec"] is not None
     assert s["avg_time_per_atom_sec"] >= 0
+    assert s["avg_time_per_atom_local"] is not None
+    assert s["avg_time_per_atom_network"] is not None
 
 
 def test_reset_clears_everything():
@@ -43,6 +51,8 @@ def test_reset_clears_everything():
     m.record_cache(hit=True)
     with m.timeit("atom"):
         pass
+    with m.timeit("atom_local"):
+        pass
 
     m.reset()
     s = m.snapshot()
@@ -51,6 +61,7 @@ def test_reset_clears_everything():
     assert s["cache_hits"] == 0
     assert s["cache_misses"] == 0
     assert s["avg_time_per_atom_sec"] is None
+    assert s["avg_time_per_atom_local"] is None
 
 
 def test_global_singleton_and_summary_format():
@@ -63,4 +74,4 @@ def test_global_singleton_and_summary_format():
     assert "atoms_processed" in text
     assert "cache_hit_rate" in text
     assert "network_calls" in text
-    assert "avg" in text
+    assert "(local " in text

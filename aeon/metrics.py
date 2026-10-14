@@ -56,13 +56,13 @@ class Metrics:
 
     # ── сводка ──
 
+    @staticmethod
+    def _avg(values: List[float]) -> Optional[float]:
+        return round(sum(values) / len(values), 3) if values else None
+
     def snapshot(self) -> Dict[str, Any]:
         with self._lock:
             cache_lookups = self.cache_hits + self.cache_misses
-            atom_times = self.timings.get("atom", [])
-            avg_atom: Optional[float] = (
-                round(sum(atom_times) / len(atom_times), 3) if atom_times else None
-            )
             return {
                 "atoms_processed": self.atoms_processed,
                 "network_calls": self.network_calls,
@@ -75,7 +75,9 @@ class Metrics:
                 "cache_hit_rate": (
                     round(self.cache_hits / cache_lookups, 2) if cache_lookups else None
                 ),
-                "avg_time_per_atom_sec": avg_atom,
+                "avg_time_per_atom_sec": self._avg(self.timings.get("atom", [])),
+                "avg_time_per_atom_local": self._avg(self.timings.get("atom_local", [])),
+                "avg_time_per_atom_network": self._avg(self.timings.get("atom_network", [])),
             }
 
     def format_summary(self) -> str:
@@ -84,15 +86,17 @@ class Metrics:
         def _fmt(value: Any) -> Any:
             return "n/a" if value is None else value
 
-        avg_atom = s["avg_time_per_atom_sec"]
-        avg_atom_str = "n/a" if avg_atom is None else f"{avg_atom}s"
+        def _sec(value: Any) -> str:
+            return "n/a" if value is None else f"{value}s"
 
         return "\n".join([
             f"  atoms_processed:   {s['atoms_processed']}",
             f"  network_calls:     {s['network_calls']} "
             f"(avg {_fmt(s['network_calls_per_atom'])}/atom)",
             f"  cache_hit_rate:    {_fmt(s['cache_hit_rate'])}",
-            f"  avg_time_per_atom: {avg_atom_str}",
+            f"  avg_time_per_atom: {_sec(s['avg_time_per_atom_sec'])} "
+            f"(local {_sec(s['avg_time_per_atom_local'])} / "
+            f"network {_sec(s['avg_time_per_atom_network'])})",
         ])
 
     def reset(self) -> None:
