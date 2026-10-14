@@ -57,10 +57,14 @@ Semantic processor: переводит смысл между формами (т�
   SQLite-кэш 7д, offline-режим; веса скоринга — `AEON_SCORE_WEIGHT_*`.
 - **Fragment-понятия ортогональны:** `is_fragment` — свойство ИСТОЧНИКА (лакуна);
   `completeness_score` — качество ИЗВЛЕЧЕНИЯ (5 полей); агрегат `needs_attention`.
-- **Verification 2.0:** negatives доминируют → `contradicted`; нет positives →
-  `abstained`; positives-mean <0.50 → `abstained`; needs_review <0.85; нейтральные
-  НЕ штрафуются; per-agent abstention (detective conf<0.85, logician coherence<0.60);
-  logician при <2 claims — abstained (без false positive).
+- **Verification 2.0 (точная формула CVI — для воспроизводимости):** negatives
+  доминируют → `contradicted` (conf = max по негативным); нет positives →
+  `abstained` (conf 0.0); **CVI = среднее confidence ПОЛОЖИТЕЛЬНЫХ вердиктов**
+  (round 4; нейтральные/abstained в среднее НЕ входят); CVI < 0.50
+  (`abstention_threshold`) → `abstained`; needs_review при CVI < 0.85
+  (=1−`legacy.risk_verified_max`). Пример из demo: mean(0.91, 0.90) = 0.905 →
+  в выводе `{cvi:.2f}` отображается «0.91». Per-agent abstention (detective
+  conf<0.85, logician coherence<0.60); logician при <2 claims — abstained.
 - **verify_atom:** legacy-ключи (consistency/grounding/hallucination_risk/
   overall_verdict) + v4.0 (agents/combined/cvi/abstained/reasoning_trace).
 
@@ -78,3 +82,11 @@ Semantic processor: переводит смысл между формами (т�
 - **Coverage на Windows:** pytest-cov (`--cov`) падает access violation (0xC0000005)
   при загрузке torch DLL. Обход: `python tools/run_coverage.py` (Coverage API
   стартует до pytest). Не возвращаться к `pytest --cov`.
+- **Coverage-раннер — кросс-платформенный:** `tools/run_coverage.py` использует
+  только Coverage API, валиден и на Linux (там штатный `pytest --cov` тоже
+  работает); версия закреплена `coverage>=7.4,<8.0` в requirements-dev.
+- **Network-тесты в CI (план):** `pytest -m network` — отдельная НЕблокирующая
+  джоба; локально — по требованию; Pleiades live-тест skip при недоступности.
+- **Real-API gap:** demo-метрики на mock (200 ms/вызов — экстраполяция); реальный
+  DeepSeek ≈1.5–4 s/вызов → 4 вызова ≈6–16 s; Ф2 multi-focus (до 12 вызовов)
+  может потребовать параллелизации (backlog шаг 2.7).

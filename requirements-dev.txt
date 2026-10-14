@@ -2,3 +2,4 @@
 # Установка: pip install -r requirements-dev.txt
 pytest>=9.0
 pytest-cov>=6.0
+coverage>=7.4,<8.0          # pin: tools/run_coverage.py использует Coverage API
