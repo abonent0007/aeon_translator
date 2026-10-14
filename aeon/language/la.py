@@ -111,7 +111,7 @@ class LatinPack(LanguagePack):
     direction = "ltr"
 
     special_tokens = {
-        "lacuna": ["[...]", "[…]", "[lacuna]", "[---]"],
+        "lacuna": ["[...]", "…", "[…]", "[lacuna]", "[---]"],
         "editorial": ["<...>", "<*>"],
         "deletion": ["{...}"],
         "uncertain": ["(...)", "[...?]"],
@@ -154,14 +154,22 @@ class LatinPack(LanguagePack):
         return markers
 
     def detect_heuristic(self, text: str) -> float:
-        """Word-эвристика: служебные слова (1.0) + падежные окончания (0.5)."""
+        """
+        Word-эвристика: УНИКАЛЬНЫЕ служебные слова (1.0) + падежные окончания
+        (0.5), порог ≥2. Уникальность — защита от английских повторов
+        («in … in» не даёт 2.0, refinement 2.2 №3). Порог/веса захардкожены
+        под Classical Latin (refinement 2.2 №5: Medieval/Neo-Latin может
+        underdetect); вынос в конфиг — backlog.
+        """
         words = _WORD_RE.findall(text.lower())
         if len(words) < 2:
             return 0.0
-        score = 0.0
-        for word in words:
-            if word in _LATIN_FUNCTION_WORDS:
-                score += 1.0
-            elif len(word) > 3 and word.endswith(_LATIN_ENDINGS):
-                score += 0.5
+        function_hits = {word for word in words if word in _LATIN_FUNCTION_WORDS}
+        endings_score = 0.5 * sum(
+            1 for word in words
+            if word not in _LATIN_FUNCTION_WORDS
+            and len(word) > 3
+            and word.endswith(_LATIN_ENDINGS)
+        )
+        score = float(len(function_hits)) + endings_score
         return score if score >= 2.0 else 0.0

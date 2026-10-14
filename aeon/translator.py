@@ -72,7 +72,8 @@ class AeonTranslator:
         target_language: str = "english",
         verify: bool = False,
         verify_mode: Optional[str] = None,
-        language_pack: Optional["LanguagePack"] = None
+        language_pack: Optional["LanguagePack"] = None,
+        reconstruct: bool = False
     ) -> Dict[str, Any]:
         """
         Универсальный перевод смысла с верификацией.
@@ -86,6 +87,10 @@ class AeonTranslator:
         language_pack: опциональный LanguagePack (Фаза 2). Если задан —
         content нормализуется через pack.normalize(); None → поведение
         Фазы 1 без изменений (интеграция в extractor/verifier — шаг 2.1+).
+
+        reconstruct: True и atom.is_fragment → Fragment Hypothesis Engine
+        (шаг 2.3): гипотезы восстановления в metadata["reconstruction"];
+        default False — поведение Ф2.2 без изменений.
         """
         if verify_mode is None:
             verify_mode = "full" if verify else "off"
@@ -153,11 +158,33 @@ class AeonTranslator:
             print(f"   Риск галлюцинации: {atom.hallucination_risk:.0%}")
             print(f"   Вердикт: {verification_result.get('overall_verdict', '?')}")
 
+        # ══ Шаг 1.6: Реконструкция фрагмента (опционально, шаг 2.3) ══
+        reconstruction_result = None
+        if reconstruct and atom.is_fragment:
+            from .fragments import FragmentHypothesisEngine
+
+            print(f"\n🧩 РЕКОНСТРУКЦИЯ ФРАГМЕНТА...")
+            engine = FragmentHypothesisEngine(
+                llm_client=self.llm, verifier=self.verification
+            )
+            reconstruction_result = engine.reconstruct(atom, pack=language_pack)
+            if reconstruction_result.status == "ok":
+                for hypothesis in reconstruction_result.hypotheses:
+                    print(f"   [{hypothesis.confidence:.2f}] {hypothesis.text[:60]}")
+            else:
+                reason = reconstruction_result.no_reconstruction.reason
+                print(f"   ⚠️ no_reconstruction_possible: {reason}")
+
         # ══ Шаг 2: Генерация ══
         print(f"\n📤 ГЕНЕРАЦИЯ В ЦЕЛЕВОЙ ФОРМЕ...")
 
         result = None
-        metadata = {"verification": verification_result}
+        metadata = {
+            "verification": verification_result,
+            "reconstruction": (
+                reconstruction_result.to_dict() if reconstruction_result else None
+            ),
+        }
 
         if target_form == "text":
             result = self.generator.generate_text(atom, target_language, original_text, detected_lang)

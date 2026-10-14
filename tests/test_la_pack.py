@@ -123,6 +123,23 @@ def test_detect_ascii_only_returns_none():
     assert registry.detect("hello world") is None
 
 
+def test_heuristic_not_triggered_by_in_vitro():
+    assert registry.detect("in vitro") is None
+
+
+def test_heuristic_not_triggered_by_et_al():
+    assert registry.detect("et al.") is None
+
+
+def test_heuristic_not_triggered_by_per_se():
+    assert registry.detect("per se") is None
+
+
+def test_heuristic_distinct_words_english_repeats():
+    """Уникальные служебные слова: повтор 'in' не даёт 2.0 (refinement 2.2 №3)."""
+    assert registry.detect("living in Rome in summer") is None
+
+
 def test_registry_lists_la_after_registration():
     assert "la" in registry.list_available()
 

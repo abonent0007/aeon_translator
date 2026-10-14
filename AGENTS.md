@@ -3,9 +3,9 @@
 ## Overview
 Semantic processor: переводит смысл между формами (текст/код/эмоция/голос/изображение)
 с верификацией, entity linking и анализом древних текстов.
-Статус: **Фаза 0 ✅, Фаза 1 ✅, Фаза 2 — шаги 2.0 ✅, 2.1 ✅, 2.2 ✅**
-(Language Pack Infra, Ancient Greek, Latin). Впереди: 2.3 Fragment Hypotheses,
-2.4 Linguistic Layers, 2.5 Multi-focus, 2.6 Offline adapters, 2.7 Real API.
+Статус: **Фаза 0 ✅, Фаза 1 ✅, Фаза 2 — шаги 2.0 ✅, 2.1 ✅, 2.2 ✅, 2.3 ✅**
+(Language Pack Infra, Ancient Greek, Latin, Fragment Hypotheses).
+Впереди: 2.4 Linguistic Layers, 2.5 Multi-focus, 2.6 Offline adapters, 2.7 Real API.
 
 ## Architecture (Фаза 1)
 ```
@@ -31,9 +31,10 @@ Semantic processor: переводит смысл между формами (т�
 Реестр (`aeon/language/registry.py`): `register` — eager-регистрация фабрики,
 lazy-инстанциация + validate при первом `get` (инстанс валидируется сразу);
 `force=True` — осознанный override; `get` — KeyError со списком; `list_available`
-(sorted); `detect` — score = unicode-hits + `detect_heuristic`, **tie-break
-детерминирован (алфавитный iso_code) + событие `detect_ambiguous`**;
-`clear` — тесты.
+(sorted); `detect` — двухфазно: (1) unicode-ranges (max-hits — алфавит решает),
+(2) при равенстве/отсутствии hits — `detect_heuristic` (default 0; эволюция
+контракта в 2.2); **tie-break детерминирован (алфавитный iso_code) +
+событие `detect_ambiguous`**; `clear` — тесты.
 
 Как добавить пак: подкласс `LanguagePack` (реализовать `detect_markers`) →
 `registry.register(PackClass)`; builtin-паки регистрируются в
@@ -89,9 +90,14 @@ Medieval/Neo-Latin не различаем).
 осмысленным u/v-различением; свёртка — поисковый слой Ф3, как ς/σ в grc);
 макроны (ā ē ī ō ū) СОХРАНЯЮТСЯ (долгота/метрика); регистр не трогаем.
 
-Детекция: ranges Latin-1 Supplement / Ext-A / Ext-B + **word-эвристика**
-(служебные слова + падежные окончания, порог ≥2 — общий ASCII-алфавит с
-английским): «Gallia est omnis divisa…» → `la`, «hello world» → `None`.
+Детекция (algorithm, refinement 2.2 №4 — двухфазно):
+1) Unicode-ranges: если есть hits — побеждает max-hits (алфавит решает);
+2) при равенстве/отсутствии — `detect_heuristic` паков (common alphabet).
+`la`-эвристика: **УНИКАЛЬНЫЕ** служебные слова (1.0) + падежные окончания
+(0.5), порог ≥2: «Gallia est omnis divisa…» → `la`, «hello world» → `None`,
+«in vitro»/«et al.» → `None` (повторы не считаются). Порог/веса — хардкод
+Classical (Medieval/Neo-Latin может underdetect; вынос в конфиг — backlog).
+Алгоритм и лимитации: AGENTS → Language Pack Architecture.
 
 Промпты (≤30 строк): verify — lacuna И `†word†` → 
 `unverifiable_due_to_missing_data` (НЕ contradicted); reconstruct — cruces
@@ -101,6 +107,39 @@ Medieval/Neo-Latin не различаем).
 Тексты: `examples/latin/` — Caesar BG 1.1, Cicero Cat. 1.1, Vergil Aen. 1.1–7,
 CIL-образец (лакуны/восстановления/†), Vulgata Gen. 1.1 + `LICENSE.md`
 (PD; макроны Vulgata — учебная конвенция AEON; CIL/EDCS-копии не делались).
+
+## Fragment Hypothesis Engine (шаг 2.3)
+Пакет `aeon/fragments/`: `hypothesis.py` (Hypothesis / NoReconstruction /
+ReconstructionResult — все JSON-сериализуемы; .aeon v2 — Ф3), `ranking.py`
+(rank/cap/drop_contradicted), `engine.py` (оркестратор).
+
+Поток `FragmentHypothesisEngine.reconstruct(atom, pack=None)`:
+1. маркеры: `pack.detect_markers` (приоритет) → fallback
+   `semantic_atom.LACUNA_MARKERS` (pack=None);
+2. `fragment_density = markers_count / max(len(text), 1)` (+ конфиг
+   `AEON_FRAGMENT_DENSITY_THRESHOLD`, default 0.005);
+3. только-cruces → `no_reconstruction_possible(reason=
+   "cruces_without_external_evidence")` без LLM (стоп-точка №4: терминальный
+   вердикт + reason — структурированный сигнал внешним источникам, Ф2.6;
+   в СМЕШАННОМ тексте lacunae реконструируются, cruces исключаются из
+   `markers_addressed`);
+4. LLM: pack-промпт `reconstruct` (или DEFAULT, ≤30 строк) → 2–4 гипотезы;
+   серверная защита: cap=4, `max(confidence) < 0.5` →
+   `reason="max_confidence_below_threshold"`;
+5. верификация (стоп-точка №2): **каждая** гипотеза → Детектив (N вызовов);
+   contradicted → отброшена; пусто → `reason="all_contradicted"`.
+Остальные reason: `no_markers`, `llm_unavailable`, `llm_parse_error`,
+`llm_returned_none`.
+
+Флаги: `translate(..., reconstruct=False)` (default off — backward compat
+Ф2.2; при `True` и `atom.is_fragment` результат в
+`metadata["reconstruction"]`); demo `--reconstruct`.
+Варианты чтения (contested readings ≠ лакуны) — backlog Ф2.4+ (стоп-точка
+№1: Sappho идёт обычным fragment-путём).
+
+Конфиг: `CONFIG.fragments` (`AEON_FRAGMENT_MAX_HYPOTHESES=4`,
+`AEON_FRAGMENT_MIN_CONFIDENCE=0.5`, `AEON_FRAGMENT_DENSITY_THRESHOLD=0.005`,
+`AEON_FRAGMENT_VERIFY_HYPOTHESES=1`).
 
 ## Tech Stack
 - Python 3.11 (Windows dev), приоритет stdlib
@@ -123,7 +162,8 @@ CIL-образец (лакуны/восстановления/†), Vulgata Gen.
 - Coverage (обходной раннер — см. quirks): `python tools/run_coverage.py`
 - Demo верификации: `python -m aeon.demo --text examples/latin/caesar_bg_1_1.txt --verify=full --language=la`
   (mock 200ms/вызов; `--real` — с DEEPSEEK_API_KEY; `--verify=off|basic|full`;
-  `--language` — ISO-код пака: нормализация + маркеры)
+  `--language` — ISO-код пака: нормализация + маркеры;
+  `--reconstruct` — Fragment Hypothesis Engine: гипотезы / no_reconstruction)
 - verify_mode в API: `translator.translate(..., verify_mode="off|basic|full", language_pack=None)`
   (legacy `verify=True` ≡ `verify_mode="full"`)
 - Реестр паков: `python -c "from aeon.language import registry; print(registry.list_available())"`

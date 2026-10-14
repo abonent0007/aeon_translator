@@ -121,6 +121,11 @@ def test_registry_lists_grc_after_registration():
     assert "grc" in registry.list_available()
 
 
+def test_grc_inherits_default_heuristic():
+    """grc не переопределяет detect_heuristic — default 0.0 (refinement 2.2 №1)."""
+    assert AncientGreekPack().detect_heuristic("μῆνιν ἄειδε θεά") == 0.0
+
+
 def test_detect_modern_greek_documented_limitation():
     """Новогреческий тоже матчится на grc — известное ограничение (AGENTS.md)."""
     pack = registry.detect("καλημέρα, φίλε")

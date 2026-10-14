@@ -279,6 +279,12 @@ DEMO_RESPONSES = {
     ]},
     "Logician": {"contradictions": [], "coherence": 0.9,
                  "reasoning": "внутренних противоречий нет"},
+    "You reconstruct": {"hypotheses": [
+        {"text": "Ἀθῆναι", "confidence": 0.62,
+         "evidence": "контекст πόλις ἐστίν ограничивает топоним"},
+        {"text": "Σπάρτη", "confidence": 0.41,
+         "evidence": "менее вероятный топоним в контексте"},
+    ], "status": "ok"},
 }
 
 
@@ -289,7 +295,8 @@ def _offline_embeddings():
 
 
 def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
-                    use_real: bool, language: str | None = None) -> None:
+                    use_real: bool, language: str | None = None,
+                    reconstruct: bool = False) -> None:
     """Demo: атом + trace верификации + метрики (мок с задержкой или реальный LLM)."""
     from pathlib import Path
 
@@ -342,6 +349,12 @@ def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
                     text, claims, [e.name for e in atom.entities],
                     trace_id=atom.meaning_hash, mode=verify_mode,
                 )
+            reconstruction = None
+            if reconstruct and atom.is_fragment:
+                from aeon.fragments import FragmentHypothesisEngine
+
+                engine = FragmentHypothesisEngine(llm_client=llm, verifier=verification)
+                reconstruction = engine.reconstruct(atom, pack=language_pack)
 
         print(f"\nАТОМ: {atom}")
         print(f"  сущностей: {len(atom.entities)} | evidence: {len(atom.evidence)}"
@@ -364,6 +377,21 @@ def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
             if result["abstained"]:
                 print("⚠️ Система воздержалась («Я не знаю») — недостаточно данных")
 
+        if reconstruct:
+            if reconstruction is None:
+                print("\n🧩 РЕКОНСТРУКЦИЯ: не запускалась (текст не фрагментарен)")
+            else:
+                print(f"\n🧩 РЕКОНСТРУКЦИЯ (status={reconstruction.status}):")
+                if reconstruction.status == "ok":
+                    for hypothesis in reconstruction.hypotheses:
+                        print(f"  [{hypothesis.confidence:.2f}] {hypothesis.text}")
+                        print(f"       evidence: {hypothesis.evidence[:70]}")
+                else:
+                    print(f"  ⚠️ no_reconstruction_possible: "
+                          f"{reconstruction.no_reconstruction.reason}")
+                print(f"  density: {reconstruction.fragment_density:.5f}"
+                      f" | маркеров: {reconstruction.markers_count}")
+
     METRICS.record_atom()
     print_separator("METRICS")
     print(METRICS.format_summary())
@@ -384,11 +412,13 @@ def main():
                         help="использовать реальный LLM (нужен DEEPSEEK_API_KEY в .env)")
     parser.add_argument("--language", type=str, default=None,
                         help="ISO-код языкового пака для нормализации/маркеров (например, grc)")
+    parser.add_argument("--reconstruct", action="store_true",
+                        help="Fragment Hypothesis Engine (шаг 2.3): гипотезы восстановления")
     args = parser.parse_args()
 
     if args.text:
         run_verify_demo(args.text, args.verify, args.latency_ms, args.real,
-                        language=args.language)
+                        language=args.language, reconstruct=args.reconstruct)
         return
 
     print("""

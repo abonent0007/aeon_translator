@@ -45,6 +45,10 @@ RESPONSES = {
          "confidence": 0.4, "reasoning": "no external data"},
     ]},
     "Logician": {"contradictions": [], "coherence": 0.9, "reasoning": "ok"},
+    "You reconstruct": {"hypotheses": [
+        {"text": "восстановление-1", "confidence": 0.8, "evidence": "контекст-1"},
+        {"text": "восстановление-2", "confidence": 0.6, "evidence": "контекст-2"},
+    ], "status": "ok"},
 }
 
 
@@ -128,3 +132,27 @@ def test_translate_original_content_preserved(translator):
 
     assert result["source"]["content"] == TEXT                  # оригинал сохранён
     assert result["semantic_atom"].source_text == TEXT.upper()  # pipeline видел нормализованное
+
+
+def test_reconstruct_flag_default_off(translator):
+    """Backward compat Ф2.2: без флага реконструкция не запускается."""
+    result = translator.translate("текст [...] конец", source_language="russian")
+
+    assert result["metadata"]["reconstruction"] is None
+
+
+def test_reconstruct_flag_on_with_fragment(translator):
+    result = translator.translate("текст [...] конец", source_language="russian",
+                                  reconstruct=True)
+
+    reconstruction = result["metadata"]["reconstruction"]
+    assert reconstruction is not None
+    assert reconstruction["status"] == "ok"
+    assert len(reconstruction["hypotheses"]) == 2
+
+
+def test_reconstruct_flag_on_non_fragment(translator):
+    """Не-фрагмент: движок не запускается (no-op)."""
+    result = translator.translate(TEXT, source_language="russian", reconstruct=True)
+
+    assert result["metadata"]["reconstruction"] is None

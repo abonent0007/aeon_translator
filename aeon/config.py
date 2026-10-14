@@ -194,6 +194,16 @@ class LoggingConfig:
 
 
 @dataclass(frozen=True)
+class FragmentsConfig:
+    """Fragment Hypothesis Engine (шаг 2.3)."""
+
+    max_hypotheses: int = 4            # 2–4 в промпте; серверный cap
+    min_confidence: float = 0.5        # max(conf) ниже → no_reconstruction
+    density_threshold: float = 0.005   # markers_count / len(text): ниже — «разреженный»
+    verify_hypotheses: bool = True     # каждая гипотеза → Detective
+
+
+@dataclass(frozen=True)
 class AeonConfig:
     """Полная конфигурация AEON v4.0."""
 
@@ -206,6 +216,7 @@ class AeonConfig:
     similarity: SimilarityConfig = field(default_factory=SimilarityConfig)
     entity_linking: EntityLinkingConfig = field(default_factory=EntityLinkingConfig)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
+    fragments: FragmentsConfig = field(default_factory=FragmentsConfig)
 
     # ── удобный доступ (CONFIG.detective.min_confidence) ──
 
@@ -304,6 +315,13 @@ def load_config() -> AeonConfig:
         level=_env_str("AEON_LOG_LEVEL", "INFO"),
     )
 
+    fragments_cfg = FragmentsConfig(
+        max_hypotheses=_env_int("AEON_FRAGMENT_MAX_HYPOTHESES", 4),
+        min_confidence=_env_float("AEON_FRAGMENT_MIN_CONFIDENCE", 0.5),
+        density_threshold=_env_float("AEON_FRAGMENT_DENSITY_THRESHOLD", 0.005),
+        verify_hypotheses=_env_bool("AEON_FRAGMENT_VERIFY_HYPOTHESES", True),
+    )
+
     return AeonConfig(
         llm=llm,
         embeddings=embeddings,
@@ -312,6 +330,7 @@ def load_config() -> AeonConfig:
         similarity=similarity,
         entity_linking=entity_linking,
         logging=logging_cfg,
+        fragments=fragments_cfg,
     )
 
 

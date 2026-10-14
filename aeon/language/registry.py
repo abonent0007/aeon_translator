@@ -90,40 +90,50 @@ def list_available() -> List[str]:
 
 def detect(text: str) -> Optional[LanguagePack]:
     """
-    Эвристическая детекция языка: Unicode-hits (unicode_ranges) +
-    опциональный бонус пака detect_heuristic (общий алфавит, напр. ASCII-латынь).
+    Эвристическая детекция языка — двухфазно (algorithm, refinement 2.2 №4):
+      1) Unicode-ranges: если есть hits — побеждает max-hits (алфавит решает);
+         при равенстве кандидатов — фаза 2.
+      2) detect_heuristic паков: disambiguation для общего алфавита
+         (ASCII-латынь vs английский).
+    Если итоговый score <= 0 → None.
 
-    Tie-break (refinement 2.0 №1): обход в алфавитном порядке iso_code —
-    при равных score побеждает лексикографически первый (детерминировано,
-    порядок регистрации не влияет); неоднозначность логируется событием
+    Tie-break: алфавитный iso_code (детерминирован, порядок регистрации
+    не влияет); при выборе из нескольких кандидатов логируется
     `detect_ambiguous`.
 
     Ограничение (стоп-точка 2.0 №2): древний и современный греческий
-    по codepoints НЕ различаются — возвращается кандидат ('grc');
-    точное определение — задача пака (диакритика/морфология, 2.1+).
+    по codepoints НЕ различаются — возвращается кандидат ('grc').
     """
     if not text or not text.strip():
         return None
-    best_pack: Optional[LanguagePack] = None
-    best_score = 0.0
-    tied: List[str] = []
-    for iso_code in list_available():  # sorted ⇒ детерминированный tie-break
-        pack = get(iso_code)
-        score = _count_unicode_hits(text, pack.unicode_ranges)
-        score += max(0.0, pack.detect_heuristic(text))
-        if score > best_score:
-            best_pack, best_score, tied = pack, score, [iso_code]
-        elif score == best_score and score > 0:
-            tied.append(iso_code)
-    if len(tied) > 1:
+
+    scores: Dict[str, float] = {
+        iso_code: float(_count_unicode_hits(text, get(iso_code).unicode_ranges))
+        for iso_code in list_available()
+    }
+    method = "ranges"
+    best = max(scores.values(), default=0.0)
+    if best <= 0:
+        method = "heuristic"
+        scores = {
+            iso_code: max(0.0, get(iso_code).detect_heuristic(text))
+            for iso_code in scores
+        }
+        best = max(scores.values(), default=0.0)
+    if best <= 0:
+        return None
+
+    top = sorted(iso_code for iso_code, score in scores.items() if score == best)
+    if len(top) > 1:
         log_event(
             get_logger("aeon.language"),
             "detect_ambiguous",
-            candidates=list(tied),
-            winner=tied[0],
-            hits=best_score,
+            candidates=list(top),
+            winner=top[0],
+            method=method,
+            score=best,
         )
-    return best_pack
+    return get(top[0])
 
 
 def clear() -> None:

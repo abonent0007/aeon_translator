@@ -25,6 +25,7 @@ SOURCE = [
     "aeon.logging_config",
     "aeon.testing",
     "aeon.language",
+    "aeon.fragments",
 ]
 
 

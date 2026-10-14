@@ -96,7 +96,7 @@ class AncientGreekPack(LanguagePack):
     direction = "ltr"
 
     special_tokens = {
-        "lacuna": ["[...]", "[…]", "[lacuna]", "[---]"],
+        "lacuna": ["[...]", "…", "[…]", "[lacuna]", "[---]"],
         "editorial": ["<...>", "<*>"],
         "deletion": ["{...}"],
         "uncertain": ["(...)", "[...?]"],
