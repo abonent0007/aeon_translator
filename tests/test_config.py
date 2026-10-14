@@ -62,6 +62,7 @@ def test_config_env_override(clean_env):
     clean_env.setenv("AEON_EXPERT_MIN_SOURCES", "3")
     clean_env.setenv("AEON_ABSTENTION_THRESHOLD", "0.6")
     clean_env.setenv("AEON_ENTITY_LINKING", "yes")
+    clean_env.setenv("AEON_CONTACT_EMAIL", "user@example.com")
     clean_env.setenv("AEON_WIKIDATA_RATE_LIMIT_SEC", "0.5")
 
     cfg = load_config()
@@ -91,6 +92,7 @@ def test_config_invalid_int(clean_env):
 
 
 def test_config_bool_parsing_variants(clean_env):
+    clean_env.setenv("AEON_CONTACT_EMAIL", "user@example.com")
     for raw, expected in (
         ("1", True), ("TRUE", True), ("on", True), ("Yes", True),
         ("0", False), ("false", False), ("No", False), ("off", False),
@@ -118,3 +120,19 @@ def test_module_level_config_exists():
     assert CONFIG.detective.min_confidence > 0
     assert CONFIG.verification.expert.min_sources >= 1
     assert CONFIG.abstention_threshold > 0
+
+
+def test_entity_linking_requires_contact_when_enabled(clean_env):
+    clean_env.setenv("AEON_ENTITY_LINKING", "1")
+    with pytest.raises(ConfigError, match="AEON_CONTACT_EMAIL"):
+        load_config()
+
+
+def test_entity_linking_enabled_with_contact_ok(clean_env):
+    clean_env.setenv("AEON_ENTITY_LINKING", "1")
+    clean_env.setenv("AEON_CONTACT_EMAIL", "user@example.com")
+
+    cfg = load_config()
+
+    assert cfg.entity_linking.enabled is True
+    assert cfg.entity_linking.contact_email == "user@example.com"

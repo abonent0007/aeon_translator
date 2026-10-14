@@ -75,3 +75,24 @@ def test_global_singleton_and_summary_format():
     assert "cache_hit_rate" in text
     assert "network_calls" in text
     assert "(local " in text
+
+
+def test_cache_namespaces_are_separate():
+    m = Metrics()
+    m.record_cache(hit=True)
+    m.record_cache(hit=True)
+    m.record_cache(hit=False, namespace="redirect")
+
+    s = m.snapshot()
+    assert s["cache_hit_rate"] == 1.0
+    assert s["redirect_cache_hit_rate"] == 0.0
+    assert s["cache_hits_redirect"] == 0
+    assert s["cache_misses_redirect"] == 1
+
+
+def test_redirect_rate_in_summary():
+    reset_metrics()
+    METRICS.record_cache(hit=True, namespace="redirect")
+
+    text = METRICS.format_summary()
+    assert "redirect: 1.0" in text

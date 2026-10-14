@@ -173,6 +173,13 @@ class EntityLinkingConfig:
     max_links_per_atom: int = 5
     max_attempts: int = 3                   # ретраи на timeout/5xx
 
+    def __post_init__(self):
+        if self.enabled and not self.contact_email:
+            raise ConfigError(
+                "Entity Linking включён (AEON_ENTITY_LINKING=1), но AEON_CONTACT_EMAIL "
+                "не задан. Wikidata требует контакт в User-Agent — укажите email."
+            )
+
 
 @dataclass(frozen=True)
 class LoggingConfig:
