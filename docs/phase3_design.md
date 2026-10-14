@@ -9,19 +9,36 @@
 readings (3.5 заполняет слот, не расширяя формат); gold-standard —
 инструмент валидации, ему нужно что валидировать.
 
-## 3.1 — контракт `.aeon v2` (схема: `schemas/aeon_v2.json`)
-- Обязательные: `aeon_version` (^2.x), `created_at`, `generator`, `source`,
-  `atom`, `traces`, `metadata.thresholds_snapshot`, `metadata.mock`.
-- Forward-slots в `traces`: extraction/entity_linking/verification/
-  linguistics/focus/reconstruction + зарезервированные
-  `variant_readings`(3.5)/`morphology`(3.2)/`cross_references`(3.4) = null.
-- `source.content` = ОРИГИНАЛ; `source.normalized` = pipeline-вход.
-- `mock: true` обязателен до 2.7 (научная чистота: mock-прогон помечен).
-- Версионирование semver: 2.1+ — опциональные поля в `extensions`; 3.0 — breaking.
-- Backward read: v1-файл читается и представляется как v2 в памяти
-  (`extensions.legacy_v1_original`), запись — только v2.
-- Валидация: **stdlib-мини-валидатор** (required/types/const/pattern) —
-  собственный, без пакетов jsonschema.
+## 3.1 — контракт `.aeon v2` (схема: `schemas/aeon_v2.json`; доработки №1–4 внесены)
+- Обязательные: `aeon_version` (semver-строка `X.Y.Z`), `created_at`,
+  `generator`, `source`, `atom`, `traces`,
+  `metadata.thresholds_snapshot` + `metadata.mock` + **`metadata.pipeline`**.
+- **Доп. №1 — `metadata.pipeline`:** `steps_requested[]` / `steps_executed[]` /
+  `steps_halted[{step, reason}]` / `steps_failed[]` — различает «не просили»
+  vs «выполнено» vs «остановлено (halt)» vs «упало». null в traces ≠ «не
+  запускалось»; истина — в pipeline.
+- **Доп. №2 — хэши:** `atom.content_hash = sha256(source.content)`
+  (детерминирован от входа) + `atom.atom_hash = sha256(canonical atom core)`
+  (хэш результата; различается при вариациях LLM). `meaning_hash` сохранён
+  как legacy v1-поле. Смысл: «тот же текст, разные атомы — что изменилось?».
+- **Доп. №3 — `extensions`:** ключи только namespaced (`aeon.experimental_x`,
+  `acme.metric`); переопределение core-полей (`source/atom/traces/metadata`)
+  → `AeonSchemaError`; `extensions.legacy_v1_original` при миграции v1.
+- **Доп. №4 — версия:** `aeon_version: "2.0.0"` semver + опциональный
+  `aeon_version_min_reader`; reader: major>2 → `AeonSchemaError (reader too old)`,
+  major<2 → миграционный путь (v1), minor игнорируется.
+- Forward-slots в `traces`: variant_readings(3.5)/morphology(3.2)/
+  cross_references(3.4) = null (честный null, не «примерная структура»).
+- Валидация: **stdlib-мини-валидатор** — required / types / semver /
+  extensions-overlap; БЕЗ $ref/oneOf/if-then (стоп-точка №4).
+- **Стоп-точка №2 (mock-guard):** writer запрещает `mock=false` без
+  `DEEPSEEK_API_KEY` → `AeonSchemaError`; обход только `force_unsafe=True`
+  + лог `aeon_mock_flag_bypassed`.
+- **Стоп-точка №3 (размер):** сохраняются только структурированные
+  результаты (parsed JSON), raw LLM output не пишется (`--save-raw` — backlog);
+  целевой размер полного атома < 200KB.
+- Миграция: v1-файлы в репо отсутствуют (проверено); миграционный тест
+  строит v1-файл production-врайтером v1 (`aeon_format.AeonFormat`) в рантайме.
 
 ## Preflight 3.5 — variant readings (answers)
 1. **Источник чтений:** (b) — LLM только ВЫБИРАЕТ между внешне заданными

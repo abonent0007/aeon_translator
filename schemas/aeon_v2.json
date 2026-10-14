@@ -7,8 +7,13 @@
   "properties": {
     "aeon_version": {
       "type": "string",
-      "pattern": "^2\\.[0-9]+$",
-      "description": "semver-совместимо: 2.1 = опциональные поля в extensions; 3.0 = breaking"
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "semver: major bump = breaking; minor = только extensions (доп. №4)"
+    },
+    "aeon_version_min_reader": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "минимальный reader, способный прочитать (опционально)"
     },
     "created_at": {"type": "string", "format": "date-time"},
     "generator": {"type": "string", "examples": ["aeon-4.0"]},
@@ -16,7 +21,7 @@
       "type": "object",
       "required": ["content", "form", "language"],
       "properties": {
-        "content": {"type": "string", "description": "ОРИГИНАЛ пользователя (нормализация не теряет оригинал)"},
+        "content": {"type": "string", "description": "ОРИГИНАЛ пользователя"},
         "form": {"type": "string"},
         "language": {"type": "string"},
         "normalized": {"type": ["string", "null"], "description": "pipeline-вход после pack.normalize()"}
@@ -24,10 +29,12 @@
     },
     "atom": {
       "type": "object",
-      "required": ["meaning_hash", "intent", "domain"],
+      "required": ["content_hash", "atom_hash", "intent", "domain"],
       "additionalProperties": true,
       "properties": {
-        "meaning_hash": {"type": "string"},
+        "meaning_hash": {"type": "string", "description": "legacy v1-поле (identity); новый код использует content_hash/atom_hash"},
+        "content_hash": {"type": "string", "description": "sha256(source.content) — детерминирован от текста (доп. №2)"},
+        "atom_hash": {"type": "string", "description": "sha256(canonical atom core) — хэш РЕЗУЛЬТАТА, может различаться между прогонами (доп. №2)"},
         "text": {"type": "string"},
         "intent": {"type": "string"},
         "domain": {"type": "string"},
@@ -43,7 +50,7 @@
               "role": {"type": "string"},
               "span": {"type": "string"},
               "confidence": {"type": "number"},
-              "external_ids": {"type": "object", "description": "wikidata/pleiades/trismegistos"},
+              "external_ids": {"type": "object"},
               "external_labels": {"type": "object"},
               "link_confidence": {"type": "number"},
               "source_unavailable": {"type": "boolean"},
@@ -69,37 +76,55 @@
     },
     "traces": {
       "type": "object",
-      "description": "Полный reasoning trace; null = этап не выполнялся",
+      "description": "null = этап не запускался ИЛИ результат отсутствует; различение — через metadata.pipeline (доп. №1)",
       "properties": {
         "extraction": {"type": ["object", "null"]},
         "entity_linking": {"type": ["object", "null"]},
-        "verification": {"type": ["object", "null"], "description": "agents/combined/cvi/abstained/reasoning_trace (2.0-2.3)"},
-        "linguistics": {"type": ["object", "null"], "description": "слот шага 2.4"},
-        "focus": {"type": ["object", "null"], "description": "слот шага 2.5"},
-        "reconstruction": {"type": ["object", "null"], "description": "слот шага 2.3"},
-        "variant_readings": {"type": ["object", "null"], "description": "ЗАРЕЗЕРВИРОВАНО под 3.5 (attested readings + edition attribution)"},
-        "morphology": {"type": ["object", "null"], "description": "ЗАРЕЗЕРВИРОВАНО под 3.2 (Ithaca/Aeneas/LatinBERT)"},
-        "cross_references": {"type": ["object", "null"], "description": "ЗАРЕЗЕРВИРОВАНО под 3.4 (multi-document)"}
+        "verification": {"type": ["object", "null"]},
+        "linguistics": {"type": ["object", "null"]},
+        "focus": {"type": ["object", "null"]},
+        "reconstruction": {"type": ["object", "null"]},
+        "variant_readings": {"type": ["object", "null"], "description": "слот 3.5"},
+        "morphology": {"type": ["object", "null"], "description": "слот 3.2"},
+        "cross_references": {"type": ["object", "null"], "description": "слот 3.4"}
       }
     },
     "metadata": {
       "type": "object",
-      "required": ["thresholds_snapshot", "mock"],
+      "required": ["thresholds_snapshot", "mock", "pipeline"],
       "properties": {
         "language_pack": {"type": ["string", "null"]},
         "language_pack_version": {"type": ["string", "null"]},
-        "thresholds_snapshot": {
-          "type": "object",
-          "description": "ОБЯЗАТЕЛЬНО: ABSTENTION/agents/layers/focus/fragments пороги на момент прогона"
-        },
+        "thresholds_snapshot": {"type": "object"},
         "llm_provider": {"type": ["string", "null"]},
         "llm_model": {"type": ["string", "null"]},
-        "mock": {"type": "boolean", "description": "true = прогон на MockLLM (до 2.7 всегда true)"}
+        "mock": {"type": "boolean", "description": "true = MockLLM; writer запрещает false без DEEPSEEK_API_KEY (стоп-точка №2)"},
+        "pipeline": {
+          "type": "object",
+          "description": "доп. №1: различать «не просили» / «выполнено» / «остановлено» / «упало»",
+          "required": ["steps_requested", "steps_executed"],
+          "properties": {
+            "steps_requested": {"type": "array", "items": {"type": "string"}},
+            "steps_executed": {"type": "array", "items": {"type": "string"}},
+            "steps_halted": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["step", "reason"],
+                "properties": {
+                  "step": {"type": "string"},
+                  "reason": {"type": "string"}
+                }
+              }
+            },
+            "steps_failed": {"type": "array", "items": {"type": "object"}}
+          }
+        }
       }
     },
     "extensions": {
       "type": "object",
-      "description": "Произвольное расширение без bump версии; тут же legacy_v1_original при чтении v1"
+      "description": "Правила (доп. №3): ключи ТОЛЬКО namespaced (a.b или a_b.c); core-поля переопределять нельзя — AeonSchemaError; legacy_v1_original живёт здесь"
     }
   }
 }
