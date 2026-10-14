@@ -69,13 +69,20 @@ class AeonTranslator:
         source_language: str = "auto",
         target_form: str = "text",
         target_language: str = "english",
-        verify: bool = False
+        verify: bool = False,
+        verify_mode: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Универсальный перевод смысла с верификацией.
 
-        Новое: verify=True запускает проверку на галлюцинации.
+        verify_mode: "off" | "basic" | "full" (Verification 2.0):
+          - off   — без верификации (v3.0-поведение по умолчанию);
+          - basic — Детектив + Логик (быстро, без внешних источников);
+          - full  — три верификатора + Wikidata-обогащение.
+        Legacy: verify=True эквивалентен verify_mode="full".
         """
+        if verify_mode is None:
+            verify_mode = "full" if verify else "off"
         self.translation_count += 1
 
         print(f"\n{'='*60}")
@@ -120,14 +127,16 @@ class AeonTranslator:
 
         self.translation_memory[atom.meaning_hash] = atom
 
-        # ══ Шаг 1.5: Верификация (опционально) ══
+        # ══ Шаг 1.5: Верификация (Verification 2.0: off/basic/full) ══
         verification_result = None
-        if verify and self.llm.available:
-            print(f"\n🔍 ВЕРИФИКАЦИЯ...")
+        if verify_mode != "off":
+            print(f"\n🔍 ВЕРИФИКАЦИЯ ({verify_mode})...")
             claims = atom.explanation_chain + [f"Intent: {atom.intent}", f"Domain: {atom.domain}"]
             verification_result = self.verification.verify_atom(
                 original_text, claims,
-                [e.name for e in atom.entities]
+                [e.name for e in atom.entities],
+                trace_id=atom.meaning_hash,
+                mode=verify_mode,
             )
             atom.hallucination_risk = verification_result.get("hallucination_risk", 0.0)
             atom.consistency_score = verification_result["consistency"].get("score", 1.0)

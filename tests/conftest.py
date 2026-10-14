@@ -1,11 +1,9 @@
 """
 Общие фикстуры и утилиты тестов AEON v4.0.
 
-MockLLM — детерминированная замена DeepSeekClient: без сети и ключей.
-Ответы задаются по подстроке в последнем user-сообщении.
+MockLLM вынесен в aeon/testing.py (общий с demo).
 """
 
-import json
 import sys
 from pathlib import Path
 
@@ -13,53 +11,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from aeon.llm.json_repair import extract_json  # noqa: E402
 from aeon.metrics import METRICS, reset_metrics  # noqa: E402
-
-
-class MockLLM:
-    """Детерминированный LLM-дублёр для тестов."""
-
-    def __init__(
-        self,
-        responses: dict | None = None,
-        default: str = "{}",
-        available: bool = True,
-    ):
-        self.available = available
-        self.responses = responses or {}
-        self.default = default
-        self.calls: list = []
-
-    def _resolve(self, messages: list) -> str:
-        text = messages[-1].get("content", "") if messages else ""
-        for needle, value in self.responses.items():
-            if needle in text:
-                if isinstance(value, str):
-                    return value
-                return json.dumps(value, ensure_ascii=False)
-        return self.default
-
-    def _call(
-        self, messages: list, temperature: float = 0.7, max_tokens: int = 2000
-    ) -> str:
-        self.calls.append(
-            {"messages": messages, "temperature": temperature, "max_tokens": max_tokens}
-        )
-        if not self.available:
-            return ""
-        return self._resolve(messages)
-
-    def _call_json(
-        self, messages: list, temperature: float = 0.3, max_tokens: int = 2000
-    ) -> dict:
-        raw = self._call(messages, temperature, max_tokens)
-        if not raw:
-            return {}
-        data, reason = extract_json(raw)
-        if reason is None:
-            return data
-        return {"raw_response": raw, "parse_error": reason}
+from aeon.testing import MockLLM  # noqa: E402
 
 
 @pytest.fixture

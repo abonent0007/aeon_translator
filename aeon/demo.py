@@ -4,11 +4,19 @@
 LLM-powered: DeepSeek + Whisper + Flux 2 + TTS
 """
 
-import sys
+import argparse
 import os
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import sys
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from aeon.embeddings import EmbeddingEngine
+from aeon.extractor import MeaningExtractor
+from aeon.llm_client import DeepSeekClient
+from aeon.metrics import METRICS, reset_metrics
+from aeon.testing import MockLLM
 from aeon.translator import AeonTranslator
+from aeon.verification import VerificationEngine
 from aeon.core import Thought, Flow, Concept, FUNDAMENTAL_AXIOMS
 
 
@@ -229,7 +237,143 @@ def demo_v3_enhanced(translator: AeonTranslator):
         print(f"   Эмбеддинг: {len(atoms[0].embedding)}D")
 
 
+# ═══════════════════════════════════════════════════════════════
+# Verification 2.0 demo (CLI: --text --verify --latency-ms --real)
+# ═══════════════════════════════════════════════════════════════
+
+DEMO_RESPONSES = {
+    "Analyze the following text": {
+        "intent": "statement",
+        "domain": "philosophy",
+        "entities": [
+            {"name": "Сократ", "type": "person", "role": "agent",
+             "span": "Сократ", "confidence": 0.9},
+            {"name": "Афины", "type": "object", "role": "location",
+             "span": "Афины", "confidence": 0.85},
+        ],
+        "semantic_roles": {"agent": "Сократ", "location": "Афины"},
+        "evidence": ["Я знаю, что ничего не знаю."],
+        "explanation_chain": [
+            "Сократ признаёт собственное незнание",
+            "Афины осудили Сократа на смерть в 399 году до н. э.",
+        ],
+        "confidence_breakdown": {"intent": 0.9, "domain": 0.85,
+                                 "entities": 0.9, "roles": 0.8},
+        "complexity": 0.4,
+        "urgency": 0.1,
+        "extraction_confidence": 0.88,
+        "semantic_tokens": ["мудрость", "незнание", "суд"],
+    },
+    "Detective": {"claims": [
+        {"claim": "Сократ признаёт собственное незнание",
+         "quote": "Я знаю, что ничего не знаю.", "contradicts": False,
+         "confidence": 0.92, "reasoning": "точная цитата в источнике"},
+        {"claim": "Афины осудили Сократа на смерть в 399 году до н. э.",
+         "quote": "Афины осудили Сократа на смерть в 399 году до н. э.",
+         "contradicts": False, "confidence": 0.9, "reasoning": "точная цитата"},
+    ]},
+    "Expert": {"claims": [
+        {"claim": "Сократ признаёт собственное незнание",
+         "status": "unknown", "source": "", "confidence": 0.4,
+         "reasoning": "внешние источники не подключены в demo"},
+    ]},
+    "Logician": {"contradictions": [], "coherence": 0.9,
+                 "reasoning": "внутренних противоречий нет"},
+}
+
+
+def _offline_embeddings():
+    engine = EmbeddingEngine()
+    engine.available = False  # без загрузки моделей
+    return engine
+
+
+def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
+                    use_real: bool) -> None:
+    """Demo: атом + trace верификации + метрики (мок с задержкой или реальный LLM)."""
+    from pathlib import Path
+
+    path = Path(text_path)
+    if not path.exists():
+        print(f"❌ Файл не найден: {text_path}")
+        return
+    text = path.read_text(encoding="utf-8").strip()
+    print_separator(f"AEON 1.4 DEMO — verify={verify_mode} — {path.name}")
+    print(f"Текст ({len(text)} симв.): {text[:110]}...")
+
+    llm = None
+    if use_real:
+        llm = DeepSeekClient()
+        if not llm.available:
+            print("⚠️ DEEPSEEK_API_KEY не задан — fallback на MockLLM")
+            llm = None
+    if llm is None:
+        llm = MockLLM(responses=DEMO_RESPONSES, latency_ms=latency_ms)
+        print(f"LLM: MockLLM (латентность {latency_ms:g} ms/вызов — имитация сети)")
+
+    extractor = MeaningExtractor(llm_client=llm, embedding_engine=_offline_embeddings())
+    verification = VerificationEngine(llm_client=llm)
+    verification.embeddings = _offline_embeddings()
+
+    reset_metrics()
+    with METRICS.timeit("atom"):
+        with METRICS.timeit("atom_network"):
+            atom = extractor.extract_from_text(text, "auto")
+            result = None
+            if verify_mode != "off":
+                claims = atom.explanation_chain + [
+                    f"Intent: {atom.intent}", f"Domain: {atom.domain}"
+                ]
+                result = verification.verify_atom(
+                    text, claims, [e.name for e in atom.entities],
+                    trace_id=atom.meaning_hash, mode=verify_mode,
+                )
+
+        print(f"\nАТОМ: {atom}")
+        print(f"  сущностей: {len(atom.entities)} | evidence: {len(atom.evidence)}"
+              f" | completeness: {atom.completeness_score:.2f}"
+              f" | is_fragment: {atom.is_fragment}")
+
+        if result is None:
+            print("\n(верификация выключена: --verify=off)")
+        else:
+            print(f"\n🔍 TRACE ВЕРИФИКАЦИИ (trace_id={atom.meaning_hash[:8]}):")
+            for step in result["reasoning_trace"]:
+                print(f"  • {step['agent']:<9} {step['verdict']:<32} "
+                      f"conf={step['confidence']:.2f}  {step['reasoning'][:56]}")
+            combined = result["combined"]
+            print(f"\nCVI: {result['cvi']:.2f} | вердикт: {combined['verdict']}"
+                  f" | abstained: {result['abstained']}"
+                  f" | needs_review: {combined['needs_review']}")
+            print(f"Legacy-проекция: verdict={result['overall_verdict']}"
+                  f" risk={result['hallucination_risk']:.0%}")
+            if result["abstained"]:
+                print("⚠️ Система воздержалась («Я не знаю») — недостаточно данных")
+
+    METRICS.record_atom()
+    print_separator("METRICS")
+    print(METRICS.format_summary())
+    print(f"  LLM-вызовов (mock): {len(llm.calls)} × {latency_ms:g} ms = "
+          f"{len(llm.calls) * latency_ms / 1000.0:.2f} s (экстраполяция сети)")
+
+
 def main():
+    parser = argparse.ArgumentParser(
+        description="AEON demo: интерактив или Verification 2.0 (--text)"
+    )
+    parser.add_argument("--text", type=str, default=None, help="файл с текстом для анализа")
+    parser.add_argument("--verify", choices=["off", "basic", "full"], default="off",
+                        help="режим верификации Verification 2.0")
+    parser.add_argument("--latency-ms", type=float, default=200.0,
+                        help="мок-задержка LLM на вызов (для замеров)")
+    parser.add_argument("--real", action="store_true",
+                        help="использовать реальный LLM (нужен DEEPSEEK_API_KEY в .env)")
+    args = parser.parse_args()
+
+    if args.text:
+        run_verify_demo(args.text, args.verify, args.latency_ms, args.real)
+        return
+
     print("""
 ╔══════════════════════════════════════════════════════╗
 ║                                                       ║

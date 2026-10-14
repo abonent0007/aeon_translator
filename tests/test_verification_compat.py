@@ -113,3 +113,45 @@ def test_stats_and_verify_cross_lingual_legacy(mock_llm):
     cross = engine.verify_cross_lingual("текст", "text")
     assert cross["aligned"] is True
     assert cross["pairs"] == {}  # embeddings offline — 0 моделей
+
+
+def test_legacy_check_consistency_with_llm(mock_llm):
+    mock_llm.responses = {"semantic consistency verifier": {
+        "score": 0.5, "contradictions": ["c2"], "unsupported": [],
+        "explanation": "x",
+    }}
+    engine = make_engine(mock_llm)
+
+    result = engine.check_consistency("src", ["c1", "c2"])
+
+    assert result["score"] == 0.5
+    assert result["flags"] == ["c2"]
+    assert engine.hallucinations_caught == 1
+
+
+def test_legacy_check_consistency_without_llm(mock_llm):
+    mock_llm.available = False
+    engine = make_engine(mock_llm)
+
+    assert engine.check_consistency("src", ["c1"])["score"] == 1.0
+
+
+def test_legacy_check_fact_grounding_positive(mock_llm):
+    mock_llm.responses = {"directly inferred": {
+        "grounded": True, "confidence": 0.9, "evidence": "quote",
+        "reasoning": "ok",
+    }}
+    engine = make_engine(mock_llm)
+
+    result = engine.check_fact_grounding("src", "claim")
+
+    assert result["confidence"] == 0.9
+
+
+def test_legacy_check_fact_grounding_negative_increments_counter(mock_llm):
+    mock_llm.responses = {"directly inferred": {"grounded": False, "confidence": 0.2}}
+    engine = make_engine(mock_llm)
+
+    engine.check_fact_grounding("src", "claim")
+
+    assert engine.hallucinations_caught == 1

@@ -90,9 +90,13 @@ class VerificationEngine:
     # ═══════════════════════════════════════════════════════════
 
     def verify_atom(self, source_text: str, claims: List[str],
-                    entities: List[str], trace_id: Optional[str] = None) -> Dict:
+                    entities: List[str], trace_id: Optional[str] = None,
+                    mode: str = "full") -> Dict:
         """
-        Полная верификация: Детектив + Эксперт + Логик → CVI.
+        Верификация атома: Детектив + (Эксперт) + Логик → CVI.
+
+        mode: "basic" — Детектив + Логик (без внешних источников);
+              "full"  — все три агента (+ Wikidata).
         Совместим с v3.0: возвращает consistency/grounding/
         hallucination_risk/overall_verdict (+ новые ключи).
         """
@@ -108,11 +112,10 @@ class VerificationEngine:
             trace_id=trace_id,
         )
 
-        verdicts: Dict[str, Verdict] = {
-            "detective": self.detective.verify(context),
-            "expert": self.expert.verify(context),
-            "logician": self.logician.verify(context),
-        }
+        verdicts: Dict[str, Verdict] = {"detective": self.detective.verify(context)}
+        if mode == "full":
+            verdicts["expert"] = self.expert.verify(context)
+        verdicts["logician"] = self.logician.verify(context)
         combined = self.aggregator.combine(verdicts)
 
         self.checks_performed += 1

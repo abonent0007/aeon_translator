@@ -10,12 +10,14 @@
     {"step": "1.1", "description": "aeon/entity_linking.py WikidataClient (wbsearchentities/wbgetentities, SQLite cache 7d, rate limit 1 rps, redirect+merged QID healing, offline mode). Tests: enabled=True -> mock-HTTP works; enabled=False -> 0 network calls; offline -> 0 network + cache-only", "status": "done"},
     {"step": "1.2", "description": "Candidate scoring (prior+text_sim+context), Entity.is_fragment/completeness_score/external_ids/link_confidence, Pleiades(P1584)/Trismegistos(P11651) crosswalk, extractor integration", "status": "done"},
     {"step": "1.3", "description": "aeon/verification/ package: GroundingAgent/ExpertAgent/LogicAgent + CVI aggregator + abstention; verify_atom backward-compatible", "status": "done"},
-    {"step": "1.4", "description": "Integration in translator (verify_mode), AGENTS.md update, final metrics report, acceptance demo", "status": "pending"}
+    {"step": "1.4", "description": "Integration in translator (verify_mode off/basic/full), demo CLI (mock latency metrics), AGENTS.md, coverage >=70%, final report", "status": "done"}
   ],
-  "current_step": 7,
-  "next_step": "1.4",
+  "current_step": 8,
+  "next_step": null,
+  "next_phase": "Phase 2 discussion: ancient packs (ancient_greek + latin), Trismegistos datasets, Pleiades offline dump, translated-quote match, Expert no_external_data, parallelization, fragments/multi-focus",
   "total_steps": 8,
-  "phase": "executing",
+  "phase": "complete",
+  "completed_at": "2026-10-14T11:53:46+03:00",
   "user_preferences": {
     "embeddings": "pluggable backend; keep MiniLM/LaBSE as defaults (C: 2.9GB free; no model downloads this iteration)",
     "llm_keys": "user will add DEEPSEEK_API_KEY to .env; tests run on mocks; live smoke optional",
@@ -25,48 +27,48 @@
   },
   "known_deltas": [
     "Threshold audit (0.3): v3.0 literals in config.legacy_verification with IDENTICAL defaults; no conflicts vs agent thresholds.",
-    "Refinements: log_event trace_id; metrics local/network timing; Retry-After -> max(backoff, header); llm_call.attempts; latency_ms = all attempts incl. sleeps.",
-    "LLM inventory (0.4): all LLM calls via DeepSeekClient; requests-direct only image_gen (Flux). _call_json failure channel preserved: {raw_response, parse_error}.",
     "Wikidata quirks (live-verified): API errors = HTTP 200 + {\"error\":{...}}; search hit has no aliases; redirects parser supports list and dict forms.",
-    "Pleiades reachability (1.2): unreachable from dev network (TCP ok, no response); mitigation: defensive parser + tests/test_network_live.py (marker network). Client is hostname-based (https://pleiades.stoa.org/...) - NO hardcoded IPs (IP in diagnostics was DNS output only).",
-    "Trismegistos (1.2): no public API (SSL chain + 403 anti-bot) -> stub adapter (no_public_api); datasets deferred to Phase 2 backlog.",
-    "Fragment orthogonality (curator fix, commit a086a4b): is_fragment = source lacuna; completeness_score = extraction quality; aggregate needs_attention = is_fragment OR completeness < 0.5.",
-    "Scoring weights (curator fix, commit 9894be8): in CONFIG.entity_linking (AEON_SCORE_WEIGHT_*); rule/type weights remain module constants.",
-    "Verification 2.0 (1.3): package aeon/verification/ (base, detective, expert, logician, aggregator, verdicts, __init__). Legacy aeon/verification.py REMOVED (package supersedes it); root aeon/verdicts.py = shim to aeon/verification/verdicts.py.",
-    "verify_atom projection (1.3): legacy keys kept - consistency.score = cvi, grounding per-claim from detective details, hallucination_risk = 1 - cvi (abstained: from mean of all agent confidences), overall_verdict legacy bands via legacy_cfg; abstained -> 'unverified'. New keys: agents, combined, cvi, abstained, reasoning_trace. Signature unchanged (source_text, claims, entities, trace_id=None). check_consistency/check_fact_grounding/verify_cross_lingual preserved verbatim.",
-    "Taxonomy/agent rules (1.3): needs_review is aggregate flag only (NOT in NEUTRAL/agent verdicts); logician with <2 claims -> trivially coherent (no LLM call, by design); detective require_quote enforced; per-agent abstention on conf < min (0.85 detective / 0.75 expert) and logician coherence < 0.60.",
-    "Abstention rule (1.3 aggregator): negatives dominate -> contradicted; no positives -> abstained; positives mean < 0.50 -> abstained; needs_review when positives mean < 0.85. Neutral confidences do NOT lower overall confidence (fragments not penalized, curator rule)."
+    "Pleiades (1.2): unreachable from dev network; defensive parser + network-marker live test; hostname-only (no hardcoded IPs).",
+    "Trismegistos (1.2): no public API (SSL chain + 403) -> stub adapter (no_public_api); datasets deferred.",
+    "Fragment orthogonality (a086a4b): is_fragment = source lacuna; completeness_score = extraction quality; needs_attention aggregate. Entities carry both fields.",
+    "Scoring weights (9894be8): CONFIG.entity_linking.score_weight_* (AEON_SCORE_WEIGHT_*).",
+    "Verification 2.0 (1.3, c201bb4): package aeon/verification/; legacy verification.py removed; root aeon/verdicts.py = shim.",
+    "Logician fix (3daaf97): <2 claims -> abstained (false positive forbidden); translated-source contract test added.",
+    "verify_atom projection: legacy keys + v4.0 keys; abstained -> 'unverified'; signature extended kw-only (trace_id, mode).",
+    "1.4 integration: translator verify_mode off/basic/full (verify=True legacy -> full); trace_id = atom.meaning_hash; engine mode param skips Expert in basic.",
+    "Demo CLI (1.4): python -m aeon.demo --text examples/plato_sample.txt --verify=full; MockLLM moved to aeon/testing.py with latency_ms; demo metrics on mock 200ms: 4 LLM calls, avg_time_per_atom_network=0.803s (extrapolation) << 30s target.",
+    "Metrics targets evidence (1.4): test_metrics_targets_on_warm_cache asserts cache_hit_rate>=0.7 and network_calls_per_atom<=5 on warm-cache reruns.",
+    "Coverage (1.4): pytest-cov --cov segfaults on Windows (0xC0000005, CTracer+torch DLL conflict; google_ai-consulted known issue; COVERAGE_CORE/.coveragerc timid/CLI timid all failed). Workaround implemented: tools/run_coverage.py (Coverage API starts before pytest.main). Result: TOTAL 92%, all new modules >=73% (verification/__init__ 76% after legacy tests)."
   ],
   "backlog": [
-    "LLM retry jitter (+/-20%) - apply at 1.4+ when concurrent atoms grow.",
-    "Pleiades offline dump adapter (Phase 2): snapshot cache/pleiades_dump.json, same interface as live client (curator 1.2 note #2).",
-    "Trismegistos data integration via datasets (no public API) - deferred after 1.2 stop-point.",
-    "Verification parallelization (stdlib concurrent.futures) - only if live 1.4 demo shows >30s/atom (stop-point #3 flagged, not measurable without API key).",
-    "Phase 2: linguistic_layers (Chain-of-Linguistics), focus.py (multi-focus), fragments.py (lacunae hypotheses), aeon/ancient/ packs (ancient_greek + latin priority)",
+    "Phase 2: ancient language packs (ancient_greek + latin priority: Ithaca/Aeneas/LatinBERT hooks, lexicons)",
+    "Phase 2: fragments.py full (lacunae hypotheses with probabilities), linguistic_layers (Chain-of-Linguistics), focus.py (multi-focus analysis)",
+    "Phase 2: Trismegistos datasets integration; Pleiades offline dump adapter (same interface); Trismegistos/Pleiades source_unavailable distinction",
+    "Phase 2: Expert no_external_data vs external_data_silent distinction; detective allow_translation_match (+0.15 confidence penalty note)",
+    "Phase 2/3: LLM retry jitter (+/-20%); verification parallelization (stdlib concurrent.futures) if live demo >30s/atom",
     "Phase 3: .aeon v2 (verification trace, entity links, hypotheses; v1 read compat), CLI analyze/link/fragments, web endpoints, README v4 + docs/ARCHITECTURE.md"
   ],
   "config_wiring": {
-    "canonical_access": "CONFIG.verification.<agent> is canonical (per AGENTS.md); flat CONFIG.<agent> is a convenience alias only",
+    "canonical_access": "CONFIG.verification.<agent> is canonical; flat CONFIG.<agent> is a convenience alias only",
     "wired_in": [
       "llm (CONFIG.llm -> DeepSeekClient/OpenAICompatibleProvider)",
-      "logging (CONFIG.logging -> get_logger default file/level)",
-      "entity_linking client (CONFIG.entity_linking -> WikidataClient)",
-      "entity_linking -> extractor/atom integration (MeaningExtractor._link_entities)",
-      "crosswalk (PleiadesClient uses CONFIG.entity_linking)",
-      "scoring weights (CONFIG.entity_linking.score_weight_* -> score_candidate/rank_candidates)",
-      "verification (CONFIG.verification thresholds -> agents; abstention_threshold -> aggregator; legacy_verification -> legacy projection + review threshold)"
+      "logging (CONFIG.logging -> get_logger)",
+      "entity_linking client + extractor integration",
+      "crosswalk (PleiadesClient)",
+      "scoring weights",
+      "verification (thresholds -> agents; abstention -> aggregator; legacy -> projection)"
     ],
-    "not_wired_yet": ["similarity levels (1.4 optional)"]
+    "not_wired_yet": ["similarity levels (optional, later)"]
   },
-  "legacy_config_used_by": ["verification legacy projection (risk bands + weights thresholds reference) + Aggregator review_threshold"],
-  "completed_at": null,
+  "legacy_config_used_by": ["verification legacy projection (risk bands) + Aggregator review_threshold"],
   "created_at": "2026-10-14T10:30:33+03:00",
   "baseline_commit": "1c5a460",
   "tooling": {
-    "secrets_scan": "astra-sentinel MCP (opencode) - tool astra-sentinel_scan; run 2026-10-14; scope: 14 key files; result: 0 findings",
-    "llm_layer": "aeon/llm/ (base, retries, json_repair, openai_compatible, deepseek) + aeon/llm_client.py shim; JSON-repair stdlib only",
-    "wikidata_schema_check": "live script %TEMP%\\opencode\\check_wikidata.py; 2026-10-14; confirmed actual schemas; zero drift",
-    "pleiades_trismegistos_check": "live scripts %TEMP%\\opencode\\check_pleiades_trismegistos*.py; 2026-10-14; outcomes in known_deltas",
-    "network_live_tests": "tests/test_network_live.py (marker network, excluded by default); run: pytest -m network -k pleiades"
+    "secrets_scan": "astra-sentinel MCP (opencode) - astra-sentinel_scan; 2026-10-14; 14 key files; 0 findings",
+    "llm_layer": "aeon/llm/ + llm_client shim; JSON-repair stdlib only",
+    "wikidata_schema_check": "live script %TEMP%\\opencode\\check_wikidata.py; 2026-10-14; zero drift",
+    "pleiades_trismegistos_check": "live scripts %TEMP%\\opencode\\check_pleiades_trismegistos*.py; outcomes in known_deltas",
+    "network_live_tests": "tests/test_network_live.py (marker network); run: pytest -m network -k pleiades",
+    "coverage_runner": "tools/run_coverage.py (Windows pytest-cov segfault workaround, documented in AGENTS.md)"
   }
 }

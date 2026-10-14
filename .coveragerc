@@ -1,0 +1,9 @@
+; AEON coverage config.
+; ВАЖНО: timid=True (pure-Python tracer) — обход известного segfault
+; CTracer + PyTorch DLL на Windows (0xC0000005), см. AGENTS.md.
+
+[run]
+timid = True
+
+[report]
+show_missing = True
