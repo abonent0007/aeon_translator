@@ -84,7 +84,7 @@
       "trigger": "satisfied: DEEPSEEK_API_KEY present in .env (~2026-10-14)",
       "substeps": {
         "2.7.1_smoke": "PASS (2026-10-14): plato full real, no exceptions; mock=false, llm_model=deepseek-chat; CVI 0.9465 verified; 16.2s/atom (~5 calls, ~3.2s/call); detective exact-quote 7/7 on Greek with diacritics. FINDING: extractor returned 8 entities incl. pronouns/words (ὑμεῖς, ἐγώ, ἀληθές, οὐδέν) vs gold 1 — entity-extraction quality signal for 2.7.3; entity_linking OFF.",
-        "2.7.2_sappho": "PASS-with-findings (2026-10-14): real DeepSeek honest refusal (raw {\"hypotheses\": [], \"status\": \"no_reconstruction_possible\"}); engine reason 'llm_returned_none' MISLEADING (conflates decline vs parse-garbage). Mock-canned (v3.0 baseline, git -S) = optimistic: contained Voigt readings (ἴδρως κακχέεται 0.78 / τρόμος δὲ παῖσαν ἄγρει 0.55) — misleading demo, NOT gold-circular (gold fixtures have no reconstruction entries). No hallucinations. Detective+0.75 filter NOT exercised on real (no hypotheses to filter) — honest gap. CVI=1.00 'verified' on fragment (detective unverifiable 5/7): positives-only mean — calibration material. Cost: ~5 calls, 12.6s (2.5s/call).",
+        "2.7.2_sappho": "PASS-with-findings (fixes applied) (2026-10-14): real DeepSeek honest refusal (raw {\"hypotheses\": [], \"status\": \"no_reconstruction_possible\"}); engine reason 'llm_returned_none' MISLEADING (conflates decline vs parse-garbage). Mock-canned (v3.0 baseline, git -S) = optimistic: contained Voigt readings (ἴδρως κακχέεται 0.78 / τρόμος δὲ παῖσαν ἄγρει 0.55) — misleading demo, NOT gold-circular (gold fixtures have no reconstruction entries). No hallucinations. Detective+0.75 filter NOT exercised on real (no hypotheses to filter) — honest gap. CVI=1.00 'verified' on fragment (detective unverifiable 5/7): positives-only mean — calibration material. Cost: ~5 calls, 12.6s (2.5s/call).",
         "2.7.3_gold_real": "pending",
         "2.7.4_detective_greek": "pending (preview: exact-quote OK in smoke)",
         "2.7.5_calibration": "pending (separate commit policy)",
@@ -110,7 +110,8 @@
           "root_cause_hypothesis": "engine checks only parsed hypotheses list; ignores result['status']",
           "action": "post-2.7.3: distinguish reason='llm_declined' when status declares refusal",
           "not_a_bug": "terminal outcome identical; observability/докладность only",
-          "curator_note": "fix low-hanging; commit together with CVI fix (semantic accuracy theme)"
+          "curator_note": "fix low-hanging; commit together with CVI fix (semantic accuracy theme)",
+          "status": "fixed in 3b3b731"
         },
         {
           "id": "cvi_overclaims_on_fragment_texts",
@@ -119,9 +120,19 @@
           "root_cause_hypothesis": "CVI = mean confidence of POSITIVE verdicts only; single-positive case yields 1.00 without coverage penalty",
           "action": "2.7.5 calibration material: consider positive-coverage factor for fragments",
           "not_a_bug": "formula as documented; question is fitness on fragment texts",
-          "curator_note": "logical aggregator defect, not calibration; fix REQUIRED before 2.7.3; approved fix pending review"
+          "curator_note": "logical aggregator defect, not calibration; fix REQUIRED before 2.7.3; approved fix pending review",
+          "status": "fixed in 3b3b731"
         }
-      ]
+      ],
+      "fixes_2_7_2": {
+        "aggregator_rule": "variant (b) per curator flag: abstained iff positives < 2 and neutrals >= 1 (reason insufficient_positives; needs_review stays False; CVI kept visible). Tests: fragment_neutral rewritten + 4 new (incl. sappho regression, basic-mode).",
+        "llm_declined": "engine distinguishes honest refusal (status=no_reconstruction_possible) from llm_returned_none; test added",
+        "commits": [
+          "3b3b731",
+          "9b78e66"
+        ]
+      },
+      "token_tracking": "done (9b78e66): provider usage counters (calls/prompt/completion tokens), DeepSeekClient.usage, tariffs in LLMConfig (AEON_LLM_PRICE_IN/OUT_PER_M, defaults 0.27/1.10), runner stats + attach_raw_recorder (gold real_runs audit), report --dry-run/--raw-dir/cost-block. Dry-run: 52 calls (28 extract + 24 verify). Cost estimate: $0.03-0.25 (live measurement; stop >$2)."
     },
     "known_gaps": [
       "LLM quality not validated on real API (mock used throughout)",
