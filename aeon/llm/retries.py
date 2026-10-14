@@ -29,6 +29,21 @@ def is_retryable(exc: BaseException) -> bool:
     return False
 
 
+def retry_after_seconds(exc: BaseException) -> Optional[float]:
+    """Retry-After из ответа сервера (заголовок), в секундах. None если нет."""
+    response = getattr(exc, "response", None)
+    headers = getattr(response, "headers", None)
+    if not headers:
+        return None
+    value = headers.get("retry-after") or headers.get("Retry-After")
+    if value is None:
+        return None
+    try:
+        return max(0.0, float(value))
+    except (TypeError, ValueError):
+        return None
+
+
 def retry_call(
     fn: Callable[[], Any],
     *,
@@ -55,6 +70,9 @@ def retry_call(
             if attempts >= max(1, max_attempts) or not retryable(exc):
                 raise
             delay = base_delay * (2 ** (attempts - 1))
+            hint = retry_after_seconds(exc)
+            if hint is not None:
+                delay = max(delay, hint)
             delays.append(delay)
             if on_retry is not None:
                 on_retry(attempts, delay, exc)

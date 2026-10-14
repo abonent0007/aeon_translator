@@ -23,3 +23,9 @@ def test_mock_llm_records_calls(mock_llm):
 
     assert len(mock_llm.calls) == 1
     assert mock_llm.calls[0]["temperature"] == 0.1
+
+
+def test_mock_llm_parse_error_channel(mock_llm):
+    mock_llm.default = "I cannot answer that."
+    data = mock_llm._call_json([{"role": "user", "content": "x"}])
+    assert data["parse_error"] == "unrepairable JSON"

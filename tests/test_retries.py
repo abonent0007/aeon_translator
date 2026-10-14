@@ -85,3 +85,46 @@ def test_is_retryable_classification():
     assert not is_retryable(Boom(401))
     assert not is_retryable(Boom(404))
     assert not is_retryable(Boom())  # без статуса — не ретраим
+
+
+class BoomWithHeaders(Exception):
+    def __init__(self, status_code, retry_after=None):
+        super().__init__(f"http {status_code}")
+        self.status_code = status_code
+        if retry_after is not None:
+            self.response = type(
+                "R", (), {"headers": {"retry-after": str(retry_after)}}
+            )()
+
+
+def test_retry_after_hint_overrides_backoff():
+    slept = []
+    calls = {"n": 0}
+
+    def fn():
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise BoomWithHeaders(429, retry_after=2)
+        return "ok"
+
+    result, attempts, delays = retry_call(fn, base_delay=0.5, sleep=slept.append)
+
+    assert result == "ok"
+    assert slept == [2.0]  # max(backoff 0.5, Retry-After 2)
+    assert delays == [2.0]
+
+
+def test_retry_after_smaller_than_backoff():
+    slept = []
+    calls = {"n": 0}
+
+    def fn():
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise BoomWithHeaders(429, retry_after=0.1)
+        return "ok"
+
+    _, _, delays = retry_call(fn, base_delay=0.5, sleep=slept.append)
+
+    assert slept == [0.5]  # backoff больше Retry-After
+    assert delays == [0.5]

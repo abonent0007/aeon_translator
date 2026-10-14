@@ -11,6 +11,7 @@ import numpy as np
 from .semantic_atom import SemanticAtom, Entity, Relation
 from .llm_client import DeepSeekClient
 from .embeddings import EmbeddingEngine, get_embedding_engine
+from .logging_config import get_logger, log_event
 
 
 class MeaningExtractor:
@@ -255,6 +256,15 @@ Return a JSON object with these fields:
             {"role": "system", "content": "You are a semantic structure analyzer. Return ONLY valid JSON. No markdown, no explanations outside JSON."},
             {"role": "user", "content": prompt}
         ], temperature=0.2, max_tokens=2000)
+
+        if result.get("parse_error"):
+            log_event(
+                get_logger("aeon.extractor"),
+                "extract_structure_parse_error",
+                reason=result.get("parse_error"),
+                trace_id=getattr(self.llm, "trace_id", None),
+            )
+            return self._extract_structure_rule(text, language)
 
         return result if result else self._extract_structure_rule(text, language)
 

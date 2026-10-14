@@ -87,6 +87,7 @@ def test_provider_chat_success_logs_event(captured_events):
     assert event["provider"] == "deepseek"
     assert event["model"] == "m1"
     assert event["retries"] == 0
+    assert event["attempts"] == 1
     assert event["ok"] is True
     assert event["trace_id"] == "t-1"
     assert isinstance(event["latency_ms"], float)
@@ -108,6 +109,7 @@ def test_provider_retries_on_5xx(captured_events):
     call_events = [e for e in captured_events if e["msg"] == "llm_call"]
     assert len(retry_events) == 2
     assert len(call_events) == 1
+    assert call_events[0]["attempts"] == 3
     assert call_events[0]["retries"] == 2
     assert call_events[0]["ok"] is True
 

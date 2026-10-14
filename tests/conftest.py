@@ -13,6 +13,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from aeon.llm.json_repair import extract_json  # noqa: E402
 from aeon.metrics import METRICS, reset_metrics  # noqa: E402
 
 
@@ -55,10 +56,10 @@ class MockLLM:
         raw = self._call(messages, temperature, max_tokens)
         if not raw:
             return {}
-        try:
-            return json.loads(raw)
-        except json.JSONDecodeError:
-            return {"raw_response": raw}
+        data, reason = extract_json(raw)
+        if reason is None:
+            return data
+        return {"raw_response": raw, "parse_error": reason}
 
 
 @pytest.fixture
