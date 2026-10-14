@@ -25,14 +25,14 @@
 Строки, матчащие любой из regex (case-sensitive, начало строки):
 ```
 ^(Intent|Domain|Type|Complexity|Urgency|Confidence):
-^(Identify|Recognize|Determine|Note|Find|Locate)(\s|:)
+^(Identify|Recognize|Determine|Note|Find|Locate)(\s|:|$)
 ^Step \d+:
 ```
 - SKIP строки из оцениваемого набора; событие `claim_skipped_meta`
   (поля: row — исходная строка, reason) — для аудита.
 - Пропущенные строки входят в `details.skipped` и НЕ влияют на ratio.
 - Тест: `test_defensive_skip_bare_instruction_word` (edge: строка `"Identify"`
-  без пробела/двоеточия — покрывается `(\s|:)`-альтернативой).
+  без продолжения — покрывается `$`-альтернативой; Note 3 куратора).
 
 ## Grounding (per-row) — fix
 - строка grounded ⇔ `not contradicts` И `len(quote.strip()) >= 3` И

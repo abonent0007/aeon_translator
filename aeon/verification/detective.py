@@ -8,8 +8,17 @@ AEON Verification 2.0 — агент «Детектив» (source grounding).
 
 from typing import List
 
-from .base import BaseVerifier, VerificationContext, Verdict
+from ..logging_config import log_event
+from .base import (
+    BaseVerifier,
+    VerificationContext,
+    Verdict,
+    _nfc,
+    is_meta_or_instruction,
+)
 from .verdicts import VERDICT_CONTRADICTED, VERDICT_GROUNDED
+
+_MIN_QUOTE_LEN = 3  # contract v1: короткие «цитаты» не считаются grounded
 
 PROMPT_TEMPLATE = '''You are a source grounding verifier ("Detective").
 For EACH claim check whether the SOURCE TEXT supports, contradicts, or lacks it.
@@ -82,10 +91,29 @@ class DetectiveAgent(BaseVerifier):
         if not context.claims:
             return self._emit(context, self._neutral("нет утверждений для проверки", 0.5))
 
+        # Contract v1 (2.7.3): defensive-skip meta/инструкций — вторая линия
+        if selected_mode == "claim":
+            semantic_claims = [c for c in context.claims
+                               if not is_meta_or_instruction(str(c))]
+            for skipped in context.claims:
+                if is_meta_or_instruction(str(skipped)):
+                    log_event(self._logger, "claim_skipped_meta",
+                              row=str(skipped)[:200],
+                              reason="detective_input_filter",
+                              trace_id=context.trace_id)
+            if not semantic_claims:
+                log_event(self._logger, "detective_no_semantic_claims",
+                          trace_id=context.trace_id)
+                return self._emit(context, self._neutral(
+                    "no_semantic_claims: все claims — meta/инструкции "
+                    "(дефект extractor?)", 0.3))
+        else:  # hypothesis/reading: конструируемые claims не фильтруем по regex
+            semantic_claims = list(context.claims)
+
         template = (HYPOTHESIS_PROMPT_TEMPLATE
                     if selected_mode in ("hypothesis", "reading")
                     else PROMPT_TEMPLATE)
-        prompt = _build_prompt(context.source_text, context.claims, template)
+        prompt = _build_prompt(context.source_text, semantic_claims, template)
         result = self.llm._call_json([
             {"role": "system", "content": "You are a grounding verifier. Return only valid JSON."},
             {"role": "user", "content": prompt},
@@ -100,8 +128,10 @@ class DetectiveAgent(BaseVerifier):
         if not rows:
             return self._emit(context, self._neutral("LLM вернул пустой список утверждений", 0.3))
 
+        source_nfc = _nfc(context.source_text)
         per_claim = []
         grounded_count = 0
+        hallucinated = 0
         for row in rows:
             quote = str(row.get("quote") or "").strip()
             contradicts = bool(row.get("contradicts"))
@@ -109,18 +139,31 @@ class DetectiveAgent(BaseVerifier):
                 confidence = float(row.get("confidence", 0.5))
             except (TypeError, ValueError):
                 confidence = 0.5
+            grounded = False
+            if not contradicts:
+                if quote and len(quote) >= _MIN_QUOTE_LEN and _nfc(quote) in source_nfc:
+                    grounded = True
+                elif quote:
+                    # Contract v1 (Q2): непустой quote, но НЕ подстрока source —
+                    # галлюцинация цитаты: событие + строка НЕ grounded
+                    hallucinated += 1
+                    log_event(self._logger, "detective_quote_not_in_source",
+                              quote=quote[:160],
+                              claim=str(row.get("claim") or "")[:160],
+                              trace_id=context.trace_id)
+            if grounded:
+                grounded_count += 1
             per_claim.append({
                 "claim": str(row.get("claim") or ""),
                 "quote": quote,
                 "contradicts": contradicts,
                 "confidence": confidence,
+                "grounded": grounded,
                 "reasoning": str(row.get("reasoning") or ""),
             })
-            if not contradicts and (quote or not self.cfg.require_quote):
-                grounded_count += 1
 
         total = len(per_claim)
-        details = {"claims": per_claim}
+        details = {"claims": per_claim, "hallucinated_quotes": hallucinated}
         contradicted = [row for row in per_claim if row["contradicts"]]
 
         if contradicted:
@@ -132,8 +175,11 @@ class DetectiveAgent(BaseVerifier):
                 details=details,
             ))
 
-        if grounded_count == total:
-            avg_confidence = sum(row["confidence"] for row in per_claim) / total
+        ratio = round(grounded_count / total, 4)
+        avg_confidence = sum(row["confidence"] for row in per_claim) / total
+
+        if ratio == 1.0:
+            # полное покрытие: сохраняем min_confidence-гейт (Q3 — порог не меняем)
             if avg_confidence < self.cfg.min_confidence:
                 return self._emit(context, self._abstained(
                     f"grounding confidence {avg_confidence:.2f} < {self.cfg.min_confidence}",
@@ -147,9 +193,23 @@ class DetectiveAgent(BaseVerifier):
                 details=details,
             ))
 
+        if ratio >= self.cfg.grounded_ratio_threshold:
+            # Contract v1 (Q1): частичное покрытие — пониженная уверенность
+            return self._emit(context, Verdict(
+                verdict=VERDICT_GROUNDED,
+                confidence=round(ratio * avg_confidence, 4),
+                agent=self.name,
+                reasoning=(
+                    f"grounded {grounded_count}/{total} "
+                    f"(ratio {ratio:.2f} ≥ {self.cfg.grounded_ratio_threshold}) — "
+                    f"пониженная уверенность"
+                ),
+                details=details,
+            ))
+
         return self._emit(context, Verdict(
             verdict="unverifiable_due_to_missing_data",
-            confidence=round(grounded_count / total, 4),
+            confidence=ratio,
             agent=self.name,
             reasoning=(
                 f"цитаты найдены для {grounded_count}/{total} утверждений — "

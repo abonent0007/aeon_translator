@@ -39,7 +39,8 @@ def build_thresholds_snapshot(config=None) -> Dict[str, Any]:
     full = config or CONFIG
     return {
         "detective": {"min_confidence": full.detective.min_confidence,
-                      "require_quote": full.detective.require_quote},
+                      "require_quote": full.detective.require_quote,
+                      "grounded_ratio_threshold": full.detective.grounded_ratio_threshold},
         "expert": {"min_confidence": full.expert.min_confidence,
                    "min_sources": full.expert.min_sources},
         "logician": {"min_coherence": full.logician.min_coherence,

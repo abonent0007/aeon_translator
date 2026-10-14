@@ -87,6 +87,9 @@ class DetectiveConfig:
 
     min_confidence: float = 0.85
     require_quote: bool = True
+    # 2.7.3 (contract detective v1): доля grounded semantic-claims для вердикта;
+    # «⅔ + округление» → 0.7 (кураторское решение)
+    grounded_ratio_threshold: float = 0.7
 
 
 @dataclass(frozen=True)
@@ -302,6 +305,7 @@ def load_config() -> AeonConfig:
         detective=DetectiveConfig(
             min_confidence=_env_float("AEON_DETECTIVE_MIN_CONFIDENCE", 0.85),
             require_quote=_env_bool("AEON_DETECTIVE_REQUIRE_QUOTE", True),
+            grounded_ratio_threshold=_env_float("AEON_DETECTIVE_GROUNDED_RATIO", 0.7),
         ),
         expert=ExpertConfig(
             min_confidence=_env_float("AEON_EXPERT_MIN_CONFIDENCE", 0.75),

@@ -269,16 +269,16 @@ DEMO_RESPONSES = {
          "confidence": 0.9, "reasoning": "surviving context brackets the gap"},
     ]},
     "Reconstruction candidate 'τρόμος": {"claims": [
-        {"claim": "cand-2", "quote": "…χρῶι πῦρ ὐπαδεδρόμηκεν…", "contradicts": False,
+        {"claim": "cand-2", "quote": "χρῶι πῦρ ὐπαδεδρόμηκεν…", "contradicts": False,
          "confidence": 0.86, "reasoning": "continuation plausible in context"},
     ]},
     "Detective": {"claims": [
         {"claim": "Сократ признаёт собственное незнание",
-         "quote": "Я знаю, что ничего не знаю.", "contradicts": False,
+         "quote": "οὐκ οἶδα", "contradicts": False,
          "confidence": 0.92, "reasoning": "точная цитата в источнике"},
-        {"claim": "Афины осудили Сократа на смерть в 399 году до н. э.",
-         "quote": "Афины осудили Сократа на смерть в 399 году до н. э.",
-         "contradicts": False, "confidence": 0.9, "reasoning": "точная цитата"},
+        {"claim": "Обвинители упомянуты как источник опыта",
+         "quote": "ὑπὸ τῶν ἐμῶν κατηγόρων", "contradicts": False,
+         "confidence": 0.9, "reasoning": "точная цитата"},
     ]},
     "Expert": {"claims": [
         {"claim": "Сократ признаёт собственное незнание",
@@ -397,9 +397,9 @@ def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
             focus_run = None
             variant_run = None
             if verify_mode != "off":
-                claims = atom.explanation_chain + [
-                    f"Intent: {atom.intent}", f"Domain: {atom.domain}"
-                ]
+                from aeon.verification import build_claims  # contract v1
+
+                claims = build_claims(atom, trace_id=atom.meaning_hash)
                 result = verification.verify_atom(
                     text, claims, [e.name for e in atom.entities],
                     trace_id=atom.meaning_hash, mode=verify_mode,

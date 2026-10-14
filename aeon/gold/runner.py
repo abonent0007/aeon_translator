@@ -101,7 +101,7 @@ def _predict_record(record, llm: Any, packs: Dict[str, Any],
     """Один сегмент: markers (pack) + extract (LLM) + verdicts (LLM, опц.)."""
     from ..extractor import MeaningExtractor
     from ..language import get as get_pack
-    from ..verification import VerificationEngine
+    from ..verification import VerificationEngine, build_claims
 
     pack = packs.setdefault(record.language, get_pack(record.language))
     segment = record.segment_text
@@ -118,8 +118,7 @@ def _predict_record(record, llm: Any, packs: Dict[str, Any],
     if with_verdicts and record.expected_verdicts is not None:
         verification = VerificationEngine(llm_client=llm)
         verification.embeddings = _offline_embeddings()
-        claims = (atom.explanation_chain or []) + [
-            f"Intent: {atom.intent}", f"Domain: {atom.domain}"]
+        claims = build_claims(atom, trace_id=f"gold:{record.text_id}:{record.segment_id}")
         result = verification.verify_atom(
             segment, claims, [entity["name"] for entity in entities],
             trace_id=f"gold:{record.text_id}:{record.segment_id}", mode="full")

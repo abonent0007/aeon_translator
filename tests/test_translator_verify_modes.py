@@ -35,11 +35,11 @@ STRUCTURE = {
 RESPONSES = {
     "Analyze the following text": STRUCTURE,
     "Reconstruction candidate 'восстановление-1'": {"claims": [
-        {"claim": "r1", "quote": "контекст", "contradicts": False,
+        {"claim": "r1", "quote": "текст", "contradicts": False,
          "confidence": 0.9, "reasoning": "ok"},
     ]},
     "Reconstruction candidate 'восстановление-2'": {"claims": [
-        {"claim": "r2", "quote": "контекст", "contradicts": False,
+        {"claim": "r2", "quote": "конец", "contradicts": False,
          "confidence": 0.88, "reasoning": "ok"},
     ]},
     "Detective": {"claims": [

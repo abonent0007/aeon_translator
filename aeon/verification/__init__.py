@@ -17,7 +17,14 @@ from ..config import CONFIG
 from ..embeddings import get_embedding_engine
 from ..llm_client import DeepSeekClient
 from .aggregator import Aggregator, CombinedVerdict
-from .base import BaseVerifier, Verdict, VerificationContext
+from .base import (
+    BaseVerifier,
+    Verdict,
+    VerificationContext,
+    build_claims,
+    has_verbatim_anchor,
+    is_meta_or_instruction,
+)
 from .detective import DetectiveAgent
 from .expert import ExpertAgent
 from .logician import LogicianAgent
@@ -50,6 +57,9 @@ __all__ = [
     "Aggregator",
     "CombinedVerdict",
     "Verdict",
+    "build_claims",
+    "has_verbatim_anchor",
+    "is_meta_or_instruction",
     "VerificationContext",
     "BaseVerifier",
 ]

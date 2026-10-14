@@ -4,6 +4,7 @@ LLM-powered + LaBSE embeddings + entity extraction + роль labelling + explai
 """
 
 import hashlib
+import os
 import re
 import json
 from typing import List, Dict, Optional
@@ -22,6 +23,28 @@ from .logging_config import get_logger, log_event
 from .config import CONFIG
 from .entity_linking import LinkResult, WikidataClient
 from .crosswalk import PleiadesClient
+
+
+def role_consistency_violations(structure: dict) -> List[str]:
+    """Rule 5 (contract v1): entities[i].role=X ⇒ semantic_roles[X] содержит name/span.
+
+    Возвращает список нарушений (пусто = ок). Q3: semantic_roles может
+    содержать не-entities — проверяется только присутствие имени/спана сущности.
+    """
+    violations: List[str] = []
+    roles = structure.get("semantic_roles") or {}
+    for entity in structure.get("entities") or []:
+        if not isinstance(entity, dict):
+            continue
+        role = str(entity.get("role") or "")
+        name = str(entity.get("name") or "")
+        span = str(entity.get("span") or "")
+        if not role or role not in roles:
+            continue
+        value = str(roles.get(role) or "")
+        if name and name not in value and span not in value:
+            violations.append(f"{name!r}: role={role}, semantic_roles[{role}]={value!r}")
+    return violations
 
 
 class MeaningExtractor:
@@ -369,6 +392,21 @@ Now analyze TEXT and return ONLY the JSON object."""
                 trace_id=getattr(self.llm, "trace_id", None),
             )
             return self._extract_structure_rule(text, language)
+
+        violations = role_consistency_violations(result)
+        if violations:
+            if os.getenv("AEON_STRICT_ROLE_CONSISTENCY", "").strip().lower() in ("1", "true", "yes"):
+                raise ValueError(
+                    "role consistency violations (contract v1, Rule 5): "
+                    f"{violations[:3]}"
+                )
+            log_event(
+                get_logger("aeon.extractor"),
+                "role_consistency_violation",
+                count=len(violations),
+                violations=violations[:5],
+                trace_id=getattr(self.llm, "trace_id", None),
+            )
 
         return result if result else self._extract_structure_rule(text, language)
 

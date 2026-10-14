@@ -174,7 +174,9 @@ class AeonTranslator:
         verification_result = None
         if verify_mode != "off":
             print(f"\n🔍 ВЕРИФИКАЦИЯ ({verify_mode})...")
-            claims = atom.explanation_chain + [f"Intent: {atom.intent}", f"Domain: {atom.domain}"]
+            from .verification import build_claims  # contract v1: без meta-склейки
+
+            claims = build_claims(atom, trace_id=atom.meaning_hash)
             verification_result = self.verification.verify_atom(
                 original_text, claims,
                 [e.name for e in atom.entities],
@@ -400,7 +402,9 @@ class AeonTranslator:
         atom = self.extractor.extract_from_text(content, source_language)
         # Верифицируем перед сохранением
         if self.llm.available:
-            claims = atom.explanation_chain + [f"Intent: {atom.intent}"]
+            from .verification import build_claims  # contract v1
+
+            claims = build_claims(atom)
             v = self.verification.verify_atom(content, claims, [e.name for e in atom.entities])
             atom.hallucination_risk = v.get("hallucination_risk", 0.0)
             atom.consistency_score = v["consistency"].get("score", 1.0)
