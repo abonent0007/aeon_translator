@@ -221,3 +221,44 @@ def test_offline_miss_no_fallback_zero_network(tmp_path, monkeypatch):
     assert transport.calls == []
     client.close()
     adapter.close()
+
+
+def test_offline_live_conflict_logged(tmp_path, monkeypatch):
+    """Уточнение 2.6 №3: offline-hit + расхождение с live-кэшем → конфликт-лог."""
+    import json
+
+    import aeon.entity_linking as _el
+    from aeon.offline import PleiadesOfflineAdapter
+
+    events = []
+    monkeypatch.setattr(
+        "aeon.crosswalk.log_event",
+        lambda logger, msg, **kw: events.append({"msg": msg, **kw}),
+    )
+    transport = FakeTransport(payload=PLEIADES_PAYLOAD)
+    client, _ = make_pleiades(tmp_path, transport)
+    client.get_place("579885")  # live → кэш (title: Athenae)
+
+    offline_dump = tmp_path / "offline.jsonl"
+    meta = {"meta": {"source": "pleiades", "dump_version": "conf.1",
+                     "dump_date": "2026-09-01", "license": "CC-BY-3.0",
+                     "license_file_sha256": "b" * 64}}
+    row = {"id": "579885", "title": "Athenai-offline", "place_types": [],
+           "repr_point": None, "uri": "", "dump_version": "conf.1"}
+    offline_dump.write_text(
+        json.dumps(meta) + "\n" + json.dumps(row) + "\n", encoding="utf-8",
+    )
+    adapter = PleiadesOfflineAdapter(db_path=str(tmp_path / "offline.db"))
+    adapter.load(offline_dump)
+    client.offline_adapter = adapter
+
+    result = client.get_place("579885")
+
+    assert result.place.source == "offline_pleiades"
+    assert result.place.title == "Athenai-offline"  # offline побеждает
+    conflicts = [e for e in events if e["msg"] == "offline_live_conflict"]
+    assert len(conflicts) == 1
+    assert conflicts[0]["live_title"] == "Athenae"
+    assert len(transport.calls) == 1  # второй вызов — без сети
+    client.close()
+    adapter.close()

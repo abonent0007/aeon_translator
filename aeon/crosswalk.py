@@ -165,6 +165,14 @@ class PleiadesClient:
         if adapter is not None and adapter.loaded:
             record = adapter.lookup(str(pleiades_id))
             if record is not None:
+                cached_live = self._cache.get("pleiades", str(pleiades_id))
+                if cached_live is not None:
+                    log_event(
+                        self._logger, "offline_live_conflict",
+                        pleiades_id=str(pleiades_id),
+                        offline_title=record.title,
+                        live_title=str(cached_live.get("title") or ""),
+                    )
                 return PlaceFetchResult(place=PlaceInfo(
                     pleiades_id=record.id, title=record.title,
                     place_types=list(record.place_types),

@@ -238,7 +238,10 @@ commit + rollback — битая запись не оставляет части
 
 Цепочка в `PleiadesClient.get_place` (шаг 2.6): offline adapter (если
 загружен) → live (при `AEON_OFFLINE_ALLOW_LIVE_FALLBACK=1`); офлайн-результат
-помечается `source="offline_pleiades"`. Trismegistos — stub
+помечается `source="offline_pleiades"`. **Детерминизм:** при offline-hit
+live-кэш проверяется на расхождение (0 сети); несовпадение title →
+событие `offline_live_conflict` — конфликт НЕ разрешается, offline
+детерминирован и побеждает. Trismegistos — stub
 (`no_public_dataset`: публичного датасета нет) — в pipeline не включается.
 
 Метрики: `offline_cache_hit_rate`, `offline_dump_age_days`.

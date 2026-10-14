@@ -238,3 +238,47 @@ def test_registry_get_adapter_instance(tmp_path):
     )
     assert isinstance(adapter, PleiadesOfflineAdapter)
     adapter.close()
+
+
+def test_load_large_generated_dump(tmp_path):
+    """Устойчивость парсера (уточнение 2.6 №1): 10k записей + edge-cases."""
+    big = tmp_path / "big.jsonl"
+    with big.open("w", encoding="utf-8") as handle:
+        handle.write(json.dumps({"meta": {**META, "dump_version": "big.1"}}) + "\n")
+        for index in range(10_000):
+            handle.write(json.dumps({
+                "id": str(index),
+                "title": f"Place {index}",
+                "place_types": (["long"] * 200) if index == 7777 else ["x"],
+                "repr_point": None,
+                "uri": "",
+            }) + "\n")
+            if index % 1000 == 0:
+                handle.write("\n")  # пустые строки
+    adapter = make_adapter(tmp_path)
+
+    result = adapter.load(big)
+
+    assert result["status"] == "loaded"
+    assert result["rows"] == 10_000
+    assert adapter.lookup("7777").place_types == ["long"] * 200
+    with adapter._store._lock:
+        names = {
+            row[0] for row in adapter._store._conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='index'"
+            ).fetchall()
+        }
+    assert "idx_pleiades_title" in names
+    adapter.close()
+
+
+def test_fixtures_not_gitignored():
+    """Уточнение 2.6 №2: tests/fixtures/ не должен ловиться data/*-правилами."""
+    import subprocess
+
+    repo_root = Path(__file__).resolve().parent.parent
+    proc = subprocess.run(
+        ["git", "check-ignore", "tests/fixtures/dumps/pleiades_sample.jsonl"],
+        capture_output=True, text=True, cwd=str(repo_root),
+    )
+    assert proc.returncode != 0, f"fixtures ignored!: {proc.stdout.strip()}"

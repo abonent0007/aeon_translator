@@ -14,13 +14,36 @@
   ],
   "current_step": 15,
   "next_step": "2.7",
-  "phase": "phase2_executing",
+  "phase": "complete_with_known_gap",
   "phase2": {
-    "step_2.6": "done (Offline Adapters: aeon/offline/, JSONL dumps, atomic load + idempotency + provenance sha256 + staleness, Pleiades offline-first chain, TS stub)",
+    "status": "complete_with_known_gap",
+    "steps_completed": ["2.0", "2.1", "2.2", "2.3", "2.4", "2.5", "2.6"],
+    "step_2_7": {
+      "status": "blocked",
+      "blocker": "DEEPSEEK_API_KEY not present",
+      "trigger": "key added to .env"
+    },
+    "known_gaps": [
+      "LLM quality not validated on real API (mock used throughout)",
+      "Sappho fr. 31 reconstruction — requires real-API verification",
+      "Contradiction detector tested on synthetic cases only",
+      "Pleiades README links correctness — unverifiable from this network (site blocked)"
+    ],
+    "checklist_2_7": [
+      "smoke: demo plato --verify=full --language=grc (time/cost/no exceptions)",
+      "Sappho re-verify --reconstruct: гипотезы реального DeepSeek vs Voigt vs mock",
+      "Detective on Greek: exact-quote на Unicode с диакритикой не деградирует",
+      "Contradiction detector: ручной противоречивый кейс на реальных ответах",
+      "Multi-focus cross-check: независимость на реальных ответах",
+      "Cost tracking: $/атом и $/полный демо-пайплайн",
+      "Замеры времени vs экстраполяция 0.8s; >30s/атом → параллелизация",
+      "Re-calibration порогов (0.75/0.85/0.60/0.50) — отдельный коммит calibrate"
+    ],
     "focus_roles_available": ["historian", "philosopher", "linguist", "esoteric"],
     "language_packs_registered": ["grc", "la"],
     "offline_sources": {"pleiades": {"adapter": "ready", "status": "awaiting_user_dump"}, "trismegistos": {"status": "stub_no_public_dataset"}},
-    "remaining": ["2.7 Real API + parallelization (triggers on DEEPSEEK_API_KEY)"]
+    "phase3_draft": ["3.1 .aeon v2 (traces/versioning/schema)", "3.2 morphology hooks (Ithaca/Aeneas/LatinBERT, after gold-standard)", "3.3 gold-standard corpus (mock-vs-real validation)", "3.4 multi-document analysis", "3.5 variant readings mode (Sappho)", "3.6 web UI/API (after 2.7)", "3.7 export formats (BibTeX/TEI-XML/Markdown)", "3.8 real-API calibration automation"],
+    "phase3_recommended_first": ["3.1 .aeon v2", "3.3 gold-standard corpus", "3.5 variant readings mode"]
   },
   "completed_at": null,
   "user_preferences": {
