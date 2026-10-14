@@ -35,38 +35,37 @@ annotations_version: 1.0.0 | датасет: 28 записей / 6 тексто�
   entities/completeness — `xfail` (достижимо только на real; см. стоп №3:
   два уровня тестов — `reports` всегда, `meets_baseline` с xfail).
 
-## Real-baseline (2.7.3, 2026-10-14) — ФАКТ
+## Real-baseline (2.7.3-b/t3, 2026-10-14) — ФАКТ (после contract-фиксов)
 
-Прогон: 52 вызова, 155.9 s, **$0.0351**, failures=0; raw: `gold/real_runs/2026-10-14_t1/`;
-отчёт: `gold/reports/real_2026-10-14.md`.
+Прогон: 52 вызова, 135.3 s, **$0.0189** (flash off-peak, thinking off), failures=0;
+raw: `gold/real_runs/2026-10-14_t3/`; отчёт: `gold/reports/real_2026-10-14_t3.md`.
 
-| Метрика | Mock | **Real** | Комментарий |
+| Метрика | Mock | t1 (v3.0) | **t3 (v1 contract)** |
 |---|---|---|---|
-| Markers F1 (lacuna) | 1.00 | **1.00** | pack-детекция детерминированна (не LLM) |
-| Markers F1 (supplement) | 1.00 | **1.00** | то же |
-| Entities F1 | 0.06 | **0.24** (P 0.14 / R 0.76) | recall высокий — имена находятся; precision убита словесным шумом |
-| is_fragment accuracy | 1.00 | **1.00** | pack |
-| completeness MAE | 0.40 | **0.00** | extractor всегда отдаёт 1.0 — поле не калибровано (finding) |
-| Verdicts detective | 0.00 | **0.00 ⛔ стоп №4** | root-cause найден (ниже), НЕ «сломан exact-quote» |
-| Verdicts expert | 1.00 | **0.88** | |
-| Verdicts logician | 1.00 | **0.88** | |
+| Markers F1 (lacuna/supplement) | 1.00/1.00 | 1.00/1.00 | **1.00/1.00** |
+| Entities F1 | 0.06 | 0.24 (P .14 / R .76) | **0.75** (P .63 / R .90) |
+| is_fragment accuracy | 1.00 | 1.00 | **1.00** |
+| completeness MAE | 0.40 | 0.00 (flat 1.0) | **0.09** |
+| detective accuracy | 0.00 | 0.00 | **0.75** (plato 1.00 / sappho 0.60) |
+| expert / logician | 1.00/1.00 | 0.88/0.88 | **1.00/1.00** |
 
-**Стоп №4 (detective <0.3) — сработал, диагноз по raw:** exact-quote РАБОТАЕТ
-(quote_in_source 7/7 на всех сегментах), ломается КОМПОЗИЦИЯ claims:
-(1) real `explanation_chain` = грамматические инструкции («Identify the main
-verb…»), а не семантические утверждения; (2) принудительные meta-claims
-`Intent:`/`Domain:` почти всегда возвращаются с пустой цитатой →
-`grounded_count < total` (all-or-nothing, detective.py:135) → unverifiable;
-(3) даже при 7/7 (sappho seg3) avg conf 0.83 < min 0.85 → abstained.
-Это контрактный дефект claims + оптимизм gold-ожиданий (annotator ставил
-`grounded` до real-данных) — материал для решения куратора, НЕ фикс.
+**История прогонов:** t1 = baseline v3.0-контракта; **t2 = FAILED** (deepseek-flash —
+thinking-модель: reasoning съедал max_tokens=2000 → пустой content у всех 28 вызовов,
+rule-fallback; диагноз probe-verified, фикс — thinking disabled, commit 7a721d0);
+t3 = первый валидный v1-прогон.
 
-**Entities — разбор (raw):** (a) извлечение = «словесный салат»: местоимения,
-служебные слова и АНГЛИЙСКИЕ переводы (`truth`, `king`, `sitting`) как entities;
-(b) метрик-артефакт: grave/acute не совпадают при casefold (`Διός` vs `Διὸς`,
-`Ἀκαμαντίς` vs `Ἀκαμαντὶς`) — нужен accent-insensitive матч; (c) расширение
-спанов артиклями/патронимиками (`ὁ Ἀθηναίων`, `Πηληϊάδεω Ἀχιλῆος` vs `Ἀχιλῆος`).
-Лучший текст: **caesar 0.73** (реальные имена, FPs — 3 общих слова).
+**Stop-flags t3 (ждут решения куратора):**
+- **Grammar-flavored kept = 48/84 (57%)** — формально >0%; НО это *anchored*
+  morpho-syntax observations («The verb dative…», verifiable), НЕ запрещённые
+  инструкции «Identify…» (тех skip=3). Вопрос: Rule 3 выполнен (anchored syntax
+  ок) или нужна итерация промпта под content-focus.
+- **Role-consistency violations: 3/28 (10.7%) > 5%** — детали: homer `Ἀχιλῆος`
+  (role=patient, roles.patient='μῆνιν'), `Ἀχαιοῖς` (goal vs пусто), plato
+  `Ἀθηναῖοι` (patient vs roles.patient='ὑμεῖς'). Rule 5 в v1 нестабилен.
+
+**Без изменений:** markers/is_fragment (pack-детерминизм). Entities per text:
+caesar 1.00, plato 1.00, homer 0.77, inscription 0.33, papyrus/sappho 0.00
+(FP при пустом gold — остаточный шум на непоправимо фрагментарных текстах).
 
 ## Real-цели — гипотеза
 
