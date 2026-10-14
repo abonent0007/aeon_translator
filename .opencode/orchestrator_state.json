@@ -1,7 +1,7 @@
 {
   "project": "C:\\Users\\User\\Documents\\aeon_translator-main\\aeon_translator-main",
-  "original_request": "AEON v4.0 'Deep Analyst': deep semantic analysis, Verification 2.0, ancient texts specialization, multimodal/interface updates. Phase 1 (0.1-1.4) COMPLETE. Phase 2 in progress.",
-  "enriched_request": "Phase 0: foundation. Phase 1: Wikidata entity linking + Verification 2.0 + fragments + integration (accepted). Phase 2: ancient texts specialization (2.0 Language Pack Infra -> 2.1 Ancient Greek -> 2.2 Latin -> 2.3 Fragment Hypotheses -> 2.4 Linguistic Layers -> 2.5 Multi-focus -> 2.6 Offline adapters -> 2.7 Real API + parallelization).",
+  "original_request": "AEON v4.0 'Deep Analyst': deep semantic analysis, Verification 2.0, ancient texts specialization, multimodal updates. Phase 1 (0.1-1.4) COMPLETE. Phase 2 in progress (2.0 done, 2.1 done).",
+  "enriched_request": "Phase 2: 2.0 Language Pack Infra -> 2.1 Ancient Greek -> 2.2 Latin -> 2.3 Fragment Hypotheses -> 2.4 Linguistic Layers -> 2.5 Multi-focus -> 2.6 Offline adapters -> 2.7 Real API + parallelization.",
   "plan": [
     {"step": "0.1", "status": "done"},
     {"step": "0.2", "status": "done"},
@@ -11,54 +11,50 @@
     {"step": "1.2", "status": "done"},
     {"step": "1.3", "status": "done"},
     {"step": "1.4", "status": "done"},
-    {"step": "2.0", "status": "done"}
+    {"step": "2.0", "status": "done"},
+    {"step": "2.1", "status": "done"}
   ],
-  "current_step": 9,
-  "next_step": "2.1",
+  "current_step": 10,
+  "next_step": "2.2",
   "phase": "phase2_executing",
   "phase2": {
-    "step_2.0": "done (Language Pack Infrastructure: aeon/language/ base+registry+__init__, tests, translator integration point)",
-    "language_packs_registered": [],
-    "remaining": ["2.1 Ancient Greek", "2.2 Latin", "2.3 Fragment Hypotheses", "2.4 Linguistic Layers", "2.5 Multi-focus", "2.6 Offline adapters", "2.7 Real API + parallelization"]
+    "step_2.0": "done (Language Pack Infrastructure)",
+    "step_2.1": "done (Ancient Greek Pack: grc.py, prompts, contextual supplement/lacuna, examples/greek/ 5 texts + LICENSE)",
+    "language_packs_registered": ["grc"],
+    "remaining": ["2.2 Latin", "2.3 Fragment Hypotheses", "2.4 Linguistic Layers", "2.5 Multi-focus", "2.6 Offline adapters", "2.7 Real API + parallelization"]
   },
   "completed_at": null,
   "user_preferences": {
     "embeddings": "pluggable backend; keep MiniLM/LaBSE as defaults (C: 2.9GB free)",
-    "llm_keys": "user will add DEEPSEEK_API_KEY to .env; tests run on mocks; .env currently ABSENT (verified 2026-10-14)",
-    "ancient_packs": "2.1 Ancient Greek + 2.2 Latin priority; LanguagePack variant A (prompts+lexicons+tokens), morphology (Morpheus/CLTK) -> Phase 3",
-    "reference_texts": "5 excerpts: Plato Apologia (translated full), Homer Il. 1.1-10 (grc full), IG/PHI lacuna inscription, P.Oxy. lacuna papyrus, Sappho fr. 31 (disputed) + Latin control (Caesar BG 1.1); Perseus/PHI public domain + license metadata",
-    "fragment_hypotheses": "2-4 hypotheses + ranking + explicit no_reconstruction_possible path",
-    "multi_focus": "opt-in flag (--focus=...), default off",
-    "checkpoints": "curator verifies step reports with fixed format; stop at defined stop-points"
+    "llm_keys": "user will add DEEPSEEK_API_KEY to .env; tests on mocks; .env ABSENT (verified 2026-10-14)",
+    "ancient_packs": "2.1 Ancient Greek done; 2.2 Latin next; variant A (prompts+lexicons+tokens), morphology (Morpheus/CLTK) -> Phase 3",
+    "reference_texts": "examples/greek/: plato_apologia_17a, homer_iliad_1_1-10, inscription_ig_lacunae, papyrus_oxy_lacunae, sappho_fr31 + LICENSE.md (PD; no Perseus/PHI digitization copies)",
+    "fragment_hypotheses": "2-4 hypotheses + ranking + explicit no_reconstruction_possible (max conf < 0.5)",
+    "multi_focus": "opt-in flag, default off",
+    "checkpoints": "curator verifies step reports with fixed format"
   },
   "known_deltas": [
-    "Threshold audit: v3.0 literals in config.legacy_verification with IDENTICAL defaults.",
-    "Wikidata quirks (live-verified): API errors = HTTP 200 + {\"error\":{...}}; redirects parser supports list and dict forms.",
-    "Pleiades: unreachable from dev network; defensive parser + network-marker live test; hostname-only.",
-    "Trismegistos: no public API (SSL chain + 403) -> stub adapter; datasets deferred.",
-    "Fragment orthogonality (a086a4b): is_fragment=source lacuna; completeness_score=extraction quality; needs_attention aggregate.",
-    "Verification 2.0 (c201bb4) + logician fix (3daaf97): package aeon/verification/; <2 claims -> abstained.",
-    "1.4 (e5619be): verify_mode off/basic/full; demo CLI; MockLLM->aeon/testing.py (latency_ms); coverage runner 92%.",
-    "CVI formula documented: negatives dominate; no positives -> abstained; CVI = mean confidence of POSITIVE verdicts (round 4); <0.50 abstained; needs_review <0.85. Demo mean(0.91,0.90)=0.905 -> '0.91' (.2f).",
-    "Real-API gap: mock extrapolation (200ms/call); real DeepSeek ~1.5-4s/call -> 4 calls ~6-16s; multi-focus up to 12 calls -> backlog 2.7 parallelization.",
-    "Coverage: TOTAL 92%, all new modules >=73%; runner tools/run_coverage.py cross-platform; coverage pinned >=7.4,<8.0.",
-    "Phase 2.0 (Language Pack Infrastructure): aeon/language/ (base.py ABC LanguagePack + Marker, registry.py, __init__.py). Stop-points: #1 pack.special_tokens приоритетный источник, semantic_atom.LACUNA_MARKERS fallback при pack=None (интеграция extractor — 2.1+); #2 греческий -> 'grc' кандидат без различения ancient/modern; #3 lazy = фабрика + кеш инстанса (eager-registration). Translator integration point: translate(..., language_pack=None) — normalize вызывается только при заданном паке. Registry пуст до 2.1-2.2 (list_available() == [])."
+    "Phase 1 (0.1-1.4) complete: entity_linking, verification/, fragments, verify_mode, demo, coverage runner. Details in git history.",
+    "CVI formula: negatives dominate; no positives -> abstained; CVI = mean confidence of POSITIVE verdicts (round 4); <0.50 abstained; needs_review <0.85.",
+    "Phase 2.0: aeon/language/ (ABC + lazy registry). Refinements applied: detect() tie-break alphabetical + detect_ambiguous log; normalize policy = pipeline-only, original preserved in result.source.content; coverage runner includes aeon.language; force=True covered by tests.",
+    "Phase 2.1 Ancient Greek Pack: aeon/language/grc.py; special_tokens now support str OR list (base helper updated); contextual rule: [letters] -> supplement, [dots/dashes] -> lacuna (stop-point #1 decision); normalize policy: NFC + preserve final sigma + preserve iota subscript + preserve breathing marks (stop-point #2, rationale: Unicode standard + Perseus/TLG orthography practice, search unification is Phase 3); prompts <=30 lines referencing markers, reconstruct requires no_reconstruction_possible when max conf < 0.5 (stop-point #3 shown in report); licenses: examples/greek/ LICENSE.md - PD ancient texts, own transcriptions, no Perseus/PHI digitization copies (stop-point #4).",
+    "Registry now builtin-registers grc at aeon.language import (list_available() == ['grc']); instantiation remains lazy; tests clear registry per-test.",
+    "Coverage after 2.1: TOTAL 92%; aeon/language grc.py 100%, base 94%, registry 94%; all new modules >=70%."
   ],
   "backlog": [
-    "2.1 Ancient Greek Pack (lacunae/editorial tokens, prompts, lexicon paths; ref texts from examples/greek/)",
-    "2.2 Latin Pack (+ examples/latin/ control)",
-    "2.3 Fragment Hypothesis Engine (2-4 hypotheses, ranking, no_reconstruction_possible)",
+    "2.2 Latin Pack (+ examples/latin/ control: Caesar BG 1.1)",
+    "2.3 Fragment Hypothesis Engine (2-4 hypotheses, ranking, no_reconstruction_possible); integrate pack markers into extractor (pack priority over semantic_atom fallback)",
     "2.4 Linguistic Layers (lexical->syntactic->semantic->pragmatic)",
     "2.5 Multi-focus (opt-in flag, roles: historian/philosopher/linguist/esoteric)",
-    "2.6 Pleiades offline dump adapter + Trismegistos datasets adapter",
+    "2.6 Pleiades offline dump adapter + Trismegistos datasets adapter + per-file corpus licenses",
     "2.7 Real API verification when key available; parallelism threshold adjustment",
     "CI: network-marker non-blocking job",
-    "Phase 3: .aeon v2 (verification trace, entity links, hypotheses), CLI/web endpoints, README v4, morphology enhancement (Morpheus/CLTK optional)"
+    "Phase 3: .aeon v2 (verification trace, entity links, hypotheses), CLI/web endpoints, README v4, morphology enhancement (Morpheus/CLTK optional), search-layer sigma unification"
   ],
   "config_wiring": {
     "canonical_access": "CONFIG.verification.<agent> is canonical; flat CONFIG.<agent> is a convenience alias",
     "wired_in": ["llm", "logging", "entity_linking client + extractor", "crosswalk", "scoring weights", "verification thresholds/abstention/legacy projection"],
-    "not_wired_yet": ["similarity levels (optional, later)", "language packs -> extractor/verifier (2.1+; translator normalize-точка подключена в 2.0)"]
+    "not_wired_yet": ["similarity levels (optional, later)", "language packs -> extractor/verifier (2.3+; translator normalize-точка + demo --language подключены)"]
   },
   "legacy_config_used_by": ["verification legacy projection (risk bands) + Aggregator review_threshold"],
   "created_at": "2026-10-14T10:30:33+03:00",
@@ -69,6 +65,6 @@
     "wikidata_schema_check": "live script; zero drift (2026-10-14)",
     "pleiades_trismegistos_check": "live scripts; outcomes in known_deltas",
     "network_live_tests": "tests/test_network_live.py (marker network)",
-    "coverage_runner": "tools/run_coverage.py (Windows pytest-cov segfault workaround; cross-platform stdlib API)"
+    "coverage_runner": "tools/run_coverage.py (Windows pytest-cov segfault workaround; includes aeon.language)"
   }
 }

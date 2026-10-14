@@ -3,8 +3,8 @@
 ## Overview
 Semantic processor: переводит смысл между формами (текст/код/эмоция/голос/изображение)
 с верификацией, entity linking и анализом древних текстов.
-Статус: **Фаза 0 ✅, Фаза 1 ✅, Фаза 2 — шаг 2.0 ✅** (Language Pack Infrastructure).
-Впереди: 2.1 Ancient Greek Pack, 2.2 Latin Pack, 2.3 Fragment Hypotheses,
+Статус: **Фаза 0 ✅, Фаза 1 ✅, Фаза 2 — шаги 2.0 ✅, 2.1 ✅** (Language Pack Infra,
+Ancient Greek Pack). Впереди: 2.2 Latin Pack, 2.3 Fragment Hypotheses,
 2.4 Linguistic Layers, 2.5 Multi-focus, 2.6 Offline adapters, 2.7 Real API.
 
 ## Architecture (Фаза 1)
@@ -22,27 +22,55 @@ Semantic processor: переводит смысл между формами (т�
 ## Language Pack Architecture (Фаза 2)
 Контракт (`aeon/language/base.py`): ABC `LanguagePack` — `iso_code`,
 `display_name`, `period` (BCE — отрицательные), `direction`,
-`special_tokens` {lacuna, editorial}, `prompts` {extract, verify, reconstruct},
-`dictionaries`, `unicode_ranges`; методы: `detect_markers` [abstract],
-`normalize` [NFC default], `is_fragment`, `validate` (fail-fast контракт).
+`special_tokens` {lacuna, editorial} (значение — строка ИЛИ список вариантов),
+`prompts` {extract, verify, reconstruct}, `dictionaries`, `unicode_ranges`;
+методы: `detect_markers` [abstract], `normalize` [NFC default], `is_fragment`,
+`validate` (fail-fast контракт).
 
-Реестр (`aeon/language/registry.py`): `register` — eager-регистрация фабрики
-(класс/инстанс/callable), lazy-инстанциация + validate при первом `get`
-(инстанс валидируется сразу); `force=True` — осознанный override; `get` —
-KeyError со списком доступных; `list_available` (sorted); `detect` — по
-декларативным `unicode_ranges` (греческий → кандидат `grc`; ancient vs modern
-по codepoints НЕ различаем — стоп-точка 2.0 №2); `clear` — тесты/перезагрузка.
+Реестр (`aeon/language/registry.py`): `register` — eager-регистрация фабрики,
+lazy-инстанциация + validate при первом `get` (инстанс валидируется сразу);
+`force=True` — осознанный override; `get` — KeyError со списком; `list_available`
+(sorted); `detect` — по `unicode_ranges`, **tie-break детерминирован
+(алфавитный iso_code) + событие `detect_ambiguous`**; `clear` — тесты.
 
 Как добавить пак: подкласс `LanguagePack` (реализовать `detect_markers`) →
-`registry.register(PackClass)`.
+`registry.register(PackClass)`; builtin-паки регистрируются в
+`aeon/language/__init__.py` (класс, инстанциация ленива).
 
-Приоритет маркеров (стоп-точка 2.0 №1): `pack.special_tokens` — приоритетный
-источник; `semantic_atom.LACUNA_MARKERS` — fallback, когда pack=None
-(интеграция в extractor — шаг 2.1+).
+Политика нормализации (refinement 2.0 №2): нормализуется только
+**pipeline-вход**; оригинальный текст пользователя сохраняется в
+`result["source"]["content"]` (см. тест `test_translate_original_content_preserved`).
 
-Интеграционная точка: `translate(..., language_pack=None)` — при заданном
-паке `content` нормализуется (`pack.normalize`); extractor/verifier-интеграция
-— шаги 2.1+.
+Приоритет маркеров: `pack.special_tokens` — приоритетный источник;
+`semantic_atom.LACUNA_MARKERS` — fallback, когда pack=None (интеграция
+в extractor — шаги 2.3+).
+
+## Ancient Greek Pack (шаг 2.1)
+`aeon/language/grc.py` — `grc` (Ancient Greek, period −800..600).
+
+Конвенции маркеров (подмножество Leiden/SIG): `lacuna` — `[...] […] [lacuna]
+[---]`; **`supplement` — контекстное правило (стоп-точка 2.1 №1)**: скобки с
+буквами (`[Ἀθῆναι]`, `[Ἀριστ]είδης`) → supplement; скобки с точками/тире →
+lacuna; `editorial` — `<...> <*>`; `deletion` — `{...}`; `uncertain` —
+`(...) [...?]`.
+
+Нормализация (стоп-точка 2.1 №2, решения): NFC (дыхания/диакритика
+СОХРАНЯЮТСЯ — семантичны: ἡ ≠ ἠ); конечная сигма ς **не** унифицируется с σ;
+iota subscript (ᾳ/ῃ/ῳ) **не** разворачивается в adscript. Обоснование —
+Unicode-стандарт + практика изданий Perseus/TLG (стандартная орфография);
+поисковые унификации — отдельный слой Ф3.
+
+Промпты (`extract`/`verify`/`reconstruct`, ≤30 строк): явно ссылаются на
+маркеры; `reconstruct` — 2–4 гипотезы + обязательный путь
+`no_reconstruction_possible` (max confidence < 0.5).
+
+Ограничения: морфологии нет (Ф3, Morpheus — интерфейс-хук); древний и
+новогреческий по codepoints не различаем (кандидат от `detect`).
+
+Эталонные тексты: `examples/greek/` — 5 фрагментов (Plato Apologia,
+Homer Il. 1.1–7, надпись с лакунами, папирус с лакунами, Sappho fr. 31)
++ `LICENSE.md` (public domain; копии оцифровок Perseus/PHI сознательно
+не использовались — стоп-точка 2.1 №4; per-file атрибуция — Ф2.6).
 
 ## Tech Stack
 - Python 3.11 (Windows dev), приоритет stdlib
@@ -63,12 +91,13 @@ KeyError со списком доступных; `list_available` (sorted); `det
 ## Commands
 - Тесты: `python -m pytest -q` (live: `pytest -m network -k pleiades`)
 - Coverage (обходной раннер — см. quirks): `python tools/run_coverage.py`
-- Demo верификации: `python -m aeon.demo --text examples/plato_sample.txt --verify=full`
-  (mock 200ms/вызов; `--real` — с DEEPSEEK_API_KEY; `--verify=off|basic|full`)
-- verify_mode в API: `translator.translate(..., verify_mode="off|basic|full")`
+- Demo верификации: `python -m aeon.demo --text examples/greek/plato_apologia_17a.txt --verify=full --language=grc`
+  (mock 200ms/вызов; `--real` — с DEEPSEEK_API_KEY; `--verify=off|basic|full`;
+  `--language` — ISO-код пака: нормализация + маркеры)
+- verify_mode в API: `translator.translate(..., verify_mode="off|basic|full", language_pack=None)`
   (legacy `verify=True` ≡ `verify_mode="full"`)
 - Реестр паков: `python -c "from aeon.language import registry; print(registry.list_available())"`
-  (пусто до 2.1–2.2)
+  → `['grc']` (Latin — 2.2)
 
 ## Key Decisions
 - **Config access (канонический):** `CONFIG.verification.detective` — иерархический;
@@ -90,7 +119,7 @@ KeyError со списком доступных; `list_available` (sorted); `det
   `abstained` (conf 0.0); **CVI = среднее confidence ПОЛОЖИТЕЛЬНЫХ вердиктов**
   (round 4; нейтральные/abstained в среднее НЕ входят); CVI < 0.50
   (`abstention_threshold`) → `abstained`; needs_review при CVI < 0.85
-  (=1−`legacy.risk_verified_max`). Пример из demo: mean(0.91, 0.90) = 0.905 →
+  (=1−`legacy.risk_verified_max`). Пример: mean(0.91, 0.90) = 0.905 →
   в выводе `{cvi:.2f}` отображается «0.91». Per-agent abstention (detective
   conf<0.85, logician coherence<0.60); logician при <2 claims — abstained.
 - **verify_atom:** legacy-ключи (consistency/grounding/hallucination_risk/
@@ -98,6 +127,8 @@ KeyError со списком доступных; `list_available` (sorted); `det
 - **LanguagePack (Ф2):** вариант A (промпты + словари + special tokens;
   морфология — Ф3); stdlib-only (`unicodedata`); detect() — декларативные
   `unicode_ranges`; registry — eager-регистрация + lazy-инстанциация.
+- **Нормализация пака — только pipeline:** оригинал сохраняется в
+  `result["source"]["content"]` (refinement 2.0 №2).
 
 ## Known Quirks & Limitations
 - **Wikidata:** ошибки API = HTTP 200 + `{"error": {...}}` (не HTTP-код!). Каждый

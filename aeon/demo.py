@@ -289,7 +289,7 @@ def _offline_embeddings():
 
 
 def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
-                    use_real: bool) -> None:
+                    use_real: bool, language: str | None = None) -> None:
     """Demo: атом + trace верификации + метрики (мок с задержкой или реальный LLM)."""
     from pathlib import Path
 
@@ -298,6 +298,20 @@ def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
         print(f"❌ Файл не найден: {text_path}")
         return
     text = path.read_text(encoding="utf-8").strip()
+
+    language_pack = None
+    if language:
+        from aeon.language import get as get_pack
+
+        language_pack = get_pack(language)
+        text = language_pack.normalize(text)
+        markers = language_pack.detect_markers(text)
+        print(f"Языковой пак: {language_pack.display_name} ({language_pack.iso_code}, "
+              f"{language_pack.period[0]}..{language_pack.period[1]})")
+        print(f"  маркеров: {len(markers)} | is_fragment: {language_pack.is_fragment(text)}")
+        for marker in markers[:5]:
+            print(f"    • {marker.kind}: {marker.text!r} @ {marker.start}")
+
     print_separator(f"AEON 1.4 DEMO — verify={verify_mode} — {path.name}")
     print(f"Текст ({len(text)} симв.): {text[:110]}...")
 
@@ -368,10 +382,13 @@ def main():
                         help="мок-задержка LLM на вызов (для замеров)")
     parser.add_argument("--real", action="store_true",
                         help="использовать реальный LLM (нужен DEEPSEEK_API_KEY в .env)")
+    parser.add_argument("--language", type=str, default=None,
+                        help="ISO-код языкового пака для нормализации/маркеров (например, grc)")
     args = parser.parse_args()
 
     if args.text:
-        run_verify_demo(args.text, args.verify, args.latency_ms, args.real)
+        run_verify_demo(args.text, args.verify, args.latency_ms, args.real,
+                        language=args.language)
         return
 
     print("""

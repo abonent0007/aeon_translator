@@ -89,6 +89,7 @@ class AeonTranslator:
         """
         if verify_mode is None:
             verify_mode = "full" if verify else "off"
+        original_content = content  # оригинал сохраняется в отчёте (source.content)
         if language_pack is not None:
             content = language_pack.normalize(content)
         self.translation_count += 1
@@ -187,7 +188,7 @@ class AeonTranslator:
         print(f"✓ Сгенерировано")
 
         return {
-            "source": {"content": content, "form": source_form, "language": source_language},
+            "source": {"content": original_content, "form": source_form, "language": source_language},
             "semantic_atom": atom,
             "target": {"content": result, "form": target_form, "language": target_language},
             "metadata": metadata,

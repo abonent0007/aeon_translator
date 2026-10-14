@@ -114,3 +114,17 @@ def test_translator_language_pack_normalize_hook(translator):
     translator.translate(TEXT, source_language="russian", language_pack=SpyPack())
 
     assert calls == [TEXT]
+
+
+def test_translate_original_content_preserved(translator):
+    """Нормализация — только для pipeline; оригинал сохраняется в source.content."""
+    class UpperPack:
+        iso_code = "grc"
+
+        def normalize(self, text):
+            return text.upper()
+
+    result = translator.translate(TEXT, source_language="russian", language_pack=UpperPack())
+
+    assert result["source"]["content"] == TEXT                  # оригинал сохранён
+    assert result["semantic_atom"].source_text == TEXT.upper()  # pipeline видел нормализованное

@@ -184,3 +184,68 @@ def test_normalize_default_nfc():
     decomposed = unicodedata.normalize("NFD", composed)
     assert decomposed != composed
     assert pack.normalize(decomposed) == composed
+
+
+def test_detect_tie_resolved_alphabetically(monkeypatch):
+    """Tie-break (refinement 2.0 №1): детерминированно — алфавитный iso_code."""
+    events = []
+    monkeypatch.setattr(
+        "aeon.language.registry.log_event",
+        lambda logger, msg, **kw: events.append({"msg": msg, **kw}),
+    )
+
+    class PackZZ(LanguagePack):
+        iso_code = "zz"
+        special_tokens = {"lacuna": "[...]", "editorial": "<...>"}
+        prompts = {"extract": "e", "verify": "v", "reconstruct": "r"}
+        unicode_ranges = GREEK_RANGES
+
+        def detect_markers(self, text):
+            return []
+
+    class PackAA(PackZZ):
+        iso_code = "aa"
+
+    registry.register(PackZZ)  # зарегистрирован ПЕРВЫМ
+    registry.register(PackAA)
+
+    winner = registry.detect("Ἀθῆναι")
+
+    assert winner.iso_code == "aa"  # алфавитный порядок, не порядок регистрации
+    ambiguous = [event for event in events if event["msg"] == "detect_ambiguous"]
+    assert len(ambiguous) == 1
+    assert ambiguous[0]["candidates"] == ["aa", "zz"]
+
+
+def test_force_override_succeeds():
+    class MockGreekPackV2(MockGreekPack):
+        display_name = "Ancient Greek (v2)"
+
+    registry.register(MockGreekPack)
+    registry.register(MockGreekPackV2, force=True)
+
+    pack = registry.get("grc")
+
+    assert pack.display_name == "Ancient Greek (v2)"
+    assert registry.list_available() == ["grc"]
+
+
+def test_force_override_replaces_lazy_spec():
+    calls = []
+
+    def factory():
+        calls.append("old")
+        return MockGreekPack()
+
+    factory.iso_code = "grc"
+    registry.register(factory)
+
+    class MockGreekPackV2(MockGreekPack):
+        display_name = "Ancient Greek (v2)"
+
+    registry.register(MockGreekPackV2, force=True)  # фабрика вытеснена
+
+    pack = registry.get("grc")
+
+    assert isinstance(pack, MockGreekPackV2)
+    assert calls == []  # старый lazy-инстанс так и не построен

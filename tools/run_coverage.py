@@ -24,6 +24,7 @@ SOURCE = [
     "aeon.metrics",
     "aeon.logging_config",
     "aeon.testing",
+    "aeon.language",
 ]
 
 

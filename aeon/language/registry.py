@@ -14,6 +14,7 @@ import threading
 from typing import Callable, Dict, List, Optional, Union
 
 from .base import LanguagePack
+from ..logging_config import get_logger, log_event
 
 _PackSource = Union[LanguagePack, type, Callable[[], LanguagePack]]
 
@@ -91,6 +92,11 @@ def detect(text: str) -> Optional[LanguagePack]:
     """
     Эвристическая детекция языка по Unicode-диапазонам паков.
 
+    Tie-break (refinement 2.0 №1): обход в алфавитном порядке iso_code —
+    при равных hits побеждает лексикографически первый (детерминировано,
+    порядок регистрации не влияет); неоднозначность логируется событием
+    `detect_ambiguous`.
+
     Ограничение (стоп-точка 2.0 №2): древний и современный греческий
     по codepoints НЕ различаются — возвращается кандидат ('grc');
     точное определение — задача пака (диакритика/морфология, 2.1+).
@@ -99,11 +105,22 @@ def detect(text: str) -> Optional[LanguagePack]:
         return None
     best_pack: Optional[LanguagePack] = None
     best_hits = 0
-    for iso_code in list_available():
+    tied: List[str] = []
+    for iso_code in list_available():  # sorted ⇒ детерминированный tie-break
         pack = get(iso_code)
         hits = _count_unicode_hits(text, pack.unicode_ranges)
         if hits > best_hits:
-            best_pack, best_hits = pack, hits
+            best_pack, best_hits, tied = pack, hits, [iso_code]
+        elif hits == best_hits and hits > 0:
+            tied.append(iso_code)
+    if len(tied) > 1:
+        log_event(
+            get_logger("aeon.language"),
+            "detect_ambiguous",
+            candidates=list(tied),
+            winner=tied[0],
+            hits=best_hits,
+        )
     return best_pack
 
 

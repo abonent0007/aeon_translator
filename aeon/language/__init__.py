@@ -10,6 +10,11 @@ from . import registry
 from .base import LanguagePack, Marker
 from .registry import detect, get, list_available, register
 
+# Builtin-паки: регистрация классов (инстанциация — ленивая, при первом get)
+from . import grc as _grc  # noqa: E402
+
+registry.register(_grc.AncientGreekPack)
+
 __all__ = [
     "LanguagePack",
     "Marker",

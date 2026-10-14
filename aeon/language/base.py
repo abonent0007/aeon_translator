@@ -15,7 +15,7 @@ import unicodedata
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 
 @dataclass(frozen=True)
@@ -38,7 +38,9 @@ class LanguagePack(ABC):
     direction: str = "ltr"              # "ltr" | "rtl"
 
     # ── контент пака ──
-    special_tokens: Dict[str, str] = {}   # {"lacuna": "[...]", "editorial": "<...>"}
+    # special_tokens: значение — строка или список вариантов
+    # (например, lacuna: ["[...]", "…", "[lacuna]"]).
+    special_tokens: Dict[str, Union[str, List[str]]] = {}
     prompts: Dict[str, str] = {}          # {"extract", "verify", "reconstruct"}
     dictionaries: Tuple[Path, ...] = ()   # опциональные wordlists
 
@@ -89,16 +91,23 @@ class LanguagePack(ABC):
     # ── helper для паков ──
 
     def _markers_from_special_tokens(self, text: str) -> List[Marker]:
-        """Стандартный поиск маркеров по special_tokens (для подклассов)."""
+        """Стандартный поиск маркеров по special_tokens (для подклассов).
+
+        Значение special_tokens: строка ИЛИ список строк — издательские
+        конвенции часто содержат несколько вариантов одного маркера
+        (например, lacuna: ["[...]", "…", "[lacuna]"]).
+        """
         markers: List[Marker] = []
-        for kind, token in (self.special_tokens or {}).items():
-            if not token:
-                continue
-            start = text.find(token)
-            while start != -1:
-                markers.append(Marker(
-                    kind=kind, text=token, start=start, end=start + len(token),
-                ))
-                start = text.find(token, start + 1)
+        for kind, tokens in (self.special_tokens or {}).items():
+            token_list = [tokens] if isinstance(tokens, str) else list(tokens or [])
+            for token in token_list:
+                if not token:
+                    continue
+                start = text.find(token)
+                while start != -1:
+                    markers.append(Marker(
+                        kind=kind, text=token, start=start, end=start + len(token),
+                    ))
+                    start = text.find(token, start + 1)
         markers.sort(key=lambda marker: marker.start)
         return markers
