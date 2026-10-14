@@ -1,0 +1,46 @@
+# .gitignore — AEON v3.0
+# Files NOT uploaded to GitHub (contains keys, models, temp data)
+
+# API keys — NEVER commit
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Models (downloaded at runtime)
+*.safetensors
+*.onnx
+*.bin
+models/
+
+# Audio temp files
+*.mp3
+*.wav
+aeon_voice_*
+aeon_tts_*
+
+# Image temp files
+aeon_flux_*
+*.png
+
+# .aeon output files
+*.aeon
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
