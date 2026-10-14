@@ -132,6 +132,16 @@ def test_apparatus_version_semver_required(tmp_path):
         load_apparatus(path)
 
 
+def test_empty_loci_rejected_by_loader(tmp_path):
+    """Уточнение №2 (3.5): apparatus без locus не валиден — нечего выбирать."""
+    payload = base_apparatus_dict()
+    payload["loci"] = []
+    path = write_apparatus(tmp_path, payload)
+
+    with pytest.raises(ApparatusError, match="непустой список"):
+        load_apparatus(path)
+
+
 # ── selector ──
 
 def test_selector_unanimous_no_llm(mock_llm):
@@ -341,6 +351,22 @@ def test_work_match_passes(tmp_path, mock_llm):
 def test_work_tokens_helper():
     assert work_tokens("Plato Apologia") == {"plato", "apologia"}
     assert work_tokens("Sappho fr. 31") == {"sappho"}
+
+
+def test_engine_empty_loci_returns_empty_selection(mock_llm):
+    """Уточнение №2 (3.5): engine не падает на пустом loci (путь не из loader)."""
+    from aeon.variants.apparatus import Apparatus
+
+    apparatus = Apparatus(work="Empty Work", editions=["Ed 2000"],
+                          loci=[], apparatus_version="1.0.0")
+    engine = VariantEngine(llm_client=mock_llm,
+                           verifier=StubVerifier(StubDetective()))
+
+    result = engine.run(None, apparatus)
+
+    assert result.selections == []
+    assert result.llm_calls == 0
+    assert mock_llm.calls == []
 
 
 def test_unanimous_after_veto_preserves_vetoed_editions(mock_llm):

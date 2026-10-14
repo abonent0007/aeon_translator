@@ -309,7 +309,10 @@ all_vetoed; 1 осталось → `unanimous_after_veto` (0 вызовов; sup
 делает контекст полнее. API: `translate(..., variant_readings=PATH,
 variant_work=...)` → `result["variant_readings"]`; demo
 `--variant-readings PATH`; `.aeon v2`: `traces.variant_readings` + pipeline steps
-(`variant_readings` в steps_requested/executed). Тесты: 27 (`tests/test_variants.py`).
+(`variant_readings` в steps_requested/executed). Тесты: 29 (`tests/test_variants.py`).
+Demo-значение `conf=0.71` у selected — **canned** (`DEMO_RESPONSES`), illustrative,
+не вычисляется пайплайном; при неоднозначном stem (напр. `greek_text_1.txt`)
+work-guard даст `ConfigError` — by design, передавайте `--variant-work` явно.
 
 ## Tech Stack
 - Python 3.11 (Windows dev), приоритет stdlib
