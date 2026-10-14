@@ -172,6 +172,10 @@ class EntityLinkingConfig:
     timeout_sec: float = 10.0
     max_links_per_atom: int = 5
     max_attempts: int = 3                   # ретраи на timeout/5xx
+    score_weight_type: float = 0.40         # веса скоринга кандидатов
+    score_weight_exactness: float = 0.35
+    score_weight_language: float = 0.15
+    score_weight_description: float = 0.10
 
     def __post_init__(self):
         if self.enabled and not self.contact_email:
@@ -289,6 +293,10 @@ def load_config() -> AeonConfig:
         timeout_sec=_env_float("AEON_WIKIDATA_TIMEOUT_SEC", 10.0),
         max_links_per_atom=_env_int("AEON_MAX_LINKS_PER_ATOM", 5),
         max_attempts=_env_int("AEON_WIKIDATA_MAX_ATTEMPTS", 3),
+        score_weight_type=_env_float("AEON_SCORE_WEIGHT_TYPE", 0.40),
+        score_weight_exactness=_env_float("AEON_SCORE_WEIGHT_EXACTNESS", 0.35),
+        score_weight_language=_env_float("AEON_SCORE_WEIGHT_LANGUAGE", 0.15),
+        score_weight_description=_env_float("AEON_SCORE_WEIGHT_DESCRIPTION", 0.10),
     )
 
     logging_cfg = LoggingConfig(

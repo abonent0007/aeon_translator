@@ -80,3 +80,28 @@ def test_rank_candidates_ordering_and_tiebreak():
 
 def test_rank_candidates_empty():
     assert rank_candidates([], "query") == []
+
+
+def test_weights_override_changes_ordering():
+    """Веса переопределяемы (config/env): language-only веса меняют выбор."""
+    exact_wrong_lang = _cand("Q1", "Plato", "label", "de")
+    prefix_right_lang = _cand("Q2", "Platon", "label", "en")
+
+    default_best = rank_candidates([exact_wrong_lang, prefix_right_lang], "Plato")[0]
+    assert default_best.candidate.qid == "Q1"  # exactness доминирует
+
+    language_only = {"type": 0.0, "exactness": 0.0, "language": 1.0, "description": 0.0}
+    lang_best = rank_candidates(
+        [exact_wrong_lang, prefix_right_lang], "Plato", weights=language_only
+    )[0]
+    assert lang_best.candidate.qid == "Q2"  # язык решает
+
+
+def test_scoring_weights_from_config_defaults():
+    from aeon.entity_linking import scoring_weights_from_config
+
+    weights = scoring_weights_from_config()
+    assert weights["type"] == 0.40
+    assert weights["exactness"] == 0.35
+    assert weights["language"] == 0.15
+    assert weights["description"] == 0.10

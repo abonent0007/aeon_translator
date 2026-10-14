@@ -312,7 +312,7 @@ def extract_external_ids(entity: WikidataEntity) -> Dict[str, str]:
 # Скоринг кандидатов (шаг 1.2)
 # ═══════════════════════════════════════════════════════════════
 
-#: Веса типов совпадений (measure от wbsearchentities match.type).
+#: Дефолтные веса типов совпадений (wbsearchentities match.type).
 MATCH_TYPE_WEIGHTS = {
     "label": 1.0,
     "entity": 0.7,
@@ -321,8 +321,18 @@ MATCH_TYPE_WEIGHTS = {
 }
 _UNKNOWN_MATCH_WEIGHT = 0.4
 
-#: Итоговые веса компонент скора (сумма = 1.0).
-SCORE_WEIGHTS = {"type": 0.40, "exactness": 0.35, "language": 0.15, "description": 0.10}
+
+def scoring_weights_from_config(
+    cfg: Optional[EntityLinkingConfig] = None,
+) -> Dict[str, float]:
+    """Веса комбинации скора из конфига (env AEON_SCORE_WEIGHT_*, overridable)."""
+    cfg = cfg or CONFIG.entity_linking
+    return {
+        "type": cfg.score_weight_type,
+        "exactness": cfg.score_weight_exactness,
+        "language": cfg.score_weight_language,
+        "description": cfg.score_weight_description,
+    }
 
 
 def _normalize(text: Optional[str]) -> str:
@@ -330,7 +340,10 @@ def _normalize(text: Optional[str]) -> str:
 
 
 def score_candidate(
-    candidate: SearchCandidate, query: str, language: str = "en"
+    candidate: SearchCandidate,
+    query: str,
+    language: str = "en",
+    weights: Optional[Dict[str, float]] = None,
 ) -> float:
     """
     Оценка кандидата ∈ [0,1]: монотонна по качеству совпадения.
@@ -340,7 +353,9 @@ def score_candidate(
       exactness   — точное совпадение label с запросом > префикс > прочее;
       language    — язык матча совпадает с целевым;
       description — у кандидата есть описание.
+    Веса — из CONFIG.entity_linking (env AEON_SCORE_WEIGHT_*), либо явные.
     """
+    weights = weights or scoring_weights_from_config()
     type_weight = MATCH_TYPE_WEIGHTS.get(candidate.match_type, _UNKNOWN_MATCH_WEIGHT)
 
     label = _normalize(candidate.label)
@@ -360,20 +375,26 @@ def score_candidate(
     has_description = 1.0 if candidate.description else 0.5
 
     score = (
-        SCORE_WEIGHTS["type"] * type_weight
-        + SCORE_WEIGHTS["exactness"] * exactness
-        + SCORE_WEIGHTS["language"] * language_match
-        + SCORE_WEIGHTS["description"] * has_description
+        weights.get("type", 0.40) * type_weight
+        + weights.get("exactness", 0.35) * exactness
+        + weights.get("language", 0.15) * language_match
+        + weights.get("description", 0.10) * has_description
     )
     return round(min(1.0, max(0.0, score)), 4)
 
 
 def rank_candidates(
-    candidates: List[SearchCandidate], query: str, language: str = "en"
+    candidates: List[SearchCandidate],
+    query: str,
+    language: str = "en",
+    weights: Optional[Dict[str, float]] = None,
 ) -> List[ScoredCandidate]:
     """Ранжирование кандидатов по score (desc), тайбрейк — исходный rank API."""
     scored = [
-        ScoredCandidate(candidate=candidate, score=score_candidate(candidate, query, language))
+        ScoredCandidate(
+            candidate=candidate,
+            score=score_candidate(candidate, query, language, weights=weights),
+        )
         for candidate in candidates
     ]
     scored.sort(key=lambda item: (-item.score, item.candidate.rank))

@@ -55,6 +55,10 @@ def test_config_defaults_unchanged(clean_env):
     assert cfg.entity_linking.rate_limit_sec == 1.0
     assert cfg.entity_linking.cache_ttl_days == 7
     assert cfg.entity_linking.max_links_per_atom == 5
+    assert cfg.entity_linking.score_weight_type == 0.40
+    assert cfg.entity_linking.score_weight_exactness == 0.35
+    assert cfg.entity_linking.score_weight_language == 0.15
+    assert cfg.entity_linking.score_weight_description == 0.10
 
 
 def test_config_env_override(clean_env):
