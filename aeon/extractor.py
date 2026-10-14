@@ -267,24 +267,94 @@ class MeaningExtractor:
         if not self.llm.available:
             return self._extract_structure_rule(text, language)
 
-        prompt = f"""Analyze the following text deeply. Return ONLY valid JSON (no markdown).
+        prompt = f"""Analyze the following text and return a semantic structure as ONLY valid JSON (no markdown).
 
 TEXT: "{text}"
 LANGUAGE: {language}
 
+CONTRACT RULES:
+1. entities are NAMED REFERENTS only.
+   INCLUDE: personal names, deities, groups/tribes, places, objects, abstract entities (rare).
+   EXCLUDE: pronouns, common nouns, adjectives, verbs, descriptions, translations.
+   name: minimal named form exactly as in the source (no articles: Ἀθηναίων, not ὁ Ἀθηναίων;
+   no patronymic phrases: Ἀχιλῆος, not Πηληϊάδεω Ἀχιλῆος).
+   type: person | deity | group | place | object | abstract — all six are equally valid
+   (place and object are common in geographic, dedicatory and material texts).
+   role: agent | patient | instrument | location | time | manner | goal — thematic role in the
+   clause; semantic_roles may also reference non-entity constituents (common nouns, pronouns).
+2. Language enforcement: entity names and evidence MUST be in the SOURCE language — never
+   translated. If unsure of the source form, use name: null instead of a translation.
+3. explanation_chain: 1-5 working analytical claims IN ENGLISH — this is NOT a translation and
+   must NOT be cited as source. Each claim MUST contain at least one verbatim anchor from the
+   TEXT; every anchor must be a substring of one of the evidence quotes.
+4. evidence: 1-4 NON-redundant exact quotes (no quote is a substring of another); for a short
+   segment one full quote is valid.
+5. entities[].role and semantic_roles are inverse views; keep them consistent when both given.
+
 Return a JSON object with these fields:
 - "intent": one of [question, request, emotion, statement, command, declaration]
-- "domain": one of [science, technology, emotion, philosophy, general, art, business, politics]
-- "entities": list of objects with {{"name", "type": concept|person|object|action|property|abstract, "role": agent|patient|instrument|location|time|manner|goal, "span": exact text span}}
-- "semantic_roles": object with keys [agent, patient, instrument, location, time, goal, manner] and string values
-- "semantic_primitives": list of detected primitives [existence, action, relation, property, quantity, quality, time, space, cause, effect, purpose, means, part, whole, similarity, difference]
-- "evidence": list of 2-4 exact quotes from the text supporting the analysis
-- "explanation_chain": list of 3-5 step-by-step reasoning steps showing HOW you arrived at the analysis
+- "domain": one of [science, technology, emotion, philosophy, general, art, business, politics,
+  literature, history, epigraphy, papyrology, religion]
+- "entities": list of objects with {{"name", "type", "role", "span"}} per CONTRACT RULE 1
+- "semantic_roles": object with keys [agent, patient, instrument, location, time, goal, manner]
+- "semantic_primitives": list from [existence, action, relation, property, quantity, quality,
+  time, space, cause, effect, purpose, means, part, whole, similarity, difference]
+- "evidence": per CONTRACT RULE 4
+- "explanation_chain": per CONTRACT RULE 3
 - "confidence_breakdown": object with scores 0-1 for {{"intent", "domain", "entities", "roles"}}
 - "complexity": float 0-1
 - "urgency": float 0-1
 - "extraction_confidence": float 0-1
-- "semantic_tokens": list of 3-10 key semantic tokens/concepts"""
+- "semantic_tokens": list of 3-10 key concept tokens (English allowed)
+
+--- Example 1 (Greek) ---
+TEXT: "ἄνδρα μοι ἔννεπε, Μοῦσα, πολύτροπον, ὃς μάλα πολλὰ πλάγχθη"
+{{"intent": "command", "domain": "literature",
+ "entities": [{{"name": "Μοῦσα", "type": "deity", "role": "agent", "span": "Μοῦσα"}}],
+ "semantic_roles": {{"agent": "Μοῦσα", "patient": "ἄνδρα", "instrument": "", "location": "",
+                    "time": "", "goal": "μοι", "manner": ""}},
+ "semantic_primitives": ["existence", "action", "relation", "purpose", "quantity"],
+ "evidence": ["ἄνδρα μοι ἔννεπε, Μοῦσα, πολύτροπον", "ὃς μάλα πολλὰ πλάγχθη"],
+ "explanation_chain": ["Narrator invokes the Muse to sing of a much-wandering man (ἔννεπε imperative).",
+   "The Muse is the agent of the song; ἄνδρα is its subject, πολύτροπον his defining trait.",
+   "The relative clause ὃς μάλα πολλὰ πλάγχθη defines the extent of his wandering."],
+ "confidence_breakdown": {{"intent": 0.95, "domain": 0.9, "entities": 0.9, "roles": 0.8}},
+ "complexity": 0.5, "urgency": 0.1, "extraction_confidence": 0.9,
+ "semantic_tokens": ["invocation", "muse", "wandering", "hero"]}}
+
+--- Example 2 (Latin) ---
+TEXT: "Apud Helvētiōs longē nōbilissimus fuit et dītissimus Orgetorīx."
+{{"intent": "statement", "domain": "history",
+ "entities": [{{"name": "Helvētiōs", "type": "group", "role": "location", "span": "Helvētiōs"}},
+              {{"name": "Orgetorīx", "type": "person", "role": "agent", "span": "Orgetorīx"}}],
+ "semantic_roles": {{"agent": "Orgetorīx", "patient": "", "instrument": "", "location": "Helvētiōs",
+                    "time": "", "goal": "", "manner": ""}},
+ "semantic_primitives": ["existence", "property", "relation", "whole"],
+ "evidence": ["Apud Helvētiōs longē nōbilissimus fuit et dītissimus Orgetorīx"],
+ "explanation_chain": ["Orgetorix's superlative standing among the Helvetii is asserted through two coordinated superlatives (nōbilissimus, dītissimus, Orgetorīx).",
+   "The superlatives mark his pre-eminence within that community (Helvētiōs)."],
+ "confidence_breakdown": {{"intent": 0.95, "domain": 0.9, "entities": 0.9, "roles": 0.85}},
+ "complexity": 0.3, "urgency": 0.1, "extraction_confidence": 0.9,
+ "semantic_tokens": ["Helvetii", "Orgetorix", "nobility", "wealth"]}}
+
+--- Example 3 (Greek, epigraphic register) ---
+TEXT: "Ἀθηναῖοι ἀνέθεσαν τῷ Διὶ τρόπαιον ἐν Ὀλυμπίᾳ."
+{{"intent": "statement", "domain": "epigraphy",
+ "entities": [{{"name": "Ἀθηναῖοι", "type": "group", "role": "agent", "span": "Ἀθηναῖοι"}},
+              {{"name": "Διὶ", "type": "deity", "role": "goal", "span": "Διὶ"}},
+              {{"name": "τρόπαιον", "type": "object", "role": "patient", "span": "τρόπαιον"}},
+              {{"name": "Ὀλυμπίᾳ", "type": "place", "role": "location", "span": "Ὀλυμπίᾳ"}}],
+ "semantic_roles": {{"agent": "Ἀθηναῖοι", "patient": "τρόπαιον", "instrument": "",
+                    "location": "Ὀλυμπίᾳ", "time": "", "goal": "Διὶ", "manner": ""}},
+ "semantic_primitives": ["action", "relation", "purpose", "part"],
+ "evidence": ["Ἀθηναῖοι ἀνέθεσαν τῷ Διὶ τρόπαιον ἐν Ὀλυμπίᾳ"],
+ "explanation_chain": ["The inscription records a dedicatory act by the Athenians, addressed to Zeus and located at Olympia (ἀνέθεσαν, τῷ Διὶ, Ὀλυμπίᾳ).",
+   "The dedication formula assigns the object (τρόπαιον) and the recipient deity (Διὶ)."],
+ "confidence_breakdown": {{"intent": 0.9, "domain": 0.9, "entities": 0.9, "roles": 0.85}},
+ "complexity": 0.3, "urgency": 0.1, "extraction_confidence": 0.9,
+ "semantic_tokens": ["dedication", "trophy", "Zeus", "Olympia"]}}
+
+Now analyze TEXT and return ONLY the JSON object."""
 
         result = self.llm._call_json([
             {"role": "system", "content": "You are a semantic structure analyzer. Return ONLY valid JSON. No markdown, no explanations outside JSON."},
