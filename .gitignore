@@ -30,8 +30,16 @@ aeon_tts_*
 aeon_flux_*
 *.png
 
-# .aeon output files
+# .aeon output files (examples/ сохраняются в репозитории)
 *.aeon
+!examples/*.aeon
+!examples/**/*.aeon
+
+# Test / tooling artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+*.db
 
 # IDE
 .vscode/
