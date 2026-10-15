@@ -37,6 +37,8 @@ annotations_version: 1.0.0 | датасет: 28 записей / 6 тексто�
 
 ## Real-baseline (2.7.3-b/t3, 2026-10-14) — ФАКТ (после contract-фиксов)
 
+**Phase 2 real baseline (финал).**
+
 Прогон: 52 вызова, 135.3 s, **$0.0189** (flash off-peak, thinking off), failures=0;
 raw: `gold/real_runs/2026-10-14_t3/`; отчёт: `gold/reports/real_2026-10-14_t3.md`.
 

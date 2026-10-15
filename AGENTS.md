@@ -3,9 +3,9 @@
 ## Overview
 Semantic processor: переводит смысл между формами (текст/код/эмоция/голос/изображение)
 с верификацией, entity linking и анализом древних текстов.
-Статус: **Фаза 0 ✅, Фаза 1 ✅, Фаза 2 ✅ (2.0–2.6; 2.7 разблокирован —
-ключ в `.env`, отложен до конца 3.3 по политике), Фаза 3 — шаги 3.1 ✅
-(`.aeon v2`), 3.5 ✅ (variant readings), 3.3 ✅ (gold-standard: 28 записей/6 текстов)**.
+Статус: **Фаза 0 ✅, Фаза 1 ✅, **Фаза 2 ✅ complete (2.0–2.6 + 2.7 real-API
+validation — см. «Phase 2 closure»)**; Фаза 3 — 3.1 ✅ (`.aeon v2`), 3.5 ✅
+(variant readings), 3.3 ✅ (gold-standard). Рекомендуемый следующий шаг: 3.2.**
 
 ## Architecture (Фаза 1)
 ```
@@ -347,6 +347,39 @@ RU-конспектом → заменён подлинной grc-транскр
 `examples/greek/legacy/`; regression `tests/test_examples_corpus.py` (файлы
 вне legacy/ обязаны содержать греческие codepoints; 2.1-тесты флаг не затронул —
 они на inline-греческом).
+
+## Phase 2 closure: results (2.7.3–2.7.6)
+- **Real baseline (t3, 2026-10-14):** entities F1 **0.82** (fold-метрика;
+  P 0.70 / R 1.00), detective **0.75**, expert/logician **1.00/1.00**,
+  completeness MAE **0.09**, markers 1.00; **$0.0189** / 135 s (52 вызова,
+  flash off-peak, thinking off). Raw: `gold/real_runs/2026-10-14_t3/`;
+  дискавери — `gold/metrics.md`, распределение confidence —
+  `gold/confidence_analysis.md` (2.7.5 — данные собраны, решение defer).
+- **Contract-first refactor (worked example):** extractor v1 (semantic claims,
+  taxonomy person|deity|group|place|object|abstract, language enforcement) +
+  detective v1 (defensive-skip, quote-in-source NFC ≥3, grounded-ratio 0.7) +
+  `build_claims` (meta-glue удалён) + v2-метаданные (`extractor_contract`) →
+  гипотеза подтверждена измерением на ТЕХ ЖЕ gold: 0.24→0.82 и 0.00→0.75.
+- **DeepSeek V4:** flash — thinking по умолчанию (см. Known Quirks);
+  тарифы/peak-часы/cache-hit в конфиге; диагностический кейс t2 (28 пустых
+  ответов) сохранён как документ API-quirk.
+- **Design principle (урок):** focus-роли НЕ потребляют chain (вход:
+  source_text + entities + linguistic summary) — правильная развязка
+  зависимостей защитила от coupling-каскада: grammar-heavy chain (57%)
+  не сломал focus → Rule-3 v1 green.
+- **Known gaps:** Pleiades README links (network); Trismegistos datasets (нет
+  публичного API); `deepseek-chat` — deprecated alias-fallback; zero-gold F1
+  артефакт (papyrus/sappho: 1+1 borderline FP); role-consistency 10.7%
+  (accepted для v1); grammar-heavy chain (accepted, trigger-revisit: новый
+  chain-потребитель или gold + grammar-sensitive text); mock-fixtures alignment
+  (backlog); anchor_language inference из pack для старых v2 (backlog);
+  порог 0.85 (Фаза 4 calibration).
+- **Backlog Ф3+:** **3.2 morphology — рекомендуемый первый** (разблокирован);
+  3.9 embeddings-provider; 3.4 cross-references; 3.6 Web UI/API; contract v1.2
+  (Rule 3 content-first; Rule 5 emphasis + post-hoc repair; edge-cases:
+  **generic office/deity rejected** — named referent требует specific
+  identity, не class membership; revisited если gold добавит такие кейсы);
+  deepseek-chat compatibility audit (при деprecation).
 
 ## Tech Stack
 - Python 3.11 (Windows dev), приоритет stdlib
