@@ -426,6 +426,21 @@ RU-конспектом → заменён подлинной grc-транскр
   the example** — если countersign подсветил слабый few-shot, усиливай ПРАВИЛО
   (guard), а не только заменяй пример: правило действует на всех парах, замена
   примера — локальна (рождено на Issue A 3.4.2: Rule 4 «SECURE equivalent»).
+- **Design principle (#14, 3.4.2 countersign 2026-10-15):** **confidence-scale
+  must reflect evidence strength, not convenience** — если few-shot не
+  вписывается в шкалу, неправильна ШКАЛА: direct_citation high = verbatim-run
+  ИЛИ citation-formula (мета-маркер зависимости), medium = name-drop
+  (рождено на Example 4: расширена шкала, а не понижен пример).
+- **Design principle (#15, 3.4.2 countersign 2026-10-15):** **phase completion
+  requires committed state + CI-check** — файлы шага обязаны быть в git;
+  regression `test_all_gold_artifacts_tracked_in_git` (кейс 3.4.0: данные не
+  были закоммичены — тесты шли на локальных файлах; фикс 1a869f8).
+- **Design principle (#16, 3.4.2 countersign 2026-10-15; candidate):** **kind
+  priority is contextual (specificity), not size-based** — proem-формула >
+  adaptation даже при 3+ парах (impl: prompt v1.1).
+- **Design principle (#17, 3.4.2 countersign 2026-10-15; candidate):** **LLM
+  output requires a ground-truth filter, not only a schema filter** — пары
+  проверяются на присутствие в исходных сегментах (impl: engine post-filter).
 - **Design principle (#9, 3.4 countersign 2026-10-14): ACTIVE** (подтверждён
   четырежды: `direction`, `matched_lemmas` вне segment, «формула И/ИЛИ»,
   few-shot-weak/deadlock класс (3.4.2, prompts не моделируются в countersign)). При

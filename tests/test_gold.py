@@ -496,3 +496,16 @@ def test_gold_1_1_1_personal_pronouns_have_person(dataset):
                   if r.text_id == "homer_iliad_1" and r.segment_id == 2)
     eta = next(f for f in homer2.expected_morphology if f["form"] == "ἣ")
     assert eta["case"] == "nominative"
+
+
+def test_all_gold_artifacts_tracked_in_git():
+    """Design principle #15: данные шага обязаны быть в git (кейс 3.4.0)."""
+    import subprocess
+
+    if not (REPO / ".git").exists():
+        pytest.skip("не git-checkout")
+    result = subprocess.run(
+        ["git", "ls-files", "--others", "--exclude-standard", "--", "gold/"],
+        cwd=REPO, capture_output=True, text=True)
+    assert result.stdout.strip() == "", \
+        f"untracked gold-артефакты: {result.stdout.strip()}"
