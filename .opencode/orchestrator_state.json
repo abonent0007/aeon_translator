@@ -423,7 +423,20 @@
       "step_3_9_scope": "parallel-scoped: pluggable embeddings provider interface + config (AEON_EMBEDDINGS_PROVIDER); default remains MiniLM; Google provider behind flag, no CI network; measure on expanded gold later",
       "phase4_triggers_add": "confidence: test length-confidence correlation on N>=30 (hypothesis from 2.7.5 cases A)",
       "infra_1_1_0": "DONE: loader mixed+low-exclusion(+log gold_atom_excluded_low_confidence)+morph validation; metrics: per-field morphology F1, high/medium/all splits, null->out of denominator, missed-form=miss, lemma NFC-exact (grc)/NFC+casefold (la); runner morph_v1 hook (morph_engine param); report morphology section; 8 tests (33 in test_gold, 410 total). Demo: denominators pos/lemma=220 (165 high/55 medium), case=183, mood/tense/voice=45, person=30, gender=169; predictions absent -> 0.00."
-    }
+    },
+    "step_3_2": "DONE: morph_v1 (aeon/morphology; enum-synced contract; Il.2.1-2 few-shot; engine completeness verify + output-budget scaling + finish_reason retry x2) + gold 1.1.1 (Class A source-verified: cicero nom x4, homer eta, personal pronouns person x8) + baseline morph_t4: pos .98/lemma .92/tense .96/mood .98/voice .93/person .90/case .99/number .99/gender .98 (28 atoms/224 forms, \\.0214). Re-extract t4 on gold 1.1.1 (49 atoms): entities .78 (P.65/R.97), detective .88 (sappho .80), cache-hit 50K tokens. Design principles #1-#4 in AGENTS. Suite 420.",
+    "findings_3_2": [
+      "Class A (gold-defects found by model; patched 1.1.1): closed",
+      "Class B (derivational/Doric lemma conventions): backlog v1.1, trigger = Doric expansion",
+      "Class C (accepted noise): ageide tense, oulomenen, abutere; trigger >=3 forms",
+      "person pronoun-fill gap: v1.1 candidate, trigger = pronoun coverage expansion",
+      "entities name=null entries (rgda): contract edge -> drop-on-null candidate v1.1"
+    ],
+    "next_options": [
+      "3.9 embeddings provider (deferred per curator until failing case)",
+      "contract v1.1 (trigger-gated)",
+      "3.4 cross-references / 3.6 web (after)"
+    ]
   },
   "completed_at": null,
   "user_preferences": {
@@ -458,7 +471,8 @@
     "gold mock fixtures (gold/fixtures/mock_responses.json) — align with extractor contract v1 (entities taxonomy/semantic claims) after 2.7 re-run",
     "2.7.5 data tasks: sappho min-conf gate cases (avg .60/.65 grounded all-quoted), grammar-flavor prompt iteration, entities FP on fragment texts (papyrus/sappho)",
     "contract v1.2: content-first priority (Rule 3), Rule 5 emphasis + post-hoc repair, edge-cases: generic office/deity REJECTED (named referent requires specific identity, not class membership; revisited if gold adds such cases)",
-    "Phase 3 candidates: 3.2 morphology (recommended first), 3.9 embeddings provider, 3.4 cross-references, 3.6 Web UI/API"
+    "Phase 3 candidates: 3.2 morphology (recommended first), 3.9 embeddings provider, 3.4 cross-references, 3.6 Web UI/API",
+    "contract v1.1 (extraction): drop entities with name=null; pronoun person few-shot; Doric/derivational lemma examples (all trigger-gated)"
   ],
   "config_wiring": {
     "canonical_access": "CONFIG.verification.<agent> is canonical; flat CONFIG.<agent> is a convenience alias",

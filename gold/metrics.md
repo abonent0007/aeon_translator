@@ -117,6 +117,21 @@ homer ἣ nom, личные местоимения person ×8; source-diff) → 
 местоимений без few-shot) впервые измерен. F1 — согласованность с gold,
 не качество: смотреть gold-diff вместе с F1-diff.
 
+### Expansion validation (t4, gold 1.1.1, 49 атомов) — re-extract
+
+Raw: `gold/real_runs/2026-10-14_t4/`; 73 вызова ($0.0228 / 167 s; **cache-hit
+50176 токенов** — DeepSeek prompt-caching на повторяющихся few-shot префиксах,
+новый факт). Агрегат: entities F1 **0.78** (P 0.65/R 0.97), detective **0.88**
+(plato 1.00 / sappho **0.80** — улучшение от 0.60), expert/logician 1.00,
+markers 1.00, MAE 0.09, failures 0. **Core-6 текстов стабильны** (paste с t3):
+caesar 1.00, homer 0.92, plato 1.00, inscription 0.50, papyrus/sappho 0.00.
+Новые тексты (первые числа): sophocles 1.00, sappho_fr16 1.00, cicero 0.80,
+vergil 0.80, pindar 0.67, rgda 0.00. Diff t3→t4: entities −0.04 (корпус +21
+атом, core stable), detective +0.13 (sappho-variance). Новые extraction-edges
+(не gold-дефекты): pindar `ἀελίου` → deity-FP (common noun); rgda — 4 записи
+**entities с name=null** (модель «сохранила место» при неуверенности) →
+кандидат v1.1: drop entities без name (contract edge).
+
 ## Real-цели — гипотеза
 
 Числа real-колонки — гипотеза (после 2.7 пересматриваются; N=28 — малая
