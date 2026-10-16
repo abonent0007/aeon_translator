@@ -7,7 +7,8 @@ Pair-based engine: `CrossReferenceEngine.detect(text_a, lang_a, text_b, lang_b)`
 
 from .engine import CrossReferenceEngine
 from .prompts import (CONFIDENCE_LEVELS, CROSS_REF_KINDS, FEW_SHOTS,
-                      FORMULA_LABELS, build_prompt, render_examples)
+                      FORMULA_LABELS, PROMPT_VERSION, build_prompt,
+                      render_examples)
 
 __all__ = [
     "CrossReferenceEngine",
@@ -15,6 +16,7 @@ __all__ = [
     "CONFIDENCE_LEVELS",
     "FORMULA_LABELS",
     "FEW_SHOTS",
+    "PROMPT_VERSION",
     "build_prompt",
     "render_examples",
 ]

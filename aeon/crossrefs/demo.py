@@ -19,6 +19,7 @@ from pathlib import Path
 
 from ..testing import MockLLM
 from .engine import CrossReferenceEngine
+from .prompts import PROMPT_VERSION
 
 with contextlib.suppress(Exception):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -99,11 +100,15 @@ def main(argv=None) -> int:
                   f"{len(record['refs'])} refs{marker}")
         total_refs = sum(len(record["refs"]) for record in records)
         print(f"\nИтого: {len(records)} пар, {total_refs} refs, "
-              f"{time.time() - started:.1f}s, usage={_usage(llm)}")
+              f"{time.time() - started:.1f}s, prompt={PROMPT_VERSION}, "
+              f"usage={_usage(llm)}")
         if args.json_out:
             out = Path(args.json_out)
             out.parent.mkdir(parents=True, exist_ok=True)
-            out.write_text(json.dumps(records, ensure_ascii=False, indent=1),
+            payload = {"prompt_version": PROMPT_VERSION,
+                       "mode": "real" if args.real else "mock",
+                       "records": records}
+            out.write_text(json.dumps(payload, ensure_ascii=False, indent=1),
                            encoding="utf-8")
             print(f"predictions → {out}")
         return 0
@@ -120,11 +125,15 @@ def main(argv=None) -> int:
         "refs": refs,
     }
     print(json.dumps(result, ensure_ascii=False, indent=2))
-    print(f"\n{time.time() - started:.1f}s, usage={_usage(llm)}")
+    print(f"\n{time.time() - started:.1f}s, prompt={PROMPT_VERSION}, "
+          f"usage={_usage(llm)}")
     if args.json_out:
         out = Path(args.json_out)
         out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(json.dumps([result], ensure_ascii=False, indent=1),
+        payload = {"prompt_version": PROMPT_VERSION,
+                   "mode": "real" if args.real else "mock",
+                   "records": [result]}
+        out.write_text(json.dumps(payload, ensure_ascii=False, indent=1),
                        encoding="utf-8")
         print(f"result → {out}")
     return 0

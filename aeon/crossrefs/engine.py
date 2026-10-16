@@ -4,8 +4,16 @@
 на пару (temperature 0.0); ответ валидируется теми же правилами, что gold
 loader (kind/confidence enum, echo→formula+label-enum, shape пар), невалидные
 записи дропаются с событием `crossref_validation_drop` (не роняют пару).
+
+Post-filter (countersign refinement 1, 3.4.2): grounded-пары — source_lemma
+обязана присутствовать в TEXT_A, target_lemma — в TEXT_B (норм-префикс >= 3;
+len<=2 не допускается); ungrounded пары дропаются, adaptation без grounded-пар
+дропается целиком (echo/direct_citation переживают — formula/marker несут
+свидетельство).
 """
 
+import re
+import unicodedata
 from typing import Any, Dict, List, Optional, Tuple
 
 from ..llm_client import DeepSeekClient
@@ -14,6 +22,59 @@ from .prompts import (CONFIDENCE_LEVELS, CROSS_REF_KINDS, FORMULA_LABELS,
                       build_prompt)
 
 _LOGGER = get_logger("aeon.crossrefs")
+
+_TOKEN_RE = re.compile(r"[^\W\d_]+", re.UNICODE)
+
+
+def _norm(value: Any) -> str:
+    """NFD → strip combining → casefold (греческий/латынь-friendly)."""
+    decomposed = unicodedata.normalize("NFD", str(value))
+    stripped = "".join(ch for ch in decomposed
+                       if not unicodedata.combining(ch))
+    return stripped.casefold()
+
+
+def _grounded(lemma: Any, segments: List[str]) -> bool:
+    """Grounding леммы в исходном тексте (refinement 1):
+    len<=2 — не допускается; len>=3 — вхождение или общий префикс >= 3.
+    """
+    lemma_norm = _norm(lemma)
+    if len(lemma_norm) < 3:
+        return False
+    for segment in segments:
+        for token in _TOKEN_RE.findall(str(segment)):
+            token_norm = _norm(token)
+            if not token_norm:
+                continue
+            if lemma_norm in token_norm:
+                return True
+            shared = 0
+            for lemma_char, token_char in zip(lemma_norm, token_norm):
+                if lemma_char != token_char:
+                    break
+                shared += 1
+            if shared >= 3:
+                return True
+    return False
+
+
+def _ground_ref(ref: Dict[str, Any], a_segments: List[str],
+                b_segments: List[str]
+                ) -> Tuple[Dict[str, Any], List[Dict[str, Any]], bool]:
+    """Фильтр пар по grounding. → (ref', ungrounded_pairs, dropped_ref)."""
+    pairs = list(ref.get("matched_lemma_pairs") or [])
+    kept_pairs: List[Dict[str, Any]] = []
+    ungrounded: List[Dict[str, Any]] = []
+    for pair in pairs:
+        if (_grounded(pair.get("source_lemma"), a_segments)
+                and _grounded(pair.get("target_lemma"), b_segments)):
+            kept_pairs.append(pair)
+        else:
+            ungrounded.append(pair)
+    grounded_ref = (ref if len(kept_pairs) == len(pairs)
+                    else {**ref, "matched_lemma_pairs": kept_pairs})
+    ref_dropped = ref["kind"] == "adaptation" and not kept_pairs
+    return grounded_ref, ungrounded, ref_dropped
 
 
 def _check_ref(ref: Any, text_a_id: str, text_b_id: str,
@@ -103,17 +164,35 @@ class CrossReferenceEngine:
 
         kept: List[Dict[str, Any]] = []
         dropped = 0
+        pairs_dropped = 0
         for ref in refs:
             ok, reason = _check_ref(ref, str(text_a["text_id"]),
                                     str(text_b["text_id"]),
                                     len(a_segments), len(b_segments))
-            if ok:
-                kept.append(ref)
-            else:
+            if not ok:
                 dropped += 1
                 log_event(_LOGGER, "crossref_validation_drop", reason=reason,
                           trace_id=self.trace_id)
+                continue
+            grounded_ref, ungrounded, ref_dropped = _ground_ref(
+                ref, a_segments, b_segments)
+            for pair in ungrounded:
+                pairs_dropped += 1
+                log_event(_LOGGER, "crossref_pair_ungrounded", pair=pair,
+                          text_a=str(text_a["text_id"]),
+                          text_b=str(text_b["text_id"]),
+                          trace_id=self.trace_id)
+            if ref_dropped:
+                dropped += 1
+                log_event(_LOGGER, "crossref_ref_dropped",
+                          reason="adaptation_without_grounded_pairs",
+                          text_a=str(text_a["text_id"]),
+                          text_b=str(text_b["text_id"]),
+                          trace_id=self.trace_id)
+                continue
+            kept.append(grounded_ref)
         log_event(_LOGGER, "crossref_done",
                   text_a=str(text_a["text_id"]), text_b=str(text_b["text_id"]),
-                  kept=len(kept), dropped=dropped, trace_id=self.trace_id)
+                  kept=len(kept), dropped=dropped, pairs_dropped=pairs_dropped,
+                  trace_id=self.trace_id)
         return kept

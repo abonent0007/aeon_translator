@@ -1,6 +1,7 @@
 """Prompts + few-shot crossrefs engine (шаг 3.4.2).
 
-Frozen prompt v1 (rev.3, countersign 2026-10-15). Few-shot — structured данные
+Frozen prompt v1.1 (rev.3 + countersign-fixes F1/F3, 2026-10-15): proem-приоритет
+(D2), cross-author (D1), canonical-grounding (D4). Few-shot — structured данные
 (FEW_SHOTS): рендерятся в промпт через render_examples(), тест-инвариант
 `test_few_shot_not_in_gold_or_scoring` проверяет вне-corpus/вне-scoring.
 
@@ -14,6 +15,7 @@ from typing import Any, Dict, List
 CROSS_REF_KINDS = frozenset({"direct_citation", "adaptation", "formulaic_echo"})
 CONFIDENCE_LEVELS = frozenset({"high", "medium", "low"})
 FORMULA_LABELS = frozenset({"proem_invocation"})
+PROMPT_VERSION = "1.1"
 
 # Few-shot (rev.3): 2 positive + 1 hard negative + 1 direct_citation.
 # Все тексты ВНЕ gold-корпуса (15) и вне scoring-пар (105) — конвенция
@@ -104,12 +106,12 @@ TEXT_B (later, target) — id: "{text_b_id}", language: {lang_b}:
 {b_segments}
 
 CONTRACT RULES:
-1. A cross-reference is TEXTUAL DEPENDENCE, not similarity: themes may coincide without a link. If no dependence exists — return an empty list.
+1. A cross-reference is TEXTUAL DEPENDENCE, not similarity: themes may coincide without a link. If no dependence exists — return an empty list. Cross-references hold between works of DIFFERENT authors: shared diction or formulas within one author's own corpus (e.g., two poems by the same poet, or two genres by the same prose author) are NOT cross-references — do not report them.
 2. Kinds:
    - "direct_citation": an explicit named marker in the text (author or work, e.g. "as Aratus said") OR a verbatim run of >= 5 content lemmas.
    - "adaptation": scholarly-recognized reworking or translation ("scholarly recognized" = the dependence is discussed in standard commentaries/editions; judge from your knowledge; uncertain -> omit or confidence "low"); 3+ parallel content lemmas raise confidence (see scale).
-   - "formulaic_echo": a shared formula. "matched_formula" is REQUIRED. The formula label set is CLOSED: ["proem_invocation"] — the opening of a poem invoking a Muse/god to sing or beginning "from a god" (e.g. "ἐκ Διὸς ἀρχώμεσθα"). If a shared formula does NOT fit this label, do NOT return it as formulaic_echo — you may still report adaptation/direct_citation if their criteria hold independently.
-   If several kinds could describe the same link, choose the ONE with the strongest evidence and return a single entry per link — never the same link under multiple kinds.
+   - "formulaic_echo": a shared formula. "matched_formula" is REQUIRED. The formula label set is CLOSED: ["proem_invocation"] — the opening of a poem invoking a Muse/god to sing or beginning "from a god" (e.g. "ἐκ Διὸς ἀρχώμεσθα"). If a shared formula does NOT fit this label, do NOT return it as formulaic_echo — you may still report adaptation/direct_citation if their criteria hold independently. An opening-formula link has PRIORITY: if the shared element is the proem opening (invocation/singing verb + Muse, or "begin from a god"), return formulaic_echo — do NOT downgrade it to adaptation just because lexical pairs are also present.
+   If several kinds could describe the same link, choose the ONE with the strongest evidence — specificity beats pair count: a proem-opening link is formulaic_echo even when 3+ pairs exist. Return a single entry per link — never the same link under multiple kinds.
 3. Every returned reference MUST contain:
    "source": {"text_id": "{text_a_id}", "segment_id": N}   (MUST equal TEXT_A)
    "target": {"text_id": "{text_b_id}", "segment_id": M}   (MUST equal TEXT_B)
@@ -119,7 +121,7 @@ CONTRACT RULES:
    "confidence": "high" | "medium" | "low"
    "reasoning": optional one sentence (recommended, especially for adaptation/echo)
    "segment_id" = the index shown in the input (A1->1, A2->2; B1->1, B2->2).
-4. Lemma discipline: canonical lemmas in the SOURCE language (never translate); POS-compatible pairs only (noun<->noun, verb<->verb); no adverbs/particles/conjunctions. A pair must be a SECURE equivalent; loose/accidental parallels do NOT belong in "matched_lemma_pairs" — mention them in "reasoning" instead. If both a citation formula and a verbatim run are present for the same link, keep ONE direct_citation entry: include the verbatim pairs in "matched_lemma_pairs" and note the citation formula in "reasoning".
+4. Lemma discipline: canonical lemmas in the SOURCE language (never translate); POS-compatible pairs only (noun<->noun, verb<->verb); no adverbs/particles/conjunctions. A pair must be a SECURE equivalent; loose/accidental parallels do NOT belong in "matched_lemma_pairs" — mention them in "reasoning" instead. Use canonical dictionary forms (ἀείδω — not the inflected ἄειδε) that actually occur in their own text in some inflected form; a lemma absent from its text is an invention — drop the pair. If both a citation formula and a verbatim run are present for the same link, keep ONE direct_citation entry: include the verbatim pairs in "matched_lemma_pairs" and note the citation formula in "reasoning".
 5. Negative case: if you are not confident that a textual dependence exists — omit it (or use confidence "low"). Do not pad the output.
 6. No hallucination: mention a named author/work ONLY if it is explicitly present in the given texts.
 

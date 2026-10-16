@@ -135,6 +135,15 @@ P3 `Arat. Phaen. 1 ← AP XII.1` (Straton) — direct_citation high («καθὼ
 снят — греческий текст не верифицируем доступными средствами (2026-10-15).
 Отклонён Alc. 332/Hor. 1.37: под дисциплиной пар — 1 secure pair против 2 у
 Alc. 338/Hor. 1.9.
+> Aratus Phaen. 1 appears in two few-shot examples with different roles
+(formula-source in echo, cited-author in direct_citation) — kinds are
+properties of the link, not of the source text.
+
+**Prompt versioning (refinement 3, countersign 3.4.2):** `PROMPT_VERSION`
+(`aeon/crossrefs/prompts.py`, сейчас `1.1`) пишется в run-артефакты
+(predictions.json) и — при интеграции в `.aeon v2` — в
+`traces.cross_references = {prompt_version, refs}` (слот существует;
+engine пока не подключён к translate(), так что trace-потребителей ещё нет).
 
 ## 6. Circularity / anti-leak
 
@@ -171,6 +180,8 @@ Fallback: <3 verifiable на sample → defer 3.4 → 3.7 (export formats).
 | **`confidence: low` xref: не упражняется (0)** | acknowledged — pilot упражняет high+medium | low-бакет F1 = N/A; валидация low-исключения — только unit-тест | появление low-записи при расширении |
 | **`formulaic_echo`×medium: n=1** (Vergil←Il.1) | acknowledged — pilot-framing | F1 granularity 1.0 — statistically meaningless | рост N (Ф4) |
 | **`adaptation`×medium: 0** (оба adaptation = high/consensus) | acknowledged | medium-бакет adaptation = N/A | появление medium-adaptation |
+| **Post-filter: suppletive/dialect stems** | may falsely drop pairs (ἀνήρ/ἄνδρα, Ζεύς/Διός) — conservative threshold (needed=3; len≤2 запрещены, refinement-1); метрически нейтрально (пары не в F1-ключе) | пары-анкеры теряются у части ref'ов | tweak по данным re-run; gold добавит suppletive-пары |
+| **Post-filter vs ῥοή/ῥόαι** | collision refinement-1: префикс 'ρο'=2 < 3 → пара дропается (metрически нейтрально) | один анкер у Alc/Hor-класса | решение куратора: vowel-guard-вариант или принять |
 | `offset` локалей не включён | deferred (additive) | точность локалей = сегмент | потребность passage-level точности |
 | kind-confidence (уверенность в ТИПЕ) | backlog | kinds могут перепутываться без штрафа | при усложнении kinds/росте N |
 | multi-hop chains | backlog/Ф4 | цепочки A→B→C не детектируются | Ф4 |

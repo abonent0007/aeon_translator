@@ -43,7 +43,13 @@ def main() -> int:
 
     expected = load_dataset(args.dataset).xrefs
     payload = json.loads(Path(args.predictions).read_text(encoding="utf-8"))
-    predicted = [ref for record in payload for ref in (record.get("refs") or [])]
+    if isinstance(payload, dict):
+        print(f"prompt_version:   {payload.get('prompt_version')} "
+              f"(mode={payload.get('mode')})")
+        records = payload.get("records") or []
+    else:
+        records = payload
+    predicted = [ref for record in records for ref in (record.get("refs") or [])]
 
     print(f"gold xrefs:       {len(expected)}  {_counts(expected)}")
     print(f"engine xrefs:     {len(predicted)}  {_counts(predicted)} "

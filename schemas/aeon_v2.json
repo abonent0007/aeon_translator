@@ -240,7 +240,7 @@
             "object",
             "null"
           ],
-          "description": "слот 3.4"
+          "description": "слот 3.4 ({prompt_version, refs})"
         }
       }
     },

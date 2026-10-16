@@ -6,7 +6,9 @@ import unicodedata
 from pathlib import Path
 
 from aeon.crossrefs import (CONFIDENCE_LEVELS, CROSS_REF_KINDS, FEW_SHOTS,
-                            FORMULA_LABELS, CrossReferenceEngine, build_prompt)
+                            FORMULA_LABELS, PROMPT_VERSION,
+                            CrossReferenceEngine, build_prompt)
+from aeon.crossrefs.engine import _grounded
 from aeon.testing import MockLLM
 
 REPO = Path(__file__).resolve().parent.parent
@@ -42,6 +44,9 @@ def test_prompt_contains_inputs_and_closed_set():
     assert "A1. μῆνιν ἄειδε θεά" in prompt
     assert "B1. arma virumque cano" in prompt
     assert "proem_invocation" in prompt
+    assert "specificity beats pair count" in prompt     # v1.1 (D3)
+    assert "DIFFERENT authors" in prompt                # v1.1 (D1)
+    assert PROMPT_VERSION == "1.1"
     assert "TEXT_A" in prompt and "TEXT_B" in prompt
     for index in range(1, len(FEW_SHOTS) + 1):
         assert f"--- Example {index} (" in prompt
@@ -159,3 +164,52 @@ def test_render_examples_roundtrip():
     rendered = render_examples()
     for shot in FEW_SHOTS:
         assert json.dumps(shot["output"], ensure_ascii=False) in rendered
+
+
+# ── post-filter (countersign refinements 3.4.2) ──
+
+
+def test_post_filter_len3_uses_needed3():
+    """Refinement 1: len>=3 → префикс >= 3 (не 2!); документированная
+    коллизия ῥοή/ῥόαι ('ρο'=2) дропается — см. §10 coverage gaps."""
+    assert _grounded("θεά", ["θεάων δ' ἔπειτα"])
+    assert not _grounded("θεά", ["θέμις ἐστίν"])
+    assert not _grounded("ῥοή", ["ῥόαι δ' ὑδάτων"])
+    assert not _grounded("in", ["in aqua"])          # len<=2 — не допускается
+    assert not _grounded("ἐν", ["ἐν ἄστει"])
+
+
+def test_post_filter_ungrounded_pair_dropped():
+    ref = _ref(kind="adaptation", formula=None, confidence="medium",
+               pairs=[{"source_lemma": "cano", "target_lemma": "cano"},
+                      {"source_lemma": "vir", "target_lemma": "vir"}])
+    engine = _engine({"virum": {"cross_references": [ref]}})
+    out = engine.detect({"text_id": "alpha",
+                         "segments": ["virum mihi Camena insece versutum"]},
+                        "la",
+                        {"text_id": "beta",
+                         "segments": ["arma virumque cano"]}, "la")
+    assert len(out) == 1
+    assert out[0]["matched_lemma_pairs"] == [
+        {"source_lemma": "vir", "target_lemma": "vir"}]
+
+
+def test_post_filter_adaptation_without_grounded_pairs_dropped():
+    ref = _ref(kind="adaptation", formula=None, confidence="medium",
+               pairs=[{"source_lemma": "cano", "target_lemma": "cano"}])
+    engine = _engine({"virum": {"cross_references": [ref]}})
+    assert engine.detect(
+        {"text_id": "alpha", "segments": ["virum mihi Camena insece"]}, "la",
+        {"text_id": "beta", "segments": ["arma virumque cano"]}, "la") == []
+
+
+def test_post_filter_echo_survives_pair_drop():
+    ref = _ref(kind="formulaic_echo", pairs=[
+        {"source_lemma": "cano", "target_lemma": "cano"}])
+    engine = _engine({"virum": {"cross_references": [ref]}})
+    out = engine.detect(
+        {"text_id": "alpha", "segments": ["virum mihi Camena insece"]}, "la",
+        {"text_id": "beta", "segments": ["arma virumque cano"]}, "la")
+    assert len(out) == 1
+    assert out[0]["matched_lemma_pairs"] == []
+    assert out[0]["matched_formula"] == PROEM
