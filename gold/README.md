@@ -45,6 +45,14 @@ annotations_version: **1.1.0** (expansion 2026-10-14: +6 текстов, +morpho
   confidence-filter. Engine returning null or omitting the form → count as
   **miss** for all non-null fields of that form. (Иначе F1 геймится: вернул
   null для сложных — получил 100% на лёгких.)
+- **Dual:** homer seg6 (`διαστήτην`, `ἐρίσαντε`, Il. 1.6) — первый dual в gold
+  (патч 2026-10-14).
+- **Forward-looking enum:** частицы/наречия/союзы/предлоги ENUM'ом в промпте
+  morph_v1 предусмотрены, но gold их НЕ содержит (selection rule). Являются
+  production-категориями для будущего full-token coverage; в текущих метриках
+  не участвуют.
+- **Deponent lemma convention (morph_v1):** 1st person singular present
+  indicative (`abūtor`, `ἔρχομαι`).
 - **Метрики morphology (предстоящий infra-коммит):** per-field (case/number/
   gender/tense/mood/voice/person/pos/lemma), denominator = размеченные формы
   (subset), атомы без поля — N/A.

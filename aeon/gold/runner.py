@@ -131,7 +131,9 @@ def _predict_record(record, llm: Any, packs: Dict[str, Any],
     morphology = None
     if morph_engine is not None and record.expected_morphology is not None:
         # morph_v1: отдельный pipeline-step (3.2); только на атомах с gold-разметкой
-        morphology = list(morph_engine(record.segment_text, record.language))
+        morphology = list(morph_engine(
+            record.segment_text, record.language,
+            [form["form"] for form in record.expected_morphology]))
 
     return GoldPrediction(
         text_id=record.text_id,

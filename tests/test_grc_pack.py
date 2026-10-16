@@ -14,7 +14,10 @@ PACK = AncientGreekPack()
 def _grc_registered():
     registry.register(AncientGreekPack, force=True)
     yield
+    from aeon.language import register_builtins
+
     registry.clear()
+    register_builtins()  # восстановление builtins для последующих тестов
 
 
 def test_iso_code_and_metadata():

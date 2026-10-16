@@ -50,7 +50,10 @@ class MockPackNoTokens(LanguagePack):
 def _clean_registry():
     registry.clear()
     yield
+    from aeon.language import register_builtins
+
     registry.clear()
+    register_builtins()  # восстановление builtins для последующих тестов
 
 
 def test_register_and_get():

@@ -14,14 +14,22 @@ from .registry import detect, get, list_available, register
 from . import grc as _grc  # noqa: E402
 from . import la as _la  # noqa: E402
 
-registry.register(_grc.AncientGreekPack)
-registry.register(_la.LatinPack)
+
+def register_builtins() -> None:
+    """Перерегистрация builtin-паков (force): восстановление после
+    registry.clear() в тестах — иначе паки «теряются» для последующих тестов."""
+    registry.register(_grc.AncientGreekPack, force=True)
+    registry.register(_la.LatinPack, force=True)
+
+
+register_builtins()
 
 __all__ = [
     "LanguagePack",
     "Marker",
     "registry",
     "register",
+    "register_builtins",
     "get",
     "list_available",
     "detect",
