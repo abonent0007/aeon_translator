@@ -408,11 +408,12 @@ RU-конспектом → заменён подлинной grc-транскр
   `coverage_gaps` соответствующего документа, не в inline-комментарии.
   Пример: `direct_citation` ×0 в gold (prompt-only, F1 = N/A) —
   задокументирован в `docs/phase3_34_design.md` §10.
-- **Design principle (#9, 3.4 countersign 2026-10-14):** при countersign —
-  **прогонять schema-инварианты на samples ПРОГРАММНО**, не полагаться на
-  глаз: инвариант cross-ref («∀пары: леммы ∈ морфологии соответствующих
-  сегментов») поймал бы `adversus`/`audit` вне segment_text сразу.
-  Инварианты → loader-валидация + тесты (`test_cross_ref_pairs_within_segments`).
+- **Design principle (#9, 3.4 countersign 2026-10-14): ACTIVE** (подтверждён
+  трижды: `direction`, `matched_lemmas` вне segment, «формула И/ИЛИ»). При
+  countersign — **прогонять schema-инварианты на samples ПРОГРАММНО**, не
+  полагаться на глаз; инварианты → loader-валидация (`validate_cross_ref_schema`)
+  + тесты. Корень трёх находок — итеративное расширение схемы (каждое новое
+  поле без precedent) — норма для pilot; фикс — машино-проверка при записи.
 - **Бюджет-политика LLM (аудит 2026-10-14):** 15 call-sites — все через
   `DeepSeekClient._call(+_call_json)` → единый провайдер (finish_reason-retry —
   safety-net там); default max_tokens = 4000; sites с большими/масштабными

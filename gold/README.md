@@ -12,6 +12,22 @@ pipeline'ом AEON; в `gold_mock`-тестах MockLLM возвращает can
 
 annotations_version: **1.1.1** (Class A source-verified fixes 2026-10-14; см. Change log)
 
+## Cross-references (schema 1.2.0) — conventions
+- **Хронология:** `source` = ранний текст, `target` = поздний (поле `direction` отсутствует);
+  цитационный смысл — в `annotator_notes` («X adapts/cites Y»). Метрика неориентированная.
+- **`matched_lemma_pairs`:** только канонические POS-совместимые пары (обе леммы ∈
+  morphology своих сегментов — invariant #9). Исключения → notes: (a) POS-incompatible
+  (adj vs adv); (b) semantic non-equivalence (audiō ≠ ὑπaκούω); (c) canonical-form mismatch.
+- **`matched_formula`:** dict `{label, description}`; labels (start set):
+  `["proem_invocation"]` (unknown → error). **REQUIRED для `formulaic_echo`**;
+  пары — усилители confidence: high = формула+≥2 пары; medium = формула+1 пара
+  (или 1 спорная из ≥2); low = формула без якоря (excluded из F1).
+- **Non-annotated:** для сегментов с >2 исключёнными токенами — список в notes
+  («Non-annotated (per selection rule): …»).
+- **Indeclinables:** case по синтаксической функции (fās/nihil → nominative, sg, neuter).
+- **Coverage gaps:** `direct_citation` ×0 (prompt-only, F1 = N/A); offset отсутствует
+  (сегмент-уровень); kind-confidence — backlog.
+
 ## Change log
 ### 1.1.1 (2026-10-14) — Class A: source-verified fixes
 Обнаружено morph_v1 baseline (модель лингвистически права, gold — нет);

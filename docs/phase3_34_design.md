@@ -50,9 +50,31 @@ Vergil↔Od.1), **direct_citation ×0** (в корпусе нет named-цита
   `source_lemma ∈ lemmas(source.segment)` И `target_lemma ∈ lemmas(target.segment)`
   (сегменты с morphology; при отсутствии — skip, документировано); тесты
   `test_cross_ref_pairs_within_segments`, `test_cross_ref_lemma_pairs_well_formed`.
-- **Recency-требования:** `direct_citation` — ≥5 пар ПОДРЯД (verbatim-run) или named-маркер;
-  `formulaic_echo` — ≥1 пара ИЛИ `matched_formula ≠ null`; `adaptation` — pairs optional
-  (consensus/издание в notes).
+- **Recency-требования (Issue 1 — формула ОБЯЗАТЕЛЬНА для echo):**
+  `direct_citation` — ≥5 пар ПОДРЯД (verbatim-run) или named-маркер;
+  **`formulaic_echo` — `matched_formula` REQUIRED; `matched_lemma_pairs` OPTIONAL (усилители
+  confidence)**; «≥2 лемм без формулы» ≠ echo (kind `lexical_parallel` — не вводим; backlog Ф4);
+  `adaptation` — pairs optional (consensus/издание в notes).
+- **`formula_labels` (Issue 2) — фиксированный start set в schema README:**
+  `["proem_invocation"]`; неизвестный label → validation error (loader 3.4.1;
+  тест `test_cross_ref_formula_label_in_enum`). Description-template:
+  `proem_invocation` → «imperative 'sing/say' (2sg) + subject-of-song + optional divine addressee».
+- **Confidence-шкала для echo (Issue 3, формализована):**
+  `high` = формула + ≥2 канонические пары (все эквивалентны);
+  `medium` = формула + 1 пара ИЛИ формула + ≥2 пары с 1 спорной;
+  `low` = формула без пар/без семантического якоря → excluded из F1 (конвенция 1.1.0).
+  Тест: `test_cross_ref_echo_confidence_scale`. (Pilot: vergil↔Il.=medium, vergil↔Od.=high.)
+- **Исключения из `matched_lemma_pairs` (Issue 4 — три класса, → annotator_notes):**
+  (a) **POS-incompatible** (`ἐνάντιος` adj vs `adversus` adv); (b) **semantic
+  non-equivalence** (`audiō` ≠ `ὑπακούω`); (c) **canonical-form mismatch**
+  (поверхностная форма vs словарная лемма).
+- **Non-annotated listing (Issue 5):** string-в-notes для pilot
+  («Non-annotated (per selection rule): …»); structured-поле `non_annotated` —
+  backlog (при росте корпуса/автоматизации).
+- **3.4.1 `validate_cross_ref_schema(record)` (meta-вопрос countersign):** машино-проверка
+  при записи: formula-required-for-echo, label-enum, confidence-scale, pairs∈morphology
+  (invariant #9), pairs-nonempty-for-direct; **POS-compatibility — annotator-level rule**
+  (авто-таблица cross-language POS — не вводим, задокументировано).
 - **`confidence` = уверенность в СУЩЕСТВОВАНИИ связи** (не в kind); `low` → excluded.
 - **`offset` — НЕ включаем** (additive позже).
 - **Indeclinables convention (Issue 5):** несклоняемые — `case` по **синтаксической функции**
