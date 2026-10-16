@@ -116,7 +116,9 @@ def build_report(dataset, predictions: Dict[str, Any]) -> str:
         lines.append(f"| Verdict accuracy ({agent}) | {_fmt(accuracy)} |")
 
     # ── Morphology (schema 1.1.0; morph_v1) — per-field × confidence-split ──
-    lines += ["", "## Morphology (schema 1.1.0; morph_v1)", ""]
+    morph_status = ("morph_v1: connected" if aggregate.get("morphology_present")
+                    else "morph_v1: NOT CONNECTED → 0.00 by design")
+    lines += ["", f"## Morphology (schema 1.1.0; {morph_status})", ""]
     morph = aggregate.get("morphology", {})
     any_total = any((morph.get(bucket, {}).get(field, {}) or {}).get("total")
                     for bucket in morph for field in MORPH_FIELDS)

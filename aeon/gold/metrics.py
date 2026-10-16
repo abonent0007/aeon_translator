@@ -185,6 +185,7 @@ def evaluate_dataset(dataset: GoldDataset, predictions: Dict[str, List[Any]]) ->
     per_text: Dict[str, Any] = {}
     all_marker_tp: Dict[str, Dict[str, float]] = {}
     aggregate_morph: Dict[str, Tuple[List[Dict], List[Dict]]] = {}
+    morph_present = False
     entity_totals = {"tp": 0, "fp": 0, "fn": 0}
     fragment_pairs: List[Tuple[bool, bool]] = []
     completeness_pairs: List[Tuple[float, float]] = []
@@ -211,6 +212,8 @@ def evaluate_dataset(dataset: GoldDataset, predictions: Dict[str, List[Any]]) ->
                                   for form in record.expected_morphology]
                 predicted_forms = [dict(form, _lang=record.language)
                                    for form in (getattr(prediction, "morphology", None) or [])]
+                if predicted_forms:
+                    morph_present = True
                 bucket = (record.annotation_confidence
                           if record.annotation_confidence in ("high", "medium")
                           else "high")
@@ -271,5 +274,6 @@ def evaluate_dataset(dataset: GoldDataset, predictions: Dict[str, List[Any]]) ->
         "verdicts": verdict_accuracy(verdict_triples),
         "morphology": {bucket: morphology_f1(exp, pred)
                        for bucket, (exp, pred) in aggregate_morph.items()},
+        "morphology_present": morph_present,
     }
     return {"per_text": per_text, "aggregate": aggregate}

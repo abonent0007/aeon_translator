@@ -40,6 +40,11 @@ annotations_version: **1.1.0** (expansion 2026-10-14: +6 текстов, +morpho
   voice/person/pos/lemma); **split by confidence**: `morphology_f1_high` /
   `_medium` / `_all` (тест `test_morphology_f1_splits_by_confidence`);
   denominator = размеченные формы (subset).
+  **Denominator semantics (design-choice, accepted 2026-10-14):** denominator
+  for per-field F1 = forms where `expected.field ≠ null` AND atom passes
+  confidence-filter. Engine returning null or omitting the form → count as
+  **miss** for all non-null fields of that form. (Иначе F1 геймится: вернул
+  null для сложных — получил 100% на лёгких.)
 - **Метрики morphology (предстоящий infra-коммит):** per-field (case/number/
   gender/tense/mood/voice/person/pos/lemma), denominator = размеченные формы
   (subset), атомы без поля — N/A.
