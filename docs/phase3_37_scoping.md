@@ -20,7 +20,7 @@ tei|bib|md|jsonld [--out DIR/]`. stdlib-only, offline, детерминизм.
 | Q3 | Position-in-source → **inline**; иначе **standoff** |
 | Q4 | Пакет `aeon/export/` + `python -m aeon.export` ✓ |
 | A | **Determinism:** triple-hash (content/atom/status?) + TZ/LANG-независимость + запрет `now()/random/uuid4` (AST-guard) |
-| B | **Legacy-contract warning** в TEI/MD/BibTeX (если v2 несёт legacy-поля) |
+| B | **Legacy-contract warning** в TEI/MD/BibTeX — только `extensions.legacy_v1_original` (миграция v1); `atom.meaning_hash` — штатное v2-поле (заполняется всегда), warning НЕ триггерит (эмпирика Plato-экспорта, стоп №3) |
 | C | JSON-LD: **inline `@context`** |
 | D | TEI: **namespace + полный teiHeader + minidom** (well-formedness тест) |
 | E | MD: collection DIR + index |
