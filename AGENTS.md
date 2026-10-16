@@ -370,6 +370,14 @@ RU-конспектом → заменён подлинной grc-транскр
   source_text + entities + linguistic summary) — правильная развязка
   зависимостей защитила от coupling-каскада: grammar-heavy chain (57%)
   не сломал focus → Rule-3 v1 green.
+- **Design principle (3.2):** для каждой морфологической категории в
+  enum'ах промпта — минимум один few-shot пример; LLM не экстраполирует
+  правило на новый класс без примера (3 накопленных случая: adj/adjective,
+  participle, imperative). Голая категория в enum'е = слот для догадки.
+- **Morphology baseline (3.2, morph_v1):** F1 all: pos 0.98 / lemma 0.92 /
+  tense 0.96 / mood 0.98 / voice 0.93 / person 0.97 / case 0.95 /
+  number 0.99 / gender 0.99 (28 атомов, 224 формы, $0.0214; raw
+  `gold/real_runs/2026-10-14_morph_t3/`; детали — `gold/metrics.md`).
 - **Known gaps:** Pleiades README links (network); Trismegistos datasets (нет
   публичного API); `deepseek-chat` — deprecated alias-fallback; zero-gold F1
   артефакт (papyrus/sappho: 1+1 borderline FP); role-consistency 10.7%
