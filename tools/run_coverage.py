@@ -31,6 +31,7 @@ SOURCE = [
     "aeon.offline",
     "aeon.variants",
     "aeon.gold",
+    "aeon.morphology",
 ]
 
 

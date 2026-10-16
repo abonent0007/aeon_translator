@@ -156,3 +156,22 @@ def test_provider_no_retry_on_stop_or_none():
     assert provider.chat([{"role": "user", "content": "x"}], max_tokens=2000) == "ok"
     assert completions.last_kwargs["max_tokens"] == 2000
     assert provider.calls == 1
+
+
+def test_finish_reason_retry_exhausted():
+    """length → retry ×2 budget → снова length → возврат partial, без loop; usage суммируется."""
+    completions = _StubCompletions([
+        _response('{"a":', 10, 2000, finish="length"),
+        _response('{"a": 1', 12, 4000, finish="length"),
+    ])
+    provider = OpenAICompatibleProvider(
+        client=SimpleNamespace(chat=SimpleNamespace(completions=completions)))
+
+    result = provider.chat([{"role": "user", "content": "x"}], max_tokens=2000)
+
+    assert result == '{"a": 1'          # последний ответ возвращается как есть
+    assert completions.last_kwargs["max_tokens"] == 4000  # один retry, не бесконечность
+    assert completions._responses == []  # третьего вызова нет
+    assert provider.calls == 1
+    assert provider.prompt_tokens == 22
+    assert provider.completion_tokens == 6000  # usage обоих вызовов просуммирован

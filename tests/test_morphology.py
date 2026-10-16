@@ -132,3 +132,41 @@ def test_runner_morph_hook():
     homer = predictions["homer_iliad_1"]
     assert len(homer[0].morphology) == 5
     assert homer[0].morphology[0]["form"] == _nfc("μῆνιν")
+
+
+def test_morph_index_sorting(mock_llm):
+    """Out-of-order indices сортируются; маппинг по form."""
+    mock_llm.responses = {"You perform morphological analysis": {"forms": [
+        _entry(3, "θεά", "θεά", "noun", case="vocative", number="singular",
+               gender="feminine"),
+        _entry(1, "μῆνιν", "μῆνις", "noun", case="accusative",
+               number="singular", gender="feminine"),
+        _entry(2, "ἄειδε", "ἀείδω", "verb", tense="present",
+               mood="imperative", voice="active", person=2, number="singular"),
+    ]}}
+    engine = MorphEngine(llm_client=mock_llm)
+
+    result = engine.analyze("μῆνιν ἄειδε θεά", "grc", ["μῆνιν", "ἄειδε", "θεά"])
+
+    assert [item["form"] for item in result] == ["μῆνιν", "ἄειδε", "θεά"]
+    assert result[0]["lemma"] == "μῆνις"
+    assert result[1]["lemma"] == "ἀείδω"
+    assert result[2]["lemma"] == "θεά"
+
+
+def test_morph_form_mismatch_handled(mock_llm):
+    """Count верен, но form[i] не совпал → эта запись null-fallback."""
+    mock_llm.responses = {"You perform morphological analysis": {"forms": [
+        _entry(1, "μῆνιν", "μῆνις", "noun", case="accusative",
+               number="singular", gender="feminine"),
+        _entry(2, "ΛΑΘΟΣ", "λάθος", "noun"),
+        _entry(3, "θεά", "θεά", "noun", case="vocative", number="singular",
+               gender="feminine"),
+    ]}}
+    engine = MorphEngine(llm_client=mock_llm)
+
+    result = engine.analyze("μῆνιν ἄειδε θεά", "grc", ["μῆνιν", "ἄειδε", "θεά"])
+
+    assert result[0]["lemma"] == "μῆνις"
+    assert result[1]["form"] == "ἄειδε" and result[1]["lemma"] is None
+    assert result[2]["lemma"] == "θεά"
