@@ -16,6 +16,10 @@ threshold the system abstains explicitly instead of guessing. Fragment
 hypotheses and cross-references are returned only after per-candidate
 verification.
 
+**Languages:** currently supports **`grc`** (Ancient Greek, period −800…600)
+and **`la`** (Latin, period −200…1800). Other ancient languages (Coptic,
+Sanskrit, etc.) are not supported yet.
+
 Results are evaluated against a hand-annotated gold corpus (54 segments, 15
 texts) and exported into research formats: TEI-XML (inline annotation),
 Markdown, JSON-LD, BibTeX. Exports are byte-deterministic; the export tool
@@ -23,12 +27,20 @@ refuses to process gold annotations (predictions only).
 
 ## Install & run
 
-No installation required — run from a repo checkout (Python 3.11):
+Requires Python 3.11. From a repo checkout:
 
+    pip install -e .
     python -m aeon.demo --text examples/greek/plato_apologia_17a.txt --verify=full --language=grc
 
 This runs fully offline against a mock LLM. For real analysis add `--real`
-(requires `DEEPSEEK_API_KEY`). To keep and export a result:
+(requires `DEEPSEEK_API_KEY` in `.env`); excerpt of the real output
+(CLI prints in Russian, ~18 s):
+
+    • detective grounded                         conf=1.00   all claims confirmed by exact quotes
+    • logician  coherent                         conf=1.00
+    CVI: 1.00 | вердикт: verified
+
+To keep and export a result:
 
     python -m aeon.demo --text examples/latin/caesar_bg_1_1.txt --language=la --save-aeon out.aeon
     python -m aeon.export --aeon out.aeon --format tei --out exports/
@@ -49,11 +61,27 @@ This runs fully offline against a mock LLM. For real analysis add `--real`
   (Trigger: demonstrated external demand.)
 - **Gold corpus is small** (15 texts). Calibration and external evaluation
   need expansion. (Trigger: publication claims; N≥30 for threshold calibration.)
-- **No pip packaging** — `setup.py` is a legacy wizard; run from a checkout.
-  (Trigger: external users.)
 - **Editorial markers are not persisted** into `.aeon v2` yet, so TEI
   `<gap/>`-style marker annotation is unavailable. (Trigger: TEI-marker export
   demand.)
+- **Mock mode is illustrative for verification**: some canned demo responses
+  predate the v1 extractor contract, so `--verify=full` under mock may abstain;
+  verification-quality numbers come from real runs and gold baselines.
+  (Backlog: mock-fixtures alignment.)
+
+## How to cite
+
+Every saved analysis is a citable artifact — generate BibTeX entries with:
+
+    python -m aeon.export --aeon out.aeon --format bib --out exports/
+
+producing `exports/out.aeon_artifact.bib` (your analysis, keyed by its
+`atom_hash`) and `exports/out.editions.bib` (editions cited in a variant
+apparatus), e.g.:
+
+    @misc{aeon:a5812c3204, title = {AEON v2 semantic analysis: plato},
+      author = {{AEON v4.0 (automated generator)}}, year = {2026},
+      note = {content_hash=…; atom_hash=…; created_at=…}, ...}
 
 ## Design principles
 

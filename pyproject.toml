@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aeon-translator"
+version = "3.0.0"
+description = "Semantic analysis and verification for Ancient Greek and Latin texts (.aeon v2, gold-standard evaluation, deterministic research exports)"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {file = "LICENSE"}
+authors = [{name = "Abonent0007"}]
+dependencies = [
+    "numpy>=1.24.0",
+    "python-dotenv>=1.0.0",
+    "requests>=2.28.0",
+    "openai>=1.0.0",
+]
+
+[project.optional-dependencies]
+embeddings = ["sentence-transformers>=2.2"]
+voice = ["sounddevice>=0.4.6", "soundfile>=0.12.0", "edge-tts>=6.0.0"]
+web = ["fastapi>=0.100.0", "uvicorn>=0.23.0", "pydantic>=2"]
+full = [
+    "sentence-transformers>=2.2",
+    "sounddevice>=0.4.6",
+    "soundfile>=0.12.0",
+    "edge-tts>=6.0.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
+    "pydantic>=2",
+    "pyyaml>=6.0",
+    "rich>=13.0.0",
+    "colorama>=0.4.6",
+]
+
+[tool.setuptools.packages.find]
+include = ["aeon*"]
