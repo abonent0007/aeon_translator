@@ -1,558 +1,544 @@
 {
-  "project": "C:\\Users\\User\\Documents\\aeon_translator-main\\aeon_translator-main",
-  "original_request": "AEON v4.0 'Deep Analyst'. Phase 1 COMPLETE. Phase 2: 2.0-2.6 done.",
-  "enriched_request": "Phase 2: 2.0-2.6 done (Packs, Fragments, Layers, Focus, Offline Adapters). Next: 2.7 Real API + parallelization (triggers on key).",
-  "plan": [
+ "project": "C:\\Users\\User\\Documents\\aeon_translator-main\\aeon_translator-main",
+ "original_request": "AEON v4.0 'Deep Analyst'. Phase 1 COMPLETE. Phase 2: 2.0-2.6 done.",
+ "enriched_request": "Phase 2: 2.0-2.6 done (Packs, Fragments, Layers, Focus, Offline Adapters). Next: 2.7 Real API + parallelization (triggers on key).",
+ "plan": [
+  {
+   "step": "0.1",
+   "status": "done"
+  },
+  {
+   "step": "0.2",
+   "status": "done"
+  },
+  {
+   "step": "0.3",
+   "status": "done"
+  },
+  {
+   "step": "0.4",
+   "status": "done"
+  },
+  {
+   "step": "1.1",
+   "status": "done"
+  },
+  {
+   "step": "1.2",
+   "status": "done"
+  },
+  {
+   "step": "1.3",
+   "status": "done"
+  },
+  {
+   "step": "1.4",
+   "status": "done"
+  },
+  {
+   "step": "2.0",
+   "status": "done"
+  },
+  {
+   "step": "2.1",
+   "status": "done"
+  },
+  {
+   "step": "2.2",
+   "status": "done"
+  },
+  {
+   "step": "2.3",
+   "status": "done"
+  },
+  {
+   "step": "2.4",
+   "status": "done"
+  },
+  {
+   "step": "2.5",
+   "status": "done"
+  },
+  {
+   "step": "2.6",
+   "status": "done"
+  }
+ ],
+ "current_step": 15,
+ "next_step": "2.7",
+ "phase": "complete_with_known_gap",
+ "phase2": {
+  "status": "complete",
+  "steps_completed": [
+   "2.0",
+   "2.1",
+   "2.2",
+   "2.3",
+   "2.4",
+   "2.5",
+   "2.6"
+  ],
+  "step_2_7": {
+   "status": "done",
+   "blocker": null,
+   "trigger": "satisfied: DEEPSEEK_API_KEY present in .env (~2026-10-14)",
+   "substeps": {
+    "2.7.1_smoke": "PASS (2026-10-14): plato full real, no exceptions; mock=false, llm_model=deepseek-chat; CVI 0.9465 verified; 16.2s/atom (~5 calls, ~3.2s/call); detective exact-quote 7/7 on Greek with diacritics. FINDING: extractor returned 8 entities incl. pronouns/words (ὑμεῖς, ἐγώ, ἀληθές, οὐδέν) vs gold 1 — entity-extraction quality signal for 2.7.3; entity_linking OFF.",
+    "2.7.2_sappho": "PASS-with-findings (fixes applied) (2026-10-14): real DeepSeek honest refusal (raw {\"hypotheses\": [], \"status\": \"no_reconstruction_possible\"}); engine reason 'llm_returned_none' MISLEADING (conflates decline vs parse-garbage). Mock-canned (v3.0 baseline, git -S) = optimistic: contained Voigt readings (ἴδρως κακχέεται 0.78 / τρόμος δὲ παῖσαν ἄγρει 0.55) — misleading demo, NOT gold-circular (gold fixtures have no reconstruction entries). No hallucinations. Detective+0.75 filter NOT exercised on real (no hypotheses to filter) — honest gap. CVI=1.00 'verified' on fragment (detective unverifiable 5/7): positives-only mean — calibration material. Cost: ~5 calls, 12.6s (2.5s/call).",
+    "2.7.3_gold_real": "DONE-WITH-STOP (2026-10-14): full real run 52 calls, 155.9s, $0.0351, failures=0. Raw: gold/real_runs/2026-10-14_t1; report: gold/reports/real_2026-10-14.md. Markers 1.00/1.00 (pack), is_fragment 1.00, MAE 0.00 (extractor always 1.0 — uncalibrated field), Entities F1 0.24 (P 0.14/R 0.76; word-salad FPs incl English translations; accent grave/acute mismatch — metric artifact), expert 0.88, logician 0.88, detective 0.00 => STOP-CONDITION #4 triggered, root-caused via raw (0 API): claim composition defect (grammar-instruction explanation_chain + forced Intent/Domain meta-claims with empty quotes, all-or-nothing grounded_count==total at detective.py:135, avg conf 0.83<0.85 even at 7/7). Exact-quote itself WORKS (quote_in_source 7/7). 2.7.4 BLOCKED pending curator decision on claim-contract/gold-verdict expectations. CONTRACTS: docs/contracts/extractor_v1.md + detective_v1.md drafted (pending curator approval; uncommitted). Evidence: extractor prompt has NO entity/claim contract (entities incl. types concept|action|abstract; explanation_chain='HOW you arrived' -> instructions); claims get meta rows appended by CALLER code (translator.py:173/runner.py:121/demo.py:398) — atom.intent/domain are separate fields. || t2 FAILED: deepseek-flash thinking-mode (reasoning ate max_tokens=2000 -> empty content x28, rule-fallback). Probe-verified; fix commit 7a721d0 (thinking disabled for flash). || t3 (valid v1 run): 52 calls, 135.3s, $0.0189, failures=0. Markers 1.00/1.00; is_fragment 1.00; Entities F1 0.75 (P .63/R .90; caesar 1.00, plato 1.00, homer .77, inscription .33); MAE 0.09; detective 0.75 (plato 1.00, sappho 0.60 — 2 segs avg-conf gate <0.85), expert/logician 1.00. STOP-FLAGS: grammar-flavored kept 48/84 (57%; anchored syntax observations, instructions skip=3) -> Rule-3 interpretation decision; role-consistency violations 3/28 (10.7%) > 5% -> Rule-5 instability.",
+    "2.7.4_detective_greek": "pending (preview: exact-quote OK in smoke)",
+    "2.7.5_calibration": "DATA-ONLY + DEFER (2026-10-14): 8 verify-atoms distribution from t3-raw; cases A=[6,7] (sappho short fragments avg .60/.65), B=[], C=[], D=[]; no min<0.75-at-avg>=0.85 cases; decision deferred to Phase 4 (N=8 too small, cluster=2 known hard-case); triggers: gold verdict-texts >=20 OR cluster A >20% OR avg-vs-correctness signal. gold/confidence_analysis.md.",
+    "2.7.6_focus": "DONE (2026-10-14, real): caesar historian 0.85/5 (Commentarii attribution!), philosopher 0.50-0.52/5; sappho historian 0.85/6 (Pseudo-Longinus preservation, Sapphic stanza), philosopher 0.60/5 (makarismos, symptom catalogue), esoteric 0.30/3 (historical symbolism only, no numerology/conspiracy — guardrails held on real). all_disagree: not triggered (roles diverged by topic). Focus cost: 2-3 roles parallel ≈ +5-7s wall. Q5 verdict: historian/philosopher anchor on source_text+entities (not chain) — grammar-heavy chain did NOT harm → Rule-3 iteration trigger NOT fired → v1 GREEN. | CLOSED (curator accepted)",
+    "2.7.7_cost": "done (naming: tracking in 2.7.3b commit 9b78e66; cost block + peak + cache-hit)",
+    "2.7.8_closure": "DONE: phase2 complete; AGENTS 'Phase 2 closure' (baseline, design principle, known gaps, backlog); gold/metrics.md marked Phase-2-final; phase3.recommended_first=3.2; commit docs: close phase 2."
+   },
+   "findings_2_7_1": [
     {
-      "step": "0.1",
-      "status": "done"
-    },
-    {
-      "step": "0.2",
-      "status": "done"
-    },
-    {
-      "step": "0.3",
-      "status": "done"
-    },
-    {
-      "step": "0.4",
-      "status": "done"
-    },
-    {
-      "step": "1.1",
-      "status": "done"
-    },
-    {
-      "step": "1.2",
-      "status": "done"
-    },
-    {
-      "step": "1.3",
-      "status": "done"
-    },
-    {
-      "step": "1.4",
-      "status": "done"
-    },
-    {
-      "step": "2.0",
-      "status": "done"
-    },
-    {
-      "step": "2.1",
-      "status": "done"
-    },
-    {
-      "step": "2.2",
-      "status": "done"
-    },
-    {
-      "step": "2.3",
-      "status": "done"
-    },
-    {
-      "step": "2.4",
-      "status": "done"
-    },
-    {
-      "step": "2.5",
-      "status": "done"
-    },
-    {
-      "step": "2.6",
-      "status": "done"
+     "id": "entity_extraction_contract_underspecified",
+     "severity": "high",
+     "impact": "entities F1 real likely << mock (0.06)",
+     "root_cause_hypothesis": "prompt doesn't define 'entity'; gold uses 'named referents only'",
+     "action": "quantify in 2.7.3, then decide contract, then fix prompt",
+     "not_a_bug": "may be schema ambiguity, not extractor defect"
     }
-  ],
-  "current_step": 15,
-  "next_step": "2.7",
-  "phase": "complete_with_known_gap",
-  "phase2": {
-    "status": "complete",
-    "steps_completed": [
-      "2.0",
-      "2.1",
-      "2.2",
-      "2.3",
-      "2.4",
-      "2.5",
-      "2.6"
-    ],
-    "step_2_7": {
-      "status": "done",
-      "blocker": null,
-      "trigger": "satisfied: DEEPSEEK_API_KEY present in .env (~2026-10-14)",
-      "substeps": {
-        "2.7.1_smoke": "PASS (2026-10-14): plato full real, no exceptions; mock=false, llm_model=deepseek-chat; CVI 0.9465 verified; 16.2s/atom (~5 calls, ~3.2s/call); detective exact-quote 7/7 on Greek with diacritics. FINDING: extractor returned 8 entities incl. pronouns/words (ὑμεῖς, ἐγώ, ἀληθές, οὐδέν) vs gold 1 — entity-extraction quality signal for 2.7.3; entity_linking OFF.",
-        "2.7.2_sappho": "PASS-with-findings (fixes applied) (2026-10-14): real DeepSeek honest refusal (raw {\"hypotheses\": [], \"status\": \"no_reconstruction_possible\"}); engine reason 'llm_returned_none' MISLEADING (conflates decline vs parse-garbage). Mock-canned (v3.0 baseline, git -S) = optimistic: contained Voigt readings (ἴδρως κακχέεται 0.78 / τρόμος δὲ παῖσαν ἄγρει 0.55) — misleading demo, NOT gold-circular (gold fixtures have no reconstruction entries). No hallucinations. Detective+0.75 filter NOT exercised on real (no hypotheses to filter) — honest gap. CVI=1.00 'verified' on fragment (detective unverifiable 5/7): positives-only mean — calibration material. Cost: ~5 calls, 12.6s (2.5s/call).",
-        "2.7.3_gold_real": "DONE-WITH-STOP (2026-10-14): full real run 52 calls, 155.9s, $0.0351, failures=0. Raw: gold/real_runs/2026-10-14_t1; report: gold/reports/real_2026-10-14.md. Markers 1.00/1.00 (pack), is_fragment 1.00, MAE 0.00 (extractor always 1.0 — uncalibrated field), Entities F1 0.24 (P 0.14/R 0.76; word-salad FPs incl English translations; accent grave/acute mismatch — metric artifact), expert 0.88, logician 0.88, detective 0.00 => STOP-CONDITION #4 triggered, root-caused via raw (0 API): claim composition defect (grammar-instruction explanation_chain + forced Intent/Domain meta-claims with empty quotes, all-or-nothing grounded_count==total at detective.py:135, avg conf 0.83<0.85 even at 7/7). Exact-quote itself WORKS (quote_in_source 7/7). 2.7.4 BLOCKED pending curator decision on claim-contract/gold-verdict expectations. CONTRACTS: docs/contracts/extractor_v1.md + detective_v1.md drafted (pending curator approval; uncommitted). Evidence: extractor prompt has NO entity/claim contract (entities incl. types concept|action|abstract; explanation_chain='HOW you arrived' -> instructions); claims get meta rows appended by CALLER code (translator.py:173/runner.py:121/demo.py:398) — atom.intent/domain are separate fields. || t2 FAILED: deepseek-flash thinking-mode (reasoning ate max_tokens=2000 -> empty content x28, rule-fallback). Probe-verified; fix commit 7a721d0 (thinking disabled for flash). || t3 (valid v1 run): 52 calls, 135.3s, $0.0189, failures=0. Markers 1.00/1.00; is_fragment 1.00; Entities F1 0.75 (P .63/R .90; caesar 1.00, plato 1.00, homer .77, inscription .33); MAE 0.09; detective 0.75 (plato 1.00, sappho 0.60 — 2 segs avg-conf gate <0.85), expert/logician 1.00. STOP-FLAGS: grammar-flavored kept 48/84 (57%; anchored syntax observations, instructions skip=3) -> Rule-3 interpretation decision; role-consistency violations 3/28 (10.7%) > 5% -> Rule-5 instability.",
-        "2.7.4_detective_greek": "pending (preview: exact-quote OK in smoke)",
-        "2.7.5_calibration": "DATA-ONLY + DEFER (2026-10-14): 8 verify-atoms distribution from t3-raw; cases A=[6,7] (sappho short fragments avg .60/.65), B=[], C=[], D=[]; no min<0.75-at-avg>=0.85 cases; decision deferred to Phase 4 (N=8 too small, cluster=2 known hard-case); triggers: gold verdict-texts >=20 OR cluster A >20% OR avg-vs-correctness signal. gold/confidence_analysis.md.",
-        "2.7.6_focus": "DONE (2026-10-14, real): caesar historian 0.85/5 (Commentarii attribution!), philosopher 0.50-0.52/5; sappho historian 0.85/6 (Pseudo-Longinus preservation, Sapphic stanza), philosopher 0.60/5 (makarismos, symptom catalogue), esoteric 0.30/3 (historical symbolism only, no numerology/conspiracy — guardrails held on real). all_disagree: not triggered (roles diverged by topic). Focus cost: 2-3 roles parallel ≈ +5-7s wall. Q5 verdict: historian/philosopher anchor on source_text+entities (not chain) — grammar-heavy chain did NOT harm → Rule-3 iteration trigger NOT fired → v1 GREEN. | CLOSED (curator accepted)",
-        "2.7.7_cost": "done (naming: tracking in 2.7.3b commit 9b78e66; cost block + peak + cache-hit)",
-        "2.7.8_closure": "DONE: phase2 complete; AGENTS 'Phase 2 closure' (baseline, design principle, known gaps, backlog); gold/metrics.md marked Phase-2-final; phase3.recommended_first=3.2; commit docs: close phase 2."
-      },
-      "findings_2_7_1": [
-        {
-          "id": "entity_extraction_contract_underspecified",
-          "severity": "high",
-          "impact": "entities F1 real likely << mock (0.06)",
-          "root_cause_hypothesis": "prompt doesn't define 'entity'; gold uses 'named referents only'",
-          "action": "quantify in 2.7.3, then decide contract, then fix prompt",
-          "not_a_bug": "may be schema ambiguity, not extractor defect"
-        }
-      ],
-      "findings_2_7_2": [
-        {
-          "id": "reconstruction_reason_taxonomy_conflates_decline_and_garbage",
-          "severity": "medium",
-          "impact": "llm_returned_none maps both 'LLM honestly declined (status no_reconstruction_possible)' and 'unparseable/empty hypotheses'",
-          "root_cause_hypothesis": "engine checks only parsed hypotheses list; ignores result['status']",
-          "action": "post-2.7.3: distinguish reason='llm_declined' when status declares refusal",
-          "not_a_bug": "terminal outcome identical; observability/докладность only",
-          "curator_note": "fix low-hanging; commit together with CVI fix (semantic accuracy theme)",
-          "status": "fixed in 3b3b731"
-        },
-        {
-          "id": "cvi_overclaims_on_fragment_texts",
-          "severity": "high",
-          "impact": "sappho: detective unverifiable (5/7), expert neutral 0.30, logician coherent 1.00 -> CVI=1.00, verdict=verified",
-          "root_cause_hypothesis": "CVI = mean confidence of POSITIVE verdicts only; single-positive case yields 1.00 without coverage penalty",
-          "action": "2.7.5 calibration material: consider positive-coverage factor for fragments",
-          "not_a_bug": "formula as documented; question is fitness on fragment texts",
-          "curator_note": "logical aggregator defect, not calibration; fix REQUIRED before 2.7.3; approved fix pending review",
-          "status": "fixed in 3b3b731"
-        }
-      ],
-      "fixes_2_7_2": {
-        "aggregator_rule": "variant (b) per curator flag: abstained iff positives < 2 and neutrals >= 1 (reason insufficient_positives; needs_review stays False; CVI kept visible). Tests: fragment_neutral rewritten + 4 new (incl. sappho regression, basic-mode).",
-        "llm_declined": "engine distinguishes honest refusal (status=no_reconstruction_possible) from llm_returned_none; test added",
-        "commits": [
-          "3b3b731",
-          "9b78e66"
-        ]
-      },
-      "token_tracking": "done (9b78e66): provider usage counters (calls/prompt/completion tokens), DeepSeekClient.usage, tariffs in LLMConfig (AEON_LLM_PRICE_IN/OUT_PER_M, defaults 0.27/1.10), runner stats + attach_raw_recorder (gold real_runs audit), report --dry-run/--raw-dir/cost-block. Dry-run: 52 calls (28 extract + 24 verify). Cost estimate: $0.03-0.25 (live measurement; stop >$2).",
-      "findings_2_7_3": [
-        {
-          "id": "detective_quote_not_verified",
-          "severity": "critical",
-          "impact": "detective accepts quote by NON-EMPTINESS only (detective.py:119); substring-in-source NOT checked — all past 'grounded' verdicts unvalidated by code",
-          "root_cause_hypothesis": "v3.0-era check: (quote or not require_quote)",
-          "action": "contracts/detective_v1.md: NFC quote-in-source + min length 3 + log detective_quote_not_in_source + not grounded. Commit 3.",
-          "curator_escalation": "CRITICAL (upgrade from hidden defect)"
-        },
-        {
-          "id": "extractor_prompt_v3_legacy",
-          "severity": "high",
-          "impact": "extractor prompt is v3.0-era (semantic-translation target: domain business/technology, entity concept/property/abstract, chain='HOW you arrived'); never revised since F0; explains ALL 2.7.3 symptoms (word-salad, instructions-in-chain, language leak)",
-          "root_cause_hypothesis": "reused without re-scoping for ancient-text NER/claims",
-          "action": "contracts/extractor_v1.md is NEW SPEC (not revision); commit 2 rewrites prompt + few-shot",
-          "curator_comment": "technical debt surfaced by reality; fix systematically"
-        },
-        {
-          "id": "llm_prompt_contract_underspecified_meta",
-          "severity": "high",
-          "impact": "ONE CLASS of defects: 2.7.1 entity contract, 2.7.2 CVI rule, 2.7.3 claims composition — all 'LLM outputs without formal contract'; mock masked via implicit-knowledge canned answers",
-          "root_cause_hypothesis": "prompts never define strict output contracts; real LLM fills gaps unpredictably",
-          "action": "contract audit for ALL LLM steps; current block (extractor+detective) fix now (contracts drafted, pending approval); linguistics/focus — after 2.7 as separate step 'contract: audit LLM step outputs'",
-          "not_a_bug": "meta-pattern, the finding of 2.7.3"
-        },
-        {
-          "id": "detective_claim_composition_meta_rows",
-          "severity": "high",
-          "impact": "detective accuracy 0.00 on gold verdict texts; exact-quote fine, claims not verifiable as composed",
-          "root_cause_hypothesis": "explanation_chain (real) = grammar instructions; runner/translator append Intent:/Domain: meta-claims which LLM returns with empty quotes; grounded requires ALL rows quoted; even 7/7 case fails avg-conf 0.85",
-          "action": "curator decision: claims contract (semantic-only claims? exclude meta rows from detective? per-row threshold?) + revisit gold expected_verdicts (annotator optimism pre-data)",
-          "not_a_bug": "components work as coded; the CONTRACT is underspecified (same pattern as entity contract)",
-          "curator_comment": "root cause deeper: extractor_prompt_v3_legacy; fix order 1-6 approved; contract v1 replaces behavior"
-        },
-        {
-          "id": "entity_extraction_word_salad_and_cross_language_leak",
-          "severity": "high",
-          "impact": "entities P=0.14: pronouns/common words AND English translations (truth/king/sitting) as entities",
-          "root_cause_hypothesis": "no entity-type contract in extract prompt; model compensates by transcribing everything/translating",
-          "action": "quantified; contract fix candidate after curator decision"
-        },
-        {
-          "id": "entity_match_accent_sensitive",
-          "severity": "medium",
-          "impact": "gravis/acute variants (Διός vs Διὸς) count as misses — metric artifact understates extraction",
-          "root_cause_hypothesis": "casefold doesn't remove diacritics; gold/canonical forms differ by accent variant",
-          "action": "metric fix candidate: NFC + accent-stripping for text-match (keep QID-exact priority)"
-        },
-        {
-          "id": "completeness_always_1.0_real",
-          "severity": "medium",
-          "impact": "MAE 0.00 but field appears constant — no discriminative signal",
-          "root_cause_hypothesis": "extractor fills completeness optimistically; field not calibrated on real",
-          "action": "2.7.5 calibration material"
-        },
-        {
-          "id": "gold_verdict_expectations_optimistic",
-          "severity": "medium",
-          "impact": "gold marks all Plato/Sappho segments detective=grounded; real lawful behavior is unverifiable for grammar-style claims",
-          "root_cause_hypothesis": "annotator wrote expectations pre-real-data",
-          "action": "revisit expected_verdicts jointly with claims-contract decision (annotations_version bump if changed)"
-        }
-      ],
-      "deepseek_api_check_2_7_3": "VERIFIED 2026-10-14: /models live -> [deepseek-flash, deepseek-v4-pro]; deepseek-chat NOT listed (legacy alias, served in our 2.7.3 run); deepseek-reasoner absent from /models. Official pricing page (HTML parity): flash off-peak $0.15 in / $0.60 out, peak $0.30/$1.20, cache-hit $0.003/M; v4-pro $0.66/$1.98 off-peak, $1.32/$3.96 peak. Commit-5 UNBLOCKED.",
-      "fix_order_2_7_3": [
-        "1. commit: contracts docs (+ final review by curator)",
-        "2. commit: fix extractor prompt (contract v1: semantic claims, domain dict, language enforcement, 2-3 few-shot)",
-        "3. commit: fix detective (defensive-skip regex, quote-in-source NFC>=3, ratio threshold 0.7 config, build_claims helper, remove meta-glue in translator/runner/demo)",
-        "4. commit: fix metrics accent-insensitive (NFKD strip combining for entity name compare only)",
-        "5. commit: config DeepSeek V4 (model=deepseek-flash VERIFIED via /models; tariffs 0.15/0.60 off-peak + peak-hour flag llm_peak_hour 01-04/06-10 UTC; prompt_cache_hit_tokens graceful .get(...,0) + test_usage_handles_missing_cache_field) — BEFORE re-run for cost comparability",
-        "6. re-run gold-real on SAME gold; diff analysis",
-        "7. only then: gold verdicts review decision (with source diff, if justified)",
-        "7. DECISION PENDING (curator): Rule-3 interpretation (grammar-flavor) + Rule-5 iteration"
-      ],
-      "q3_confidence_task": "Do NOT lower min_confidence 0.85. Data task: distribution of grounded-claim confidences over 2.7.3 raw (avg/min/max/histogram); check ratio=1.0 & avg<0.85 cases (sappho seg3 0.83); min-based aggregator — only on data, separate decision.",
-      "contracts_notes_added": "Note1: n==0 -> neutral reason=no_semantic_claims + event detective_no_semantic_claims (medium) + test; Note2: extractor_v1 known-limitation (literary significance != entity status; mu_nin via linguistic layers); Note3: skip-regex (\\s|:) edge + test_defensive_skip_bare_instruction_word; Note4: cache-hit graceful -> commit 5 requirements.",
-      "commit_2b": "DONE: SemanticAtom.chain_language='en'/anchor_language=None/extractor_contract='v1'; writer metadata; reader _normalize_contract_metadata defaults v3.0-legacy + event v2_legacy_contract_defaulted; migration v1 metadata marked legacy; validator soft typechecks; schema aeon_v2.json props; translator/demo set anchor_language=pack.iso_code; tests +5 (29 in test_format_v2). Evidence: NEW plato v2 metadata {en, grc, v1}; OLD sappho_real.aeon.json loads -> {en, None, v3.0-legacy}.",
-      "findings_2_7_3b": [
-        {
-          "id": "deepseek_flash_thinking_mode_empty_content",
-          "severity": "high",
-          "status": "fixed 7a721d0",
-          "impact": "all 28 extract calls empty (t2), silent rule-fallback",
-          "root_cause": "flash = reasoning model by default; reasoning tokens count into max_tokens; http finish=length",
-          "fix": "extra_body thinking={type:disabled} for deepseek-flash (probe B: finish=stop, reasoning=0)"
-        },
-        {
-          "id": "grammar_flavored_chain_v1",
-          "severity": "medium",
-          "status": "open (decision pending)",
-          "impact": "57% of kept chain items = anchored morpho-syntax observations, not content claims",
-          "action": "decide: accept anchored syntax as compliant Rule 3 OR iterate prompt/few-shot for content-focus"
-        },
-        {
-          "id": "role_consistency_unstable_v1",
-          "severity": "medium",
-          "status": "open",
-          "impact": "3/28 structures violate Rule 5 (entity role not reflected in semantic_roles)",
-          "action": "prompt iteration candidate (few-shot emphasis) or post-hoc repair; keep warning-level"
-        },
-        {
-          "id": "chain_grammar_heavy_sappho",
-          "severity": "MEDIUM",
-          "status": "accepted, not-blocking",
-          "impact": "sappho 14/15 kept = grammar (93%); others: caesar 22%, plato 30%, papyrus 45%, homer 59%, inscription 65%",
-          "curator_verdict": "anchored morpho-syntax = compliant (not instructions/translations); Rule 3 literal ok",
-          "rationale": "focus roles don't consume chain; detective works via anchors",
-          "risk": "future content-focused consumers may be affected",
-          "trigger_for_revisit": "new chain consumer OR gold adds grammar-sensitive text"
-        },
-        {
-          "id": "rule3_priority_unspecified",
-          "severity": "low",
-          "status": "backlog",
-          "impact": "Rule 3 does not specify content-vs-structure priority",
-          "action": "contract v1.2 - content-first priority (after 2.7.6 focus data)"
-        },
-        {
-          "id": "role_consistency_violations_v1",
-          "severity": "medium",
-          "status": "accepted as known limitation; threshold updated (15% legacy / 10% new)",
-          "impact": "3/28 (10.7%) role-attribution errors (not hallucinations): homer Achilles genitive-as-patient, Achaeans goal-missing; plato vocative-as-patient",
-          "action": "backlog: contract v1.2 - Rule 5 emphasis + post-hoc repair"
-        },
-        {
-          "id": "deepseek_v4_thinking_default",
-          "severity": "high",
-          "status": "documented + fixed (7a721d0)",
-          "note": "AGENTS.md 'DeepSeek V4 quirks': flash thinking default, thinking-disabled extra_body, length-signature, t2-raw as failure document"
-        },
-        {
-          "id": "papyrus_sappho_fp_probe_t3",
-          "severity": "info",
-          "status": "resolved",
-          "impact": "t3 FP = 1+1 borderline (basileus generic-office, theoisin generic-deity-plural); otherwise entities=[] — NOT word-salad",
-          "action": "contract v1.2 edge-case candidates; gold revision NOT needed"
-        },
-        {
-          "id": "rerun_t3_breakthrough",
-          "severity": "info",
-          "status": "accepted",
-          "note": "contract-first refactor: entities 0.24->0.82 (fold), detective 0.00->0.75, expert/logician ->1.00; worked example recorded in gold/metrics.md"
-        }
-      ]
+   ],
+   "findings_2_7_2": [
+    {
+     "id": "reconstruction_reason_taxonomy_conflates_decline_and_garbage",
+     "severity": "medium",
+     "impact": "llm_returned_none maps both 'LLM honestly declined (status no_reconstruction_possible)' and 'unparseable/empty hypotheses'",
+     "root_cause_hypothesis": "engine checks only parsed hypotheses list; ignores result['status']",
+     "action": "post-2.7.3: distinguish reason='llm_declined' when status declares refusal",
+     "not_a_bug": "terminal outcome identical; observability/докладность only",
+     "curator_note": "fix low-hanging; commit together with CVI fix (semantic accuracy theme)",
+     "status": "fixed in 3b3b731"
     },
-    "known_gaps": [
-      "LLM quality not validated on real API (mock used throughout)",
-      "Sappho fr. 31 reconstruction — requires real-API verification",
-      "Contradiction detector tested on synthetic cases only",
-      "Pleiades README links correctness — unverifiable from this network (site blocked)"
-    ],
-    "checklist_2_7": [
-      "smoke: demo plato --verify=full --language=grc (time/cost/no exceptions)",
-      "Sappho re-verify --reconstruct: гипотезы реального DeepSeek vs Voigt vs mock",
-      "Detective on Greek: exact-quote на Unicode с диакритикой не деградирует",
-      "Contradiction detector: ручной противоречивый кейс на реальных ответах",
-      "Multi-focus cross-check: независимость на реальных ответах",
-      "Cost tracking: $/атом и $/полный демо-пайплайн",
-      "Замеры времени vs экстраполяция 0.8s; >30s/атом → параллелизация",
-      "Re-calibration порогов (0.75/0.85/0.60/0.50) — отдельный коммит calibrate"
-    ],
-    "focus_roles_available": [
-      "historian",
-      "philosopher",
-      "linguist",
-      "esoteric"
-    ],
-    "language_packs_registered": [
-      "grc",
-      "la"
-    ],
-    "offline_sources": {
-      "pleiades": {
-        "adapter": "ready",
-        "status": "awaiting_user_dump"
-      },
-      "trismegistos": {
-        "status": "stub_no_public_dataset"
-      }
-    },
-    "phase3_draft": [
-      "3.1 .aeon v2 (traces/versioning/schema)",
-      "3.2 morphology hooks (Ithaca/Aeneas/LatinBERT, after gold-standard)",
-      "3.3 gold-standard corpus (mock-vs-real validation)",
-      "3.4 multi-document analysis",
-      "3.5 variant readings mode (Sappho)",
-      "3.6 web UI/API (after 2.7)",
-      "3.7 export formats (BibTeX/TEI-XML/Markdown)",
-      "3.8 real-API calibration automation"
-    ],
-    "phase3_recommended_first": [
-      "3.1 .aeon v2",
-      "3.3 gold-standard corpus",
-      "3.5 variant readings mode"
-    ]
-  },
-  "phase3": {
-    "status": "step_3_3_done_accepted",
-    "step_3_5_clarifications": "Уточнения куратора закрыты: (1) demo conf=0.71 — canned (DEMO_RESPONSES), illustrative — задокументировано в AGENTS.md; (2) пустой loci — loader отклоняет (test_empty_loci_rejected_by_loader), engine на программном пустом apparatus → selections=[] без LLM (test_engine_empty_loci_returns_empty_selection); (3) неоднозначный stem → ConfigError by design — задокументировано. Tests: 29.",
-    "step_3_3_preflight": "gold/ (README/annotation_schema.json/texts/annotations/metrics.md); аннотация вручную (не pipeline — анти-циркулярность); стоп-точка №1: пример Plato 17a seg1 показан до массовой разметки; метрики stdlib (statistics), без pandas/HF; двухуровневые тесты (reports + baseline); маркеры pytest gold_mock/gold_real.",
-    "step_3_1": "done (aeon/format writer/reader/validator/versioning; D1 frozen v1 fixture (e8cf5ca); D2 meaning_hash только в legacy; D3 snapshot при создании атома; D4 +4 теста; mock-guard + force_unsafe аудит-лог; --save-aeon/--load-aeon в demo). Facts: format tests = 24 (tests/test_format_v2.py; suite 317), v2 size: plato_full(--layers=all --focus=all) = 17.3KB, plato(focus=historian) = 15.7KB (<50KB, limit 200KB with margin; structured-only confirmed). NameError-fix (chain_result/focus_run) в 50ea764 + регрессионный test_demo_save_aeon_without_optional_steps.",
-    "step_3_5": "done (aeon/variants apparatus/prompts/selector/engine + schemas/apparatus_v1.json + examples/apparatus/sappho_fr31.json; tests/test_variants.py = 27, suite 344; coverage aeon.variants 91-100%, TOTAL 93%). Решения: rule3 измеримо (fewer editorial marks, fallback -1); work-guard = все значимые токены apparatus.work ⊆ variant_work (default: stem файла в demo) → ConfigError; unanimous_after_veto → support=издания выбранного, vetoed dict; пустой context → no_context; editions скрыты от LLM; порог 0.5 (AEON_VARIANTS_MIN_CONFIDENCE); порядок reconstruct(1.6)→variant(1.9) подтверждён тестом порядка LLM-вызовов. Demo e2e: variant-only / reconstruct+variant+save/load (steps=[extract,reconstruction,variant_readings], traces=[reconstruction,variant_readings]) / work-mismatch не падает. Фикс бага: work_tokens regex включал '_' → plato_apologia_17a не разбивался; теперь [^\\W_]+.",
-    "order": [
-      "3.1 aeon_v2",
-      "3.5 variant readings",
-      "3.3 gold-standard",
-      "3.2 morphology (after gold+2.7)",
-      "3.6 web (after 2.7)",
-      "3.4/3.7/3.8 backlog"
-    ],
-    "schema_draft": "schemas/aeon_v2.json — awaiting curator verification BEFORE 3.1 implementation",
-    "design_doc": "docs/phase3_design.md",
-    "key_available": true,
-    "defer_2_7": true,
-    "preflight_3_5": {
-      "source_of_readings": "b — LLM только выбирает между внешне заданными attested readings; генерация запрещена",
-      "apparatus_format": "sidecar-JSON {work, editions[], loci[] with readings+editions}; CLI --variant-readings PATH",
-      "vs_2_3": "отдельный движок aeon/variants/ (mode=select); общий engine не делаем",
-      "attribution": "обязателен: каждое чтение цитирует издание(я); без издания — отклонение",
-      "flags": "--variant-readings независим от --reconstruct; оба могут сосуществовать; <0.5 → no_selection_possible"
-    },
-    "preflight_3_3": {
-      "annotation_source": "c hybrid; старт — ручная аннотация 5 отрывков (treebanks опционально при доступе)",
-      "granularity": "marker+atom-level все 5; finding/insight-level 1-2 отрывка",
-      "metrics": "markers P/R/F1 per kind; entities F1; is_fragment accuracy; findings accuracy; focus human binary check (backlog)",
-      "license": "CC0 (source texts PD)",
-      "format": "JSONL expectations + README в gold/",
-      "mock_vs_real": "pytest markers gold_mock (CI baseline) / gold_real (нужен ключ)"
-    },
-    "step_3_3": "done (pending curator acceptance). gold/: schema v1.0.0 (+schema_version/offsets-anchor/entity-role), annotators.json (human:curator), texts/ (6 чистых, Plato = grc-транскрипция), annotations/ 28 записей/6 текстов (13 markers, 21 entities), fixtures/mock_responses.json (анти-циркулярные canned), metrics.md. aeon/gold/: loader (схема+integrity+non-overlap), metrics (stdlib P/R/F1 per kind, entities QID|casefold, MAE, verdicts), runner (mock/real, verdicts для Plato+Sappho), report CLI. pytest.ini: маркеры gold_mock (в дефолте) / gold_real (исключён). Suite: 367 passed, 2 xfailed (baseline entities/completeness — стоп №3), gold_mock 2 passed/2 xfailed. Coverage aeon.gold: metrics 100%, runner 91%, loader 89%, TOTAL 92%. Mock-факт: markers 1.00/1.00, is_fragment 1.00; entities 0.06, MAE 0.40 (canned-сигналы). RU-аудит закрыт: 2 файла (оба Plato), вариант (c)+legacy+regression test_examples_corpus.py (grc>=50/lat).",
-    "ru_audit": "closed: only 2 files affected (examples/greek/plato_apologia_17a.txt + examples/plato_sample.txt, both RU-only); 4 remaining greek files genuine (grc 87-237); test_grc_pack 2.1 used inline Greek — pack validation unaffected. Fix: genuine grc transcription + git mv to examples/greek/legacy/ + tests/test_examples_corpus.py.",
-    "current_priority": "2.7 (real API validation; 3.2 blocked until 2.7 done)",
-    "recommended_first": "3.2 morphology (unblocked after 2.7 done)",
-    "closure_note": "2.7 real-API validation complete: entities F1 0.24->0.82, detective 0.00->0.75, expert/logician 1.00; contract-first refactor worked example; remaining deferred items -> backlog (contract v1.2, 0.85 calibration -> Phase 4).",
-    "plan_fn": {
-      "order": [
-        "0. gold expansion (+morphology annotations)",
-        "1. 3.2 morphology (LLM-based, scoped)",
-        "2. 3.9 embeddings provider (parallel, scoped, default unchanged)",
-        "3. 3.4/3.6 after 3.2",
-        "4. contract v1.2 DEFERRED (trigger-only)"
-      ],
-      "contract_v1_2": "DEFERRED (curator): no failing case; hygiene creep risk; re-run/revert cost. Triggers: new failing pattern from gold expansion OR new chain consumer OR violations >15%.",
-      "gold_expansion_spec": {
-        "texts_draft": [
-          "grc lyric: Pindar Ol. 1.1-7 (~3 seg) — new register",
-          "grc tragedy: Sophocles Aj. 1-6 (~3 seg) — trimeter",
-          "grc lyric hard-case: Sappho fr. 16.1-4 (+5 seg; for min-vs-avg data)",
-          "la oratory: Cicero Catil. 1.1 (~4 seg) — diversity",
-          "la epic: Vergil Aen. 1.1-7 (~3 seg) — diversity"
-        ],
-        "expected_size": "~18 atoms (N 28 -> ~46)",
-        "morphology_annotations": "NEW optional field expected_morphology [{form, lemma, case, number, gender}] for selected atoms (Homer genitives, Sappho forms) — measurement foundation for 3.2 (schema bump annotations 1.1.0)",
-        "method": "same as 3.3: drafts by assistant, curator countersign, separate JSONL per text",
-        "texts_final": [
-          "grc lyric risk-flagged: Pindar Ol. 1.1-7 (~3 seg; annotation_confidence per atom; fallback Theocritus Id. 1.1-5 if mass low)",
-          "grc tragedy: Sophocles Aj. 1-10 (~5 seg)",
-          "grc lyric hard-case: Sappho fr. 16.1-4 (+5 seg)",
-          "la oratory: Cicero Catil. 1.1 (~4 seg)",
-          "la epic: Vergil Aen. 1.1-7 (~3 seg)",
-          "la epigraphy: RGDA 1 (~2 seg; authentic PD inscription register, NOT CIL copy)"
-        ],
-        "size": "~20 atoms (N 28 -> ~48)",
-        "schema_1_1_0_additions": [
-          "annotation_confidence: high|medium|low (optional; low >=50% per text -> text replaced; else low atoms excluded from metrics)",
-          "expected_morphology completed (verb-aware): [{form, lemma, pos, tense, mood, voice, person, case, number, gender}]",
-          "non-verbs: tense/mood/voice/person = null; participles: mood=participle + tense/voice + case/gender/number, person=null"
-        ],
-        "retroactive_phase_a": "ACCEPTED: +expected_morphology to 7 existing atoms (homer seg1-2, sappho seg1-2, plato seg1, inscription seg1-2); annotations_version -> 1.1.0 (additive only, no field modified)",
-        "n48_limitation": "N~48 sufficient for baseline, NOT for statistical claims; README known-limitation; Phase-4 trigger: expand N>=100",
-        "loader_requirements": [
-          "accept 1.0.0 and 1.1.0 mixed",
-          "low-confidence atoms excluded from metrics",
-          "morphology metric denominator = subset with field (N/A otherwise)",
-          "morphology metrics split by confidence: high/medium/all + test_morphology_f1_splits_by_confidence"
-        ],
-        "morph_rules": {
-          "lemma_policy": "(b) Attic-standard grc / Classical-standard la; form = source-dialect verbatim (treebank convention)",
-          "elision": "form as in source (δ', κατ'); lemma expanded (δέ, κατά); segment-initial elision keeps apostrophe in form",
-          "selection": "(a) full coverage: all nouns/adjectives/pronouns/verbs/participles annotated; particles/adverbs/prepositions/conjunctions NOT annotated",
-          "possessor_convention": "genitive-of-possession entities: role=subject-by-convention + note in annotator_notes (homer Achilles)",
-          "pindar_criterion": "formal: >=50% atoms annotation_confidence=low -> replace with Theocritus Id. 1.1-5"
-        },
-        "qid_backfill": "DONE 2026-10-14: Troy Q22647, Olympia Q38888, Juno Q125046, Ajax Q172725 (via Aias), Palatium Q200642; curator candidates all 5 wrong -> never-from-memory principle in AGENTS",
-        "sappho_clarification": "resolved: lines 1-4 print w/o supplements in standard editions; markers=[] correct; note fixed"
-      },
-      "step_3_2_scope": "LLM-based morphological prompt first (option b): new contract (morph_v1: form->lemma/case/number/gender, source-language, null при неуверенности), measured on expanded gold; deterministic dictionaries (a) later as enrichment; neural models (c) Phase 4",
-      "step_3_9_scope": "parallel-scoped: pluggable embeddings provider interface + config (AEON_EMBEDDINGS_PROVIDER); default remains MiniLM; Google provider behind flag, no CI network; measure on expanded gold later",
-      "phase4_triggers_add": "confidence: test length-confidence correlation on N>=30 (hypothesis from 2.7.5 cases A)",
-      "infra_1_1_0": "DONE: loader mixed+low-exclusion(+log gold_atom_excluded_low_confidence)+morph validation; metrics: per-field morphology F1, high/medium/all splits, null->out of denominator, missed-form=miss, lemma NFC-exact (grc)/NFC+casefold (la); runner morph_v1 hook (morph_engine param); report morphology section; 8 tests (33 in test_gold, 410 total). Demo: denominators pos/lemma=220 (165 high/55 medium), case=183, mood/tense/voice=45, person=30, gender=169; predictions absent -> 0.00."
-    },
-    "step_3_2": "DONE: morph_v1 (aeon/morphology; enum-synced contract; Il.2.1-2 few-shot; engine completeness verify + output-budget scaling + finish_reason retry x2) + gold 1.1.1 (Class A source-verified: cicero nom x4, homer eta, personal pronouns person x8) + baseline morph_t4: pos .98/lemma .92/tense .96/mood .98/voice .93/person .90/case .99/number .99/gender .98 (28 atoms/224 forms, \\.0214). Re-extract t4 on gold 1.1.1 (49 atoms): entities .78 (P.65/R.97), detective .88 (sappho .80), cache-hit 50K tokens. Design principles #1-#4 in AGENTS. Suite 420.",
-    "findings_3_2": [
-      "Class A (gold-defects found by model; patched 1.1.1): closed",
-      "Class B (derivational/Doric lemma conventions): backlog v1.1, trigger = Doric expansion",
-      "Class C (accepted noise): ageide tense, oulomenen, abutere; trigger >=3 forms",
-      "person pronoun-fill gap: v1.1 candidate, trigger = pronoun coverage expansion",
-      "entities name=null entries (rgda): contract edge -> drop-on-null candidate v1.1"
-    ],
-    "next_options": [
-      "3.9 embeddings provider (deferred per curator until failing case)",
-      "contract v1.1 (trigger-gated)",
-      "3.4 cross-references / 3.6 web (after)"
-    ],
-    "midpoint_checkpoint": "DONE 2026-10-14: docs/phase3_checkpoint.md (done-items+commits; baselines summary; design principles #1-#6; backlog with triggers; remainder decisions). Next: 3.4 scoping in Plan Mode.",
-    "maintenance_cycle": "CLOSED: audit 15 LLM-sites (0 outliers, unified provider); linguistics truncation fix (2ed1081); default budget 4000; 9 except:pass eliminated + AST guard with frozen baseline (cafa314, 05e4e12); legacy facade DeprecationWarnings + CHANGELOG (fb1cb8f).",
-    "backlog_triggers": {
-      "contract_v1_1": "case-based (pronoun/Doric coverage expansion or >=3 forms of a class)",
-      "embeddings_3_9": "failing case / measurement need (deferred)",
-      "json_repair_strategy_loop": "new repair edge-case OR logging-criticality (named debt)",
-      "legacy_facade_removal": "after next major (warnings added now)",
-      "call_structured": "Phase 4 (dynamic budget + has_more chunking)",
-      "threshold_085": "Phase 4 (data collected, defer)"
-    },
-    "remainder": {
-      "3_4_cross_references": "ACTIVE next - Plan Mode scoping required (new gold type)",
-      "3_6_web": "defer until 3.4 plan",
-      "3_7_export": "candidate after 3.4",
-      "3_8_calibration": "Phase 4"
-    },
-    "step_3_4": {
-      "status": "plan_rev2_approved; build_3.4.0_green-lit; samples_pending_countersign",
-      "decisions": "direction=chronological(source=earlier); echo=lemmasORmatched_formula(hybrid); translation->adaptation with explicit note; matched_lemmas matrix per-kind; confidence=existence",
-      "findings": [
-        {
-          "id": "direct_citation_gold_gap",
-          "severity": "MEDIUM",
-          "status": "acknowledged",
-          "impact": "F1_direct=N/A; prompt-only kind not pipeline-validated",
-          "trigger": "new corpus with scholiast/commentator OR external request"
-        }
-      ],
-      "coverage_gaps": [
-        "direct_citation x0 (prompt-only)",
-        "offset deferred",
-        "kind-confidence backlog",
-        "multi-hop backlog"
-      ],
-      "fallback": "if sample-countersign <3 verifiable -> defer 3.4 -> 3.7 (pre-committed)"
+    {
+     "id": "cvi_overclaims_on_fragment_texts",
+     "severity": "high",
+     "impact": "sappho: detective unverifiable (5/7), expert neutral 0.30, logician coherent 1.00 -> CVI=1.00, verdict=verified",
+     "root_cause_hypothesis": "CVI = mean confidence of POSITIVE verdicts only; single-positive case yields 1.00 without coverage penalty",
+     "action": "2.7.5 calibration material: consider positive-coverage factor for fragments",
+     "not_a_bug": "formula as documented; question is fitness on fragment texts",
+     "curator_note": "logical aggregator defect, not calibration; fix REQUIRED before 2.7.3; approved fix pending review",
+     "status": "fixed in 3b3b731"
     }
-  },
-  "completed_at": null,
-  "user_preferences": {
-    "embeddings": "pluggable; MiniLM/LaBSE defaults",
-    "llm_keys": "DEEPSEEK_API_KEY PRESENT in .env (added ~2026-10-14); 2.7 deferred until after 3.3 per policy (key_available=true, defer_2_7=true); gold_real runnable (excluded by default)",
-    "ancient_packs": "grc + la DONE",
-    "reference_texts": "examples/greek (5) + examples/latin (5)",
-    "fragment_hypotheses": "grounded-only, threshold 0.75",
-    "multi_focus": "opt-in; all=3 roles; all,esoteric documented alternative",
-    "linguistic_layers": "opt-in, strict deps, halt 0.3",
-    "offline_dumps": "user provides converted JSONL dumps in data/<source>/ (READMEs in repo)",
-    "checkpoints": "curator verifies step reports with fixed format"
-  },
-  "known_deltas": [
-    "Phases 1, 2.0-2.5 complete (details in git/AGENTS.md).",
-    "2.5 refinements: demo mock line now 'illustrative, not calibrated'; --focus=all,esoteric FIXED (all previously overwrote the list; extras now appended; test added); all_disagree mechanism documented (pairs of INSIGHTS from different roles; claim tokens >3 chars; Jaccard>=0.5 and claims differ; example VIII vs VI век → True; semantic arbitration backlog).",
-    "Phase 2.6 (Offline Adapters): aeon/offline/ (base/pleiades/trismegistos stub/registry). JSONL dump format (line1 meta + record per line; streaming, stdlib only). Additions A-E: (A) atomic load transaction+rollback (test_load_rollback_on_malformed_batch); (B) indexes after load (test_indexes_present_after_load); (C) idempotency same->skip/new->replace+offline_dump_upgraded (2 tests); (D) .gitignore: data/ patterns with README exceptions (data/{pleiades,trismegistos}/README.md in repo); (E) provenance with license+license_file_sha256 from bundle, missing -> OfflineDumpError (test). Staleness: >AEON_OFFLINE_MAX_AGE_DAYS(90) -> offline_dump_stale (test). Chain: PleiadesClient.get_place offline-first via offline_adapter attr, source='offline_pleiades'; offline miss + allow_live_fallback=False -> reason 'offline_miss_no_fallback', 0 HTTP (tests). Metrics: offline namespace + offline_dump_age_days gauge. Trismegistos stub (no_public_dataset). Real Pleiades dump unreachable from this environment (host blocked) - adapter works against user-provided converted dump; license verification comes from bundle LICENSE (sha256), not from our memory.",
-    "Coverage: offline package >=88%, TOTAL 93%; runner incl. aeon.offline, aeon.variants.",
-    "Step 3.5 (Variant Readings) DONE: aeon/variants/ (apparatus/prompts/selector/engine), sidecar-JSON apparatus (semver, attribution обязателен), Detective mode 'reading' (context-agreement), selector экономит LLM (unanimous / no_context / veto / unanimous_after_veto), порог 0.5, work-guard ConfigError, translator+ demo интеграция (--variant-readings/--variant-work), v2 traces.variant_readings + pipeline steps, 27 tests, coverage per-module 91-100%.",
-    "RU-audit (3.3 stop-condition) CLOSED: examples/greek/plato_apologia_17a.txt was a RU summary used as grc input since Phase 1; scope = only 2 Plato files; genuine grc transcription replaced it (own transcription, PD), both RU files moved to examples/greek/legacy/ via git mv; regression tests/test_examples_corpus.py (greek files need >=50 greek codepoints; latin files >=50 latin, <=5 greek); LICENSE.md updated; historical defect noted: pre-3.3 Plato demo/v2-size measurements were on RU text (scientifically meaningless, superseded).",
-    "Step 3.3 (Gold-standard) IMPLEMENTED (pending acceptance): gold/ corpus (28 records/6 texts, 13 markers/21 entities) + aeon/gold harness (loader/metrics/runner/report, stdlib only) + pytest markers gold_mock/gold_real + metrics.md baseline. Q-IDs verified live (Achilles Q41746, Athenians Q120096553, Zeus Q34201, Sappho Q17892, Caesar Q1048, Gaul Q38060, Belgae Q337104, Aquitani Q1255605, Gauls Q273854, Achaeans Q3514911, Garonne Q5077, Seine Q1471); unverified -> null. DEEPSEEK_API_KEY detected (.env present) -> defer_2_7=true per policy; 2.7 becomes next priority after 3.3 acceptance.",
-    "3.3 ACCEPTED. Clarifications: mixed-marker [слова ...] decision (A)=supplement documented (B/C rejected: matching); offsets tooling committed (tools/annotate_offsets.py + test); gold/metrics.md mock-baseline = self-consistency not quality (explicit); test_mock_false_allowed_with_key added; demo real-path fixes (llm.calls guard, llm_model in v2 metadata). 2.7 in_progress per curator; sub-steps reported separately (2.7.1 smoke → stop).",
-    "commit_2b done: v2 contract metadata trio (chain/anchor/contract-era) + legacy default on read; build_claims (commit 3) will apply video-skip more aggressively for v3.0-legacy chain per curator.",
-    "Phase 3 midpoint checkpoint (2026-10-14): all baselines/principles/backlog consolidated; suite 428; next = 3.4 scoping Plan Mode."
-  ],
-  "backlog": [
-    "2.7 Real API verification when key available (Sappho reconstruction, layers/focus quality); budget options (a)/(b); parallelism tuning",
-    "Variant readings mode (Sappho) - DONE in step 3.5 (aeon/variants, 27 tests)",
-    "Offline: real Pleiades dump download/convert when user has network access; TS dataset if ever public; duckdb/pandas never (stdlib only)",
-    "Linguistics: contradiction resolution via LLM (variant C); focus disagreement semantic arbitration; la heuristic config",
-    "CI: network-marker non-blocking job",
-    "Phase 3: .aeon v2, CLI/web endpoints, README v4, morphology (Morpheus/CLTK), gold-standard corpus, search-layer sigma unification",
-    "gold mock fixtures (gold/fixtures/mock_responses.json) — align with extractor contract v1 (entities taxonomy/semantic claims) after 2.7 re-run",
-    "2.7.5 data tasks: sappho min-conf gate cases (avg .60/.65 grounded all-quoted), grammar-flavor prompt iteration, entities FP on fragment texts (papyrus/sappho)",
-    "contract v1.2: content-first priority (Rule 3), Rule 5 emphasis + post-hoc repair, edge-cases: generic office/deity REJECTED (named referent requires specific identity, not class membership; revisited if gold adds such cases)",
-    "Phase 3 candidates: 3.2 morphology (recommended first), 3.9 embeddings provider, 3.4 cross-references, 3.6 Web UI/API",
-    "contract v1.1 (extraction): drop entities with name=null; pronoun person few-shot; Doric/derivational lemma examples (all trigger-gated)"
-  ],
-  "config_wiring": {
-    "canonical_access": "CONFIG.verification.<agent> is canonical; flat CONFIG.<agent> is a convenience alias",
-    "wired_in": [
-      "llm",
-      "logging",
-      "entity_linking",
-      "crosswalk (+offline chain)",
-      "scoring weights",
-      "verification",
-      "language packs",
-      "fragments",
-      "linguistics",
-      "focus",
-      "offline (CONFIG.offline -> adapters; allow_live_fallback in chain)"
-    ],
-    "not_wired_yet": [
-      "similarity levels (optional, later)"
+   ],
+   "fixes_2_7_2": {
+    "aggregator_rule": "variant (b) per curator flag: abstained iff positives < 2 and neutrals >= 1 (reason insufficient_positives; needs_review stays False; CVI kept visible). Tests: fragment_neutral rewritten + 4 new (incl. sappho regression, basic-mode).",
+    "llm_declined": "engine distinguishes honest refusal (status=no_reconstruction_possible) from llm_returned_none; test added",
+    "commits": [
+     "3b3b731",
+     "9b78e66"
     ]
-  },
-  "legacy_config_used_by": [
-    "verification legacy projection (risk bands) + Aggregator review_threshold"
-  ],
-  "created_at": "2026-10-14T10:30:33+03:00",
-  "baseline_commit": "1c5a460",
-  "tooling": {
-    "secrets_scan": "astra-sentinel MCP; 14 key files; 0 findings",
-    "llm_layer": "aeon/llm/ + llm_client shim; JSON-repair stdlib only",
-    "wikidata_schema_check": "live script; zero drift",
-    "pleiades_trismegistos_check": "live scripts; outcomes in known_deltas",
-    "network_live_tests": "tests/test_network_live.py (marker network)",
-    "coverage_runner": "tools/run_coverage.py (incl. language, fragments, linguistics, focus; offline to add)"
+   },
+   "token_tracking": "done (9b78e66): provider usage counters (calls/prompt/completion tokens), DeepSeekClient.usage, tariffs in LLMConfig (AEON_LLM_PRICE_IN/OUT_PER_M, defaults 0.27/1.10), runner stats + attach_raw_recorder (gold real_runs audit), report --dry-run/--raw-dir/cost-block. Dry-run: 52 calls (28 extract + 24 verify). Cost estimate: $0.03-0.25 (live measurement; stop >$2).",
+   "findings_2_7_3": [
+    {
+     "id": "detective_quote_not_verified",
+     "severity": "critical",
+     "impact": "detective accepts quote by NON-EMPTINESS only (detective.py:119); substring-in-source NOT checked — all past 'grounded' verdicts unvalidated by code",
+     "root_cause_hypothesis": "v3.0-era check: (quote or not require_quote)",
+     "action": "contracts/detective_v1.md: NFC quote-in-source + min length 3 + log detective_quote_not_in_source + not grounded. Commit 3.",
+     "curator_escalation": "CRITICAL (upgrade from hidden defect)"
+    },
+    {
+     "id": "extractor_prompt_v3_legacy",
+     "severity": "high",
+     "impact": "extractor prompt is v3.0-era (semantic-translation target: domain business/technology, entity concept/property/abstract, chain='HOW you arrived'); never revised since F0; explains ALL 2.7.3 symptoms (word-salad, instructions-in-chain, language leak)",
+     "root_cause_hypothesis": "reused without re-scoping for ancient-text NER/claims",
+     "action": "contracts/extractor_v1.md is NEW SPEC (not revision); commit 2 rewrites prompt + few-shot",
+     "curator_comment": "technical debt surfaced by reality; fix systematically"
+    },
+    {
+     "id": "llm_prompt_contract_underspecified_meta",
+     "severity": "high",
+     "impact": "ONE CLASS of defects: 2.7.1 entity contract, 2.7.2 CVI rule, 2.7.3 claims composition — all 'LLM outputs without formal contract'; mock masked via implicit-knowledge canned answers",
+     "root_cause_hypothesis": "prompts never define strict output contracts; real LLM fills gaps unpredictably",
+     "action": "contract audit for ALL LLM steps; current block (extractor+detective) fix now (contracts drafted, pending approval); linguistics/focus — after 2.7 as separate step 'contract: audit LLM step outputs'",
+     "not_a_bug": "meta-pattern, the finding of 2.7.3"
+    },
+    {
+     "id": "detective_claim_composition_meta_rows",
+     "severity": "high",
+     "impact": "detective accuracy 0.00 on gold verdict texts; exact-quote fine, claims not verifiable as composed",
+     "root_cause_hypothesis": "explanation_chain (real) = grammar instructions; runner/translator append Intent:/Domain: meta-claims which LLM returns with empty quotes; grounded requires ALL rows quoted; even 7/7 case fails avg-conf 0.85",
+     "action": "curator decision: claims contract (semantic-only claims? exclude meta rows from detective? per-row threshold?) + revisit gold expected_verdicts (annotator optimism pre-data)",
+     "not_a_bug": "components work as coded; the CONTRACT is underspecified (same pattern as entity contract)",
+     "curator_comment": "root cause deeper: extractor_prompt_v3_legacy; fix order 1-6 approved; contract v1 replaces behavior"
+    },
+    {
+     "id": "entity_extraction_word_salad_and_cross_language_leak",
+     "severity": "high",
+     "impact": "entities P=0.14: pronouns/common words AND English translations (truth/king/sitting) as entities",
+     "root_cause_hypothesis": "no entity-type contract in extract prompt; model compensates by transcribing everything/translating",
+     "action": "quantified; contract fix candidate after curator decision"
+    },
+    {
+     "id": "entity_match_accent_sensitive",
+     "severity": "medium",
+     "impact": "gravis/acute variants (Διός vs Διὸς) count as misses — metric artifact understates extraction",
+     "root_cause_hypothesis": "casefold doesn't remove diacritics; gold/canonical forms differ by accent variant",
+     "action": "metric fix candidate: NFC + accent-stripping for text-match (keep QID-exact priority)"
+    },
+    {
+     "id": "completeness_always_1.0_real",
+     "severity": "medium",
+     "impact": "MAE 0.00 but field appears constant — no discriminative signal",
+     "root_cause_hypothesis": "extractor fills completeness optimistically; field not calibrated on real",
+     "action": "2.7.5 calibration material"
+    },
+    {
+     "id": "gold_verdict_expectations_optimistic",
+     "severity": "medium",
+     "impact": "gold marks all Plato/Sappho segments detective=grounded; real lawful behavior is unverifiable for grammar-style claims",
+     "root_cause_hypothesis": "annotator wrote expectations pre-real-data",
+     "action": "revisit expected_verdicts jointly with claims-contract decision (annotations_version bump if changed)"
+    }
+   ],
+   "deepseek_api_check_2_7_3": "VERIFIED 2026-10-14: /models live -> [deepseek-flash, deepseek-v4-pro]; deepseek-chat NOT listed (legacy alias, served in our 2.7.3 run); deepseek-reasoner absent from /models. Official pricing page (HTML parity): flash off-peak $0.15 in / $0.60 out, peak $0.30/$1.20, cache-hit $0.003/M; v4-pro $0.66/$1.98 off-peak, $1.32/$3.96 peak. Commit-5 UNBLOCKED.",
+   "fix_order_2_7_3": [
+    "1. commit: contracts docs (+ final review by curator)",
+    "2. commit: fix extractor prompt (contract v1: semantic claims, domain dict, language enforcement, 2-3 few-shot)",
+    "3. commit: fix detective (defensive-skip regex, quote-in-source NFC>=3, ratio threshold 0.7 config, build_claims helper, remove meta-glue in translator/runner/demo)",
+    "4. commit: fix metrics accent-insensitive (NFKD strip combining for entity name compare only)",
+    "5. commit: config DeepSeek V4 (model=deepseek-flash VERIFIED via /models; tariffs 0.15/0.60 off-peak + peak-hour flag llm_peak_hour 01-04/06-10 UTC; prompt_cache_hit_tokens graceful .get(...,0) + test_usage_handles_missing_cache_field) — BEFORE re-run for cost comparability",
+    "6. re-run gold-real on SAME gold; diff analysis",
+    "7. only then: gold verdicts review decision (with source diff, if justified)",
+    "7. DECISION PENDING (curator): Rule-3 interpretation (grammar-flavor) + Rule-5 iteration"
+   ],
+   "q3_confidence_task": "Do NOT lower min_confidence 0.85. Data task: distribution of grounded-claim confidences over 2.7.3 raw (avg/min/max/histogram); check ratio=1.0 & avg<0.85 cases (sappho seg3 0.83); min-based aggregator — only on data, separate decision.",
+   "contracts_notes_added": "Note1: n==0 -> neutral reason=no_semantic_claims + event detective_no_semantic_claims (medium) + test; Note2: extractor_v1 known-limitation (literary significance != entity status; mu_nin via linguistic layers); Note3: skip-regex (\\s|:) edge + test_defensive_skip_bare_instruction_word; Note4: cache-hit graceful -> commit 5 requirements.",
+   "commit_2b": "DONE: SemanticAtom.chain_language='en'/anchor_language=None/extractor_contract='v1'; writer metadata; reader _normalize_contract_metadata defaults v3.0-legacy + event v2_legacy_contract_defaulted; migration v1 metadata marked legacy; validator soft typechecks; schema aeon_v2.json props; translator/demo set anchor_language=pack.iso_code; tests +5 (29 in test_format_v2). Evidence: NEW plato v2 metadata {en, grc, v1}; OLD sappho_real.aeon.json loads -> {en, None, v3.0-legacy}.",
+   "findings_2_7_3b": [
+    {
+     "id": "deepseek_flash_thinking_mode_empty_content",
+     "severity": "high",
+     "status": "fixed 7a721d0",
+     "impact": "all 28 extract calls empty (t2), silent rule-fallback",
+     "root_cause": "flash = reasoning model by default; reasoning tokens count into max_tokens; http finish=length",
+     "fix": "extra_body thinking={type:disabled} for deepseek-flash (probe B: finish=stop, reasoning=0)"
+    },
+    {
+     "id": "grammar_flavored_chain_v1",
+     "severity": "medium",
+     "status": "open (decision pending)",
+     "impact": "57% of kept chain items = anchored morpho-syntax observations, not content claims",
+     "action": "decide: accept anchored syntax as compliant Rule 3 OR iterate prompt/few-shot for content-focus"
+    },
+    {
+     "id": "role_consistency_unstable_v1",
+     "severity": "medium",
+     "status": "open",
+     "impact": "3/28 structures violate Rule 5 (entity role not reflected in semantic_roles)",
+     "action": "prompt iteration candidate (few-shot emphasis) or post-hoc repair; keep warning-level"
+    },
+    {
+     "id": "chain_grammar_heavy_sappho",
+     "severity": "MEDIUM",
+     "status": "accepted, not-blocking",
+     "impact": "sappho 14/15 kept = grammar (93%); others: caesar 22%, plato 30%, papyrus 45%, homer 59%, inscription 65%",
+     "curator_verdict": "anchored morpho-syntax = compliant (not instructions/translations); Rule 3 literal ok",
+     "rationale": "focus roles don't consume chain; detective works via anchors",
+     "risk": "future content-focused consumers may be affected",
+     "trigger_for_revisit": "new chain consumer OR gold adds grammar-sensitive text"
+    },
+    {
+     "id": "rule3_priority_unspecified",
+     "severity": "low",
+     "status": "backlog",
+     "impact": "Rule 3 does not specify content-vs-structure priority",
+     "action": "contract v1.2 - content-first priority (after 2.7.6 focus data)"
+    },
+    {
+     "id": "role_consistency_violations_v1",
+     "severity": "medium",
+     "status": "accepted as known limitation; threshold updated (15% legacy / 10% new)",
+     "impact": "3/28 (10.7%) role-attribution errors (not hallucinations): homer Achilles genitive-as-patient, Achaeans goal-missing; plato vocative-as-patient",
+     "action": "backlog: contract v1.2 - Rule 5 emphasis + post-hoc repair"
+    },
+    {
+     "id": "deepseek_v4_thinking_default",
+     "severity": "high",
+     "status": "documented + fixed (7a721d0)",
+     "note": "AGENTS.md 'DeepSeek V4 quirks': flash thinking default, thinking-disabled extra_body, length-signature, t2-raw as failure document"
+    },
+    {
+     "id": "papyrus_sappho_fp_probe_t3",
+     "severity": "info",
+     "status": "resolved",
+     "impact": "t3 FP = 1+1 borderline (basileus generic-office, theoisin generic-deity-plural); otherwise entities=[] — NOT word-salad",
+     "action": "contract v1.2 edge-case candidates; gold revision NOT needed"
+    },
+    {
+     "id": "rerun_t3_breakthrough",
+     "severity": "info",
+     "status": "accepted",
+     "note": "contract-first refactor: entities 0.24->0.82 (fold), detective 0.00->0.75, expert/logician ->1.00; worked example recorded in gold/metrics.md"
+    }
+   ]
   },
   "known_gaps": [
-    "Pleiades README links (unverifiable from dev network)",
-    "Trismegistos datasets (no public API)",
-    "deepseek-chat legacy alias (deprecated; fallback works; audit when retired)",
-    "papyrus/sappho zero-gold F1 artifact (1+1 borderline FPs; documented)",
-    "role consistency 10.7% v1 (accepted; contract v1.2 backlog)",
-    "chain grammar-heavy (accepted, not-blocking; trigger-revisit)",
-    "mock fixtures alignment with extractor v1 (backlog)",
-    "anchor_language inference from pack for old v2 (backlog)",
-    "threshold 0.85 calibration min-vs-avg (deferred to Phase 4)",
-    "lone-positive aggregator overclaim (FIXED 2.7.2/commit 3b3b731)"
+   "LLM quality not validated on real API (mock used throughout)",
+   "Sappho fr. 31 reconstruction — requires real-API verification",
+   "Contradiction detector tested on synthetic cases only",
+   "Pleiades README links correctness — unverifiable from this network (site blocked)"
+  ],
+  "checklist_2_7": [
+   "smoke: demo plato --verify=full --language=grc (time/cost/no exceptions)",
+   "Sappho re-verify --reconstruct: гипотезы реального DeepSeek vs Voigt vs mock",
+   "Detective on Greek: exact-quote на Unicode с диакритикой не деградирует",
+   "Contradiction detector: ручной противоречивый кейс на реальных ответах",
+   "Multi-focus cross-check: независимость на реальных ответах",
+   "Cost tracking: $/атом и $/полный демо-пайплайн",
+   "Замеры времени vs экстраполяция 0.8s; >30s/атом → параллелизация",
+   "Re-calibration порогов (0.75/0.85/0.60/0.50) — отдельный коммит calibrate"
+  ],
+  "focus_roles_available": [
+   "historian",
+   "philosopher",
+   "linguist",
+   "esoteric"
+  ],
+  "language_packs_registered": [
+   "grc",
+   "la"
+  ],
+  "offline_sources": {
+   "pleiades": {
+    "adapter": "ready",
+    "status": "awaiting_user_dump"
+   },
+   "trismegistos": {
+    "status": "stub_no_public_dataset"
+   }
+  },
+  "phase3_draft": [
+   "3.1 .aeon v2 (traces/versioning/schema)",
+   "3.2 morphology hooks (Ithaca/Aeneas/LatinBERT, after gold-standard)",
+   "3.3 gold-standard corpus (mock-vs-real validation)",
+   "3.4 multi-document analysis",
+   "3.5 variant readings mode (Sappho)",
+   "3.6 web UI/API (after 2.7)",
+   "3.7 export formats (BibTeX/TEI-XML/Markdown)",
+   "3.8 real-API calibration automation"
+  ],
+  "phase3_recommended_first": [
+   "3.1 .aeon v2",
+   "3.3 gold-standard corpus",
+   "3.5 variant readings mode"
   ]
+ },
+ "phase3": {
+  "status": "step_3_4_pilot_final_accepted",
+  "step_3_5_clarifications": "Уточнения куратора закрыты: (1) demo conf=0.71 — canned (DEMO_RESPONSES), illustrative — задокументировано в AGENTS.md; (2) пустой loci — loader отклоняет (test_empty_loci_rejected_by_loader), engine на программном пустом apparatus → selections=[] без LLM (test_engine_empty_loci_returns_empty_selection); (3) неоднозначный stem → ConfigError by design — задокументировано. Tests: 29.",
+  "step_3_3_preflight": "gold/ (README/annotation_schema.json/texts/annotations/metrics.md); аннотация вручную (не pipeline — анти-циркулярность); стоп-точка №1: пример Plato 17a seg1 показан до массовой разметки; метрики stdlib (statistics), без pandas/HF; двухуровневые тесты (reports + baseline); маркеры pytest gold_mock/gold_real.",
+  "step_3_1": "done (aeon/format writer/reader/validator/versioning; D1 frozen v1 fixture (e8cf5ca); D2 meaning_hash только в legacy; D3 snapshot при создании атома; D4 +4 теста; mock-guard + force_unsafe аудит-лог; --save-aeon/--load-aeon в demo). Facts: format tests = 24 (tests/test_format_v2.py; suite 317), v2 size: plato_full(--layers=all --focus=all) = 17.3KB, plato(focus=historian) = 15.7KB (<50KB, limit 200KB with margin; structured-only confirmed). NameError-fix (chain_result/focus_run) в 50ea764 + регрессионный test_demo_save_aeon_without_optional_steps.",
+  "step_3_5": "done (aeon/variants apparatus/prompts/selector/engine + schemas/apparatus_v1.json + examples/apparatus/sappho_fr31.json; tests/test_variants.py = 27, suite 344; coverage aeon.variants 91-100%, TOTAL 93%). Решения: rule3 измеримо (fewer editorial marks, fallback -1); work-guard = все значимые токены apparatus.work ⊆ variant_work (default: stem файла в demo) → ConfigError; unanimous_after_veto → support=издания выбранного, vetoed dict; пустой context → no_context; editions скрыты от LLM; порог 0.5 (AEON_VARIANTS_MIN_CONFIDENCE); порядок reconstruct(1.6)→variant(1.9) подтверждён тестом порядка LLM-вызовов. Demo e2e: variant-only / reconstruct+variant+save/load (steps=[extract,reconstruction,variant_readings], traces=[reconstruction,variant_readings]) / work-mismatch не падает. Фикс бага: work_tokens regex включал '_' → plato_apologia_17a не разбивался; теперь [^\\W_]+.",
+  "order": [
+   "3.1 aeon_v2",
+   "3.5 variant readings",
+   "3.3 gold-standard",
+   "3.2 morphology (after gold+2.7)",
+   "3.6 web (after 2.7)",
+   "3.4/3.7/3.8 backlog"
+  ],
+  "schema_draft": "schemas/aeon_v2.json — awaiting curator verification BEFORE 3.1 implementation",
+  "design_doc": "docs/phase3_design.md",
+  "key_available": true,
+  "defer_2_7": true,
+  "preflight_3_5": {
+   "source_of_readings": "b — LLM только выбирает между внешне заданными attested readings; генерация запрещена",
+   "apparatus_format": "sidecar-JSON {work, editions[], loci[] with readings+editions}; CLI --variant-readings PATH",
+   "vs_2_3": "отдельный движок aeon/variants/ (mode=select); общий engine не делаем",
+   "attribution": "обязателен: каждое чтение цитирует издание(я); без издания — отклонение",
+   "flags": "--variant-readings независим от --reconstruct; оба могут сосуществовать; <0.5 → no_selection_possible"
+  },
+  "preflight_3_3": {
+   "annotation_source": "c hybrid; старт — ручная аннотация 5 отрывков (treebanks опционально при доступе)",
+   "granularity": "marker+atom-level все 5; finding/insight-level 1-2 отрывка",
+   "metrics": "markers P/R/F1 per kind; entities F1; is_fragment accuracy; findings accuracy; focus human binary check (backlog)",
+   "license": "CC0 (source texts PD)",
+   "format": "JSONL expectations + README в gold/",
+   "mock_vs_real": "pytest markers gold_mock (CI baseline) / gold_real (нужен ключ)"
+  },
+  "step_3_3": "done (pending curator acceptance). gold/: schema v1.0.0 (+schema_version/offsets-anchor/entity-role), annotators.json (human:curator), texts/ (6 чистых, Plato = grc-транскрипция), annotations/ 28 записей/6 текстов (13 markers, 21 entities), fixtures/mock_responses.json (анти-циркулярные canned), metrics.md. aeon/gold/: loader (схема+integrity+non-overlap), metrics (stdlib P/R/F1 per kind, entities QID|casefold, MAE, verdicts), runner (mock/real, verdicts для Plato+Sappho), report CLI. pytest.ini: маркеры gold_mock (в дефолте) / gold_real (исключён). Suite: 367 passed, 2 xfailed (baseline entities/completeness — стоп №3), gold_mock 2 passed/2 xfailed. Coverage aeon.gold: metrics 100%, runner 91%, loader 89%, TOTAL 92%. Mock-факт: markers 1.00/1.00, is_fragment 1.00; entities 0.06, MAE 0.40 (canned-сигналы). RU-аудит закрыт: 2 файла (оба Plato), вариант (c)+legacy+regression test_examples_corpus.py (grc>=50/lat).",
+  "ru_audit": "closed: only 2 files affected (examples/greek/plato_apologia_17a.txt + examples/plato_sample.txt, both RU-only); 4 remaining greek files genuine (grc 87-237); test_grc_pack 2.1 used inline Greek — pack validation unaffected. Fix: genuine grc transcription + git mv to examples/greek/legacy/ + tests/test_examples_corpus.py.",
+  "current_priority": "2.7 (real API validation; 3.2 blocked until 2.7 done)",
+  "recommended_first": "3.2 morphology (unblocked after 2.7 done)",
+  "closure_note": "2.7 real-API validation complete: entities F1 0.24->0.82, detective 0.00->0.75, expert/logician 1.00; contract-first refactor worked example; remaining deferred items -> backlog (contract v1.2, 0.85 calibration -> Phase 4).",
+  "plan_fn": {
+   "order": [
+    "0. gold expansion (+morphology annotations)",
+    "1. 3.2 morphology (LLM-based, scoped)",
+    "2. 3.9 embeddings provider (parallel, scoped, default unchanged)",
+    "3. 3.4/3.6 after 3.2",
+    "4. contract v1.2 DEFERRED (trigger-only)"
+   ],
+   "contract_v1_2": "DEFERRED (curator): no failing case; hygiene creep risk; re-run/revert cost. Triggers: new failing pattern from gold expansion OR new chain consumer OR violations >15%.",
+   "gold_expansion_spec": {
+    "texts_draft": [
+     "grc lyric: Pindar Ol. 1.1-7 (~3 seg) — new register",
+     "grc tragedy: Sophocles Aj. 1-6 (~3 seg) — trimeter",
+     "grc lyric hard-case: Sappho fr. 16.1-4 (+5 seg; for min-vs-avg data)",
+     "la oratory: Cicero Catil. 1.1 (~4 seg) — diversity",
+     "la epic: Vergil Aen. 1.1-7 (~3 seg) — diversity"
+    ],
+    "expected_size": "~18 atoms (N 28 -> ~46)",
+    "morphology_annotations": "NEW optional field expected_morphology [{form, lemma, case, number, gender}] for selected atoms (Homer genitives, Sappho forms) — measurement foundation for 3.2 (schema bump annotations 1.1.0)",
+    "method": "same as 3.3: drafts by assistant, curator countersign, separate JSONL per text",
+    "texts_final": [
+     "grc lyric risk-flagged: Pindar Ol. 1.1-7 (~3 seg; annotation_confidence per atom; fallback Theocritus Id. 1.1-5 if mass low)",
+     "grc tragedy: Sophocles Aj. 1-10 (~5 seg)",
+     "grc lyric hard-case: Sappho fr. 16.1-4 (+5 seg)",
+     "la oratory: Cicero Catil. 1.1 (~4 seg)",
+     "la epic: Vergil Aen. 1.1-7 (~3 seg)",
+     "la epigraphy: RGDA 1 (~2 seg; authentic PD inscription register, NOT CIL copy)"
+    ],
+    "size": "~20 atoms (N 28 -> ~48)",
+    "schema_1_1_0_additions": [
+     "annotation_confidence: high|medium|low (optional; low >=50% per text -> text replaced; else low atoms excluded from metrics)",
+     "expected_morphology completed (verb-aware): [{form, lemma, pos, tense, mood, voice, person, case, number, gender}]",
+     "non-verbs: tense/mood/voice/person = null; participles: mood=participle + tense/voice + case/gender/number, person=null"
+    ],
+    "retroactive_phase_a": "ACCEPTED: +expected_morphology to 7 existing atoms (homer seg1-2, sappho seg1-2, plato seg1, inscription seg1-2); annotations_version -> 1.1.0 (additive only, no field modified)",
+    "n48_limitation": "N~48 sufficient for baseline, NOT for statistical claims; README known-limitation; Phase-4 trigger: expand N>=100",
+    "loader_requirements": [
+     "accept 1.0.0 and 1.1.0 mixed",
+     "low-confidence atoms excluded from metrics",
+     "morphology metric denominator = subset with field (N/A otherwise)",
+     "morphology metrics split by confidence: high/medium/all + test_morphology_f1_splits_by_confidence"
+    ],
+    "morph_rules": {
+     "lemma_policy": "(b) Attic-standard grc / Classical-standard la; form = source-dialect verbatim (treebank convention)",
+     "elision": "form as in source (δ', κατ'); lemma expanded (δέ, κατά); segment-initial elision keeps apostrophe in form",
+     "selection": "(a) full coverage: all nouns/adjectives/pronouns/verbs/participles annotated; particles/adverbs/prepositions/conjunctions NOT annotated",
+     "possessor_convention": "genitive-of-possession entities: role=subject-by-convention + note in annotator_notes (homer Achilles)",
+     "pindar_criterion": "formal: >=50% atoms annotation_confidence=low -> replace with Theocritus Id. 1.1-5"
+    },
+    "qid_backfill": "DONE 2026-10-14: Troy Q22647, Olympia Q38888, Juno Q125046, Ajax Q172725 (via Aias), Palatium Q200642; curator candidates all 5 wrong -> never-from-memory principle in AGENTS",
+    "sappho_clarification": "resolved: lines 1-4 print w/o supplements in standard editions; markers=[] correct; note fixed"
+   },
+   "step_3_2_scope": "LLM-based morphological prompt first (option b): new contract (morph_v1: form->lemma/case/number/gender, source-language, null при неуверенности), measured on expanded gold; deterministic dictionaries (a) later as enrichment; neural models (c) Phase 4",
+   "step_3_9_scope": "parallel-scoped: pluggable embeddings provider interface + config (AEON_EMBEDDINGS_PROVIDER); default remains MiniLM; Google provider behind flag, no CI network; measure on expanded gold later",
+   "phase4_triggers_add": "confidence: test length-confidence correlation on N>=30 (hypothesis from 2.7.5 cases A)",
+   "infra_1_1_0": "DONE: loader mixed+low-exclusion(+log gold_atom_excluded_low_confidence)+morph validation; metrics: per-field morphology F1, high/medium/all splits, null->out of denominator, missed-form=miss, lemma NFC-exact (grc)/NFC+casefold (la); runner morph_v1 hook (morph_engine param); report morphology section; 8 tests (33 in test_gold, 410 total). Demo: denominators pos/lemma=220 (165 high/55 medium), case=183, mood/tense/voice=45, person=30, gender=169; predictions absent -> 0.00."
+  },
+  "step_3_2": "DONE: morph_v1 (aeon/morphology; enum-synced contract; Il.2.1-2 few-shot; engine completeness verify + output-budget scaling + finish_reason retry x2) + gold 1.1.1 (Class A source-verified: cicero nom x4, homer eta, personal pronouns person x8) + baseline morph_t4: pos .98/lemma .92/tense .96/mood .98/voice .93/person .90/case .99/number .99/gender .98 (28 atoms/224 forms, \\.0214). Re-extract t4 on gold 1.1.1 (49 atoms): entities .78 (P.65/R.97), detective .88 (sappho .80), cache-hit 50K tokens. Design principles #1-#4 in AGENTS. Suite 420.",
+  "findings_3_2": [
+   "Class A (gold-defects found by model; patched 1.1.1): closed",
+   "Class B (derivational/Doric lemma conventions): backlog v1.1, trigger = Doric expansion",
+   "Class C (accepted noise): ageide tense, oulomenen, abutere; trigger >=3 forms",
+   "person pronoun-fill gap: v1.1 candidate, trigger = pronoun coverage expansion",
+   "entities name=null entries (rgda): contract edge -> drop-on-null candidate v1.1"
+  ],
+  "next_options": [
+   "3.9 embeddings provider (deferred per curator until failing case)",
+   "contract v1.1 (trigger-gated)",
+   "3.4 cross-references / 3.6 web (after)"
+  ],
+  "midpoint_checkpoint": "DONE 2026-10-14: docs/phase3_checkpoint.md (done-items+commits; baselines summary; design principles #1-#6; backlog with triggers; remainder decisions). Next: 3.4 scoping in Plan Mode.",
+  "maintenance_cycle": "CLOSED: audit 15 LLM-sites (0 outliers, unified provider); linguistics truncation fix (2ed1081); default budget 4000; 9 except:pass eliminated + AST guard with frozen baseline (cafa314, 05e4e12); legacy facade DeprecationWarnings + CHANGELOG (fb1cb8f).",
+  "backlog_triggers": {
+   "contract_v1_1": "case-based (pronoun/Doric coverage expansion or >=3 forms of a class)",
+   "embeddings_3_9": "failing case / measurement need (deferred)",
+   "json_repair_strategy_loop": "new repair edge-case OR logging-criticality (named debt)",
+   "legacy_facade_removal": "after next major (warnings added now)",
+   "call_structured": "Phase 4 (dynamic budget + has_more chunking)",
+   "threshold_085": "Phase 4 (data collected, defer)"
+  },
+  "remainder": {
+   "3_4_cross_references": "ACTIVE next - Plan Mode scoping required (new gold type)",
+   "3_6_web": "defer until 3.4 plan",
+   "3_7_export": "candidate after 3.4",
+   "3_8_calibration": "Phase 4"
+  },
+  "step_3_4": "done / pilot-final (2026-10-16, countersign): engine aeon/crossrefs (pair-based detect, prompt v1.2.1 frozen, structured few-shot x5, post-filters: schema-validate + grounded-pairs + same-author) + gold 1.2.1 (+author_id, 54 records/15 texts, 4 xrefs) + tools/crossrefs_f1 (HEADLINE link-level F1). History: v1.0->v1.1 (D1-D4)->v1.2 (D5)->v1.2.1 (D7 + Example 5) = pilot-final. Metrics: link-F1 all 0.800 (tp4 fp2; recall 4/4 all versions), kind-macro 0.619, .037/run. FP closed: #3 accepted known (wrong-source), #7 retained (no consensus evidence). Backlog: crossref_chronology_aware_harness (trigger corpus>30), crossref_source_work_disambiguation (F4), gold bucket-drift revision (F4). Pre-commit reformulated (D7 last kind-patch; direction-artifact not trigger). Report: docs/phase3_34_report.md. Suite 459."
+ },
+ "completed_at": null,
+ "user_preferences": {
+  "embeddings": "pluggable; MiniLM/LaBSE defaults",
+  "llm_keys": "DEEPSEEK_API_KEY PRESENT in .env (added ~2026-10-14); 2.7 deferred until after 3.3 per policy (key_available=true, defer_2_7=true); gold_real runnable (excluded by default)",
+  "ancient_packs": "grc + la DONE",
+  "reference_texts": "examples/greek (5) + examples/latin (5)",
+  "fragment_hypotheses": "grounded-only, threshold 0.75",
+  "multi_focus": "opt-in; all=3 roles; all,esoteric documented alternative",
+  "linguistic_layers": "opt-in, strict deps, halt 0.3",
+  "offline_dumps": "user provides converted JSONL dumps in data/<source>/ (READMEs in repo)",
+  "checkpoints": "curator verifies step reports with fixed format"
+ },
+ "known_deltas": [
+  "Phases 1, 2.0-2.5 complete (details in git/AGENTS.md).",
+  "2.5 refinements: demo mock line now 'illustrative, not calibrated'; --focus=all,esoteric FIXED (all previously overwrote the list; extras now appended; test added); all_disagree mechanism documented (pairs of INSIGHTS from different roles; claim tokens >3 chars; Jaccard>=0.5 and claims differ; example VIII vs VI век → True; semantic arbitration backlog).",
+  "Phase 2.6 (Offline Adapters): aeon/offline/ (base/pleiades/trismegistos stub/registry). JSONL dump format (line1 meta + record per line; streaming, stdlib only). Additions A-E: (A) atomic load transaction+rollback (test_load_rollback_on_malformed_batch); (B) indexes after load (test_indexes_present_after_load); (C) idempotency same->skip/new->replace+offline_dump_upgraded (2 tests); (D) .gitignore: data/ patterns with README exceptions (data/{pleiades,trismegistos}/README.md in repo); (E) provenance with license+license_file_sha256 from bundle, missing -> OfflineDumpError (test). Staleness: >AEON_OFFLINE_MAX_AGE_DAYS(90) -> offline_dump_stale (test). Chain: PleiadesClient.get_place offline-first via offline_adapter attr, source='offline_pleiades'; offline miss + allow_live_fallback=False -> reason 'offline_miss_no_fallback', 0 HTTP (tests). Metrics: offline namespace + offline_dump_age_days gauge. Trismegistos stub (no_public_dataset). Real Pleiades dump unreachable from this environment (host blocked) - adapter works against user-provided converted dump; license verification comes from bundle LICENSE (sha256), not from our memory.",
+  "Coverage: offline package >=88%, TOTAL 93%; runner incl. aeon.offline, aeon.variants.",
+  "Step 3.5 (Variant Readings) DONE: aeon/variants/ (apparatus/prompts/selector/engine), sidecar-JSON apparatus (semver, attribution обязателен), Detective mode 'reading' (context-agreement), selector экономит LLM (unanimous / no_context / veto / unanimous_after_veto), порог 0.5, work-guard ConfigError, translator+ demo интеграция (--variant-readings/--variant-work), v2 traces.variant_readings + pipeline steps, 27 tests, coverage per-module 91-100%.",
+  "RU-audit (3.3 stop-condition) CLOSED: examples/greek/plato_apologia_17a.txt was a RU summary used as grc input since Phase 1; scope = only 2 Plato files; genuine grc transcription replaced it (own transcription, PD), both RU files moved to examples/greek/legacy/ via git mv; regression tests/test_examples_corpus.py (greek files need >=50 greek codepoints; latin files >=50 latin, <=5 greek); LICENSE.md updated; historical defect noted: pre-3.3 Plato demo/v2-size measurements were on RU text (scientifically meaningless, superseded).",
+  "Step 3.3 (Gold-standard) IMPLEMENTED (pending acceptance): gold/ corpus (28 records/6 texts, 13 markers/21 entities) + aeon/gold harness (loader/metrics/runner/report, stdlib only) + pytest markers gold_mock/gold_real + metrics.md baseline. Q-IDs verified live (Achilles Q41746, Athenians Q120096553, Zeus Q34201, Sappho Q17892, Caesar Q1048, Gaul Q38060, Belgae Q337104, Aquitani Q1255605, Gauls Q273854, Achaeans Q3514911, Garonne Q5077, Seine Q1471); unverified -> null. DEEPSEEK_API_KEY detected (.env present) -> defer_2_7=true per policy; 2.7 becomes next priority after 3.3 acceptance.",
+  "3.3 ACCEPTED. Clarifications: mixed-marker [слова ...] decision (A)=supplement documented (B/C rejected: matching); offsets tooling committed (tools/annotate_offsets.py + test); gold/metrics.md mock-baseline = self-consistency not quality (explicit); test_mock_false_allowed_with_key added; demo real-path fixes (llm.calls guard, llm_model in v2 metadata). 2.7 in_progress per curator; sub-steps reported separately (2.7.1 smoke → stop).",
+  "commit_2b done: v2 contract metadata trio (chain/anchor/contract-era) + legacy default on read; build_claims (commit 3) will apply video-skip more aggressively for v3.0-legacy chain per curator.",
+  "Phase 3 midpoint checkpoint (2026-10-14): all baselines/principles/backlog consolidated; suite 428; next = 3.4 scoping Plan Mode."
+ ],
+ "backlog": [
+  "2.7 Real API verification when key available (Sappho reconstruction, layers/focus quality); budget options (a)/(b); parallelism tuning",
+  "Variant readings mode (Sappho) - DONE in step 3.5 (aeon/variants, 27 tests)",
+  "Offline: real Pleiades dump download/convert when user has network access; TS dataset if ever public; duckdb/pandas never (stdlib only)",
+  "Linguistics: contradiction resolution via LLM (variant C); focus disagreement semantic arbitration; la heuristic config",
+  "CI: network-marker non-blocking job",
+  "Phase 3: .aeon v2, CLI/web endpoints, README v4, morphology (Morpheus/CLTK), gold-standard corpus, search-layer sigma unification",
+  "gold mock fixtures (gold/fixtures/mock_responses.json) — align with extractor contract v1 (entities taxonomy/semantic claims) after 2.7 re-run",
+  "2.7.5 data tasks: sappho min-conf gate cases (avg .60/.65 grounded all-quoted), grammar-flavor prompt iteration, entities FP on fragment texts (papyrus/sappho)",
+  "contract v1.2: content-first priority (Rule 3), Rule 5 emphasis + post-hoc repair, edge-cases: generic office/deity REJECTED (named referent requires specific identity, not class membership; revisited if gold adds such cases)",
+  "Phase 3 candidates: 3.2 morphology (recommended first), 3.9 embeddings provider, 3.4 cross-references, 3.6 Web UI/API",
+  "contract v1.1 (extraction): drop entities with name=null; pronoun person few-shot; Doric/derivational lemma examples (all trigger-gated)",
+  "3.4: crossref_chronology_aware_harness (chronology manifest for pair ordering; trigger corpus>30)",
+  "3.4: crossref_source_work_disambiguation (F4; #3 FP class homer_il->livius)",
+  "3.4: gold bucket-drift revision (il-vergil gold medium vs engine high; F4)"
+ ],
+ "config_wiring": {
+  "canonical_access": "CONFIG.verification.<agent> is canonical; flat CONFIG.<agent> is a convenience alias",
+  "wired_in": [
+   "llm",
+   "logging",
+   "entity_linking",
+   "crosswalk (+offline chain)",
+   "scoring weights",
+   "verification",
+   "language packs",
+   "fragments",
+   "linguistics",
+   "focus",
+   "offline (CONFIG.offline -> adapters; allow_live_fallback in chain)"
+  ],
+  "not_wired_yet": [
+   "similarity levels (optional, later)"
+  ]
+ },
+ "legacy_config_used_by": [
+  "verification legacy projection (risk bands) + Aggregator review_threshold"
+ ],
+ "created_at": "2026-10-14T10:30:33+03:00",
+ "baseline_commit": "1c5a460",
+ "tooling": {
+  "secrets_scan": "astra-sentinel MCP; 14 key files; 0 findings",
+  "llm_layer": "aeon/llm/ + llm_client shim; JSON-repair stdlib only",
+  "wikidata_schema_check": "live script; zero drift",
+  "pleiades_trismegistos_check": "live scripts; outcomes in known_deltas",
+  "network_live_tests": "tests/test_network_live.py (marker network)",
+  "coverage_runner": "tools/run_coverage.py (incl. language, fragments, linguistics, focus; offline to add)"
+ },
+ "known_gaps": [
+  "Pleiades README links (unverifiable from dev network)",
+  "Trismegistos datasets (no public API)",
+  "deepseek-chat legacy alias (deprecated; fallback works; audit when retired)",
+  "papyrus/sappho zero-gold F1 artifact (1+1 borderline FPs; documented)",
+  "role consistency 10.7% v1 (accepted; contract v1.2 backlog)",
+  "chain grammar-heavy (accepted, not-blocking; trigger-revisit)",
+  "mock fixtures alignment with extractor v1 (backlog)",
+  "anchor_language inference from pack for old v2 (backlog)",
+  "threshold 0.85 calibration min-vs-avg (deferred to Phase 4)",
+  "lone-positive aggregator overclaim (FIXED 2.7.2/commit 3b3b731)",
+  "3.4 direction-artifact: harness alphabetical pair order (kind-diagnostic noise only; not headline)",
+  "3.4 remaining link-FP: #3 homer_il->livius (accepted, N=1, F4)"
+ ]
 }

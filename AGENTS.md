@@ -455,6 +455,12 @@ RU-конспектом → заменён подлинной grc-транскр
   ломающий другой = проблема рамки (задача/метрика/приоритет), не правила:
   стоп + переосмысление (рождено: 3 flip'а echo/adaptation на N=4 →
   headline переопределён на link-level, kind — diagnostic).
+- **Design principle (#21, 3.4.2 countersign 2026-10-16):** **verify trigger is
+  signal, not artifact** — перед срабатыванием pre-commit/автоматического
+  fallback проверь, что triggering condition отражает реальную проблему, а не
+  артефакт harness/metadata (рождено: «livius-echo» = direction-artifact
+  алфавитного harness, не kind-flip); trigger-контекст логируется (pair,
+  direction, reason).
 - **Design principle (#9, 3.4 countersign 2026-10-14): ACTIVE** (подтверждён
   четырежды: `direction`, `matched_lemmas` вне segment, «формула И/ИЛИ»,
   few-shot-weak/deadlock класс (3.4.2, prompts не моделируются в countersign)). При
@@ -484,7 +490,13 @@ RU-конспектом → заменён подлинной grc-транскр
   порог 0.85 (Фаза 4 calibration); **xref bucket-drift** (vergil←il: gold
   medium vs engine high после расширения шкалы — version-drift, не bug).
 - **Backlog Ф3+:** **3.2 morphology — рекомендуемый первый** (разблокирован);
-  3.9 embeddings-provider; 3.4 cross-references; 3.6 Web UI/API; contract v1.2
+  3.9 embeddings-provider; **3.4 cross-references — pilot ✅ (2026-10-16):
+  v1.2.1 pilot-final, headline link-level F1 0.80 (kind-macro 0.619; FP=2:
+  #3 accepted, #7 §7-candidate); backlog: `crossref_chronology_aware_harness`
+  (trigger corpus>30), `crossref_source_work_disambiguation` (Ф4), gold
+  bucket-drift revision (Ф4); pre-commit v1.2.1: D7 — последний kind-патч
+  (trigger: настоящий kind-flip на правильно направленной паре; direction-artifact
+  — не trigger)**; 3.6 Web UI/API; contract v1.2
   (Rule 3 content-first; Rule 5 emphasis + post-hoc repair; edge-cases:
   **generic office/deity rejected** — named referent требует specific
   identity, не class membership; revisited если gold добавит такие кейсы);
