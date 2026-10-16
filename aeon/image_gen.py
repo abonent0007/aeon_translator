@@ -26,7 +26,8 @@ class FluxImageGenerator:
     ):
         self.api_key = api_key or os.getenv("FLUX_API_KEY")
         self.api_url = api_url or os.getenv("FLUX_API_URL", "https://api.gen-api.ru/api/v1/networks/flux-2")
-        self.status_url = "https://api.gen-api.ru/api/v1/request/get"
+        self.status_url = os.getenv("FLUX_STATUS_URL", "https://api.gen-api.ru/api/v1/request/get")
+        self.timeout = float(os.getenv("FLUX_TIMEOUT_SEC", "30"))
         self.available = bool(self.api_key)
 
     def generate(
@@ -61,7 +62,7 @@ class FluxImageGenerator:
         print(f"   Промпт: {prompt[:120]}...")
 
         try:
-            resp = requests.post(self.api_url, headers=headers, data=payload, timeout=30)
+            resp = requests.post(self.api_url, headers=headers, data=payload, timeout=self.timeout)
             if resp.status_code == 402:
                 return {"error": "Flux API: нет кредитов на счёте. Пополните баланс на gen-api.ru", "images": []}
             if resp.status_code == 401:
@@ -91,7 +92,7 @@ class FluxImageGenerator:
                 status_resp = requests.get(
                     f"{self.status_url}/{request_id}",
                     headers={"Authorization": f"Bearer {self.api_key}"},
-                    timeout=30
+                    timeout=self.timeout
                 )
                 status_resp.raise_for_status()
                 status_data = status_resp.json()
@@ -147,7 +148,7 @@ class FluxImageGenerator:
         """Сохраняет изображение (из URL или base64)."""
         try:
             if data.startswith("http"):
-                resp = requests.get(data, timeout=30)
+                resp = requests.get(data, timeout=self.timeout)
                 resp.raise_for_status()
                 content = resp.content
             elif data.startswith("data:"):

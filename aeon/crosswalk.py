@@ -15,6 +15,7 @@ TrismegistosClient — ЗАГЛУШКА (стоп-точка 1.2): публич�
 
 import json
 import sqlite3
+import os
 import threading
 import time
 from dataclasses import dataclass, field
@@ -32,7 +33,9 @@ from .llm.retries import retry_call
 from .logging_config import get_logger, log_event
 from .metrics import METRICS
 
-PLEIADES_URL_TEMPLATE = "https://pleiades.stoa.org/places/{pid}/json"
+PLEIADES_URL_TEMPLATE = os.getenv(
+    "AEON_PLEIADES_URL_TEMPLATE",
+    "https://pleiades.stoa.org/places/{pid}/json")
 
 
 # ═══════════════════════════════════════════════════════════════

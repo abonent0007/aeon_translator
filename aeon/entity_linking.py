@@ -31,6 +31,7 @@ import sqlite3
 import threading
 import time
 from dataclasses import dataclass, field
+import os
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 from urllib.parse import urljoin
@@ -42,7 +43,8 @@ from .llm.retries import retry_call
 from .logging_config import get_logger, log_event
 from .metrics import METRICS
 
-API_URL = "https://www.wikidata.org/w/api.php"
+API_URL = os.getenv("AEON_WIKIDATA_API_URL",
+                    "https://www.wikidata.org/w/api.php")
 UA_TEMPLATE = "AEON-Translator/4.0 (research; contact: {contact})"
 UA_PLAIN = "AEON-Translator/4.0 (research)"
 _HTTP_REDIRECTS = {301, 302, 303, 307, 308}

@@ -1,0 +1,55 @@
+{
+ "scenarios": {
+  "demo_plato_mock": {
+   "returncode": 0,
+   "verdict": "abstained",
+   "cvi": "0.00",
+   "atom_prefix": "5e469edb",
+   "entities": 2
+  },
+  "demo_caesar_mock": {
+   "returncode": 0,
+   "verdict": null,
+   "cvi": null,
+   "atom_prefix": "96f879dd",
+   "entities": 2
+  },
+  "export_fixture": {
+   "md_section_count": 4,
+   "tei_wellformed": true,
+   "tei_length": 1052,
+   "bib_has_misc": true,
+   "jsonld_context_inline": true,
+   "atom_hash_prefix": "d7888b25"
+  },
+  "crossrefs_mock": {
+   "refs": 0
+  },
+  "gold_report_mock": {
+   "returncode": 0,
+   "key_lines": [
+    "| Markers F1 (lacuna) | 1.00 (P 1.00 / R 1.00) |",
+    "| Markers F1 (supplement) | 1.00 (P 1.00 / R 1.00) |",
+    "| Markers macro F1 | 1.00 |",
+    "| Entities F1 | 0.03 (P 0.02 / R 0.08) |",
+    "| is_fragment accuracy | 0.98 |",
+    "| text_id | seg | markers macro F1 | entities F1 | frag acc | compl MAE | verdicts |"
+   ]
+  },
+  "v2_roundtrip": {
+   "atom_hash_prefix": "d7888b25",
+   "content_hash_prefix": "ab844d92",
+   "trace_keys": [
+    "cross_references",
+    "entity_linking",
+    "extraction",
+    "focus",
+    "linguistics",
+    "morphology",
+    "reconstruction",
+    "variant_readings",
+    "verification"
+   ]
+  }
+ }
+}
