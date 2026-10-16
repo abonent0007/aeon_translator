@@ -136,6 +136,28 @@ def build_report(dataset, predictions: Dict[str, Any]) -> str:
                              if total and entry.get("f1") is not None else "N/A")
             lines.append(f"| {field} | " + " | ".join(cells) + " |")
 
+    # ── Cross-references (schema 1.2.0; 3.4 engine) — pair-F1 × kind × confidence ──
+    xref = aggregate.get("cross_references", {})
+    xref_status = ("engine: connected" if aggregate.get("xref_present")
+                   else "engine: NOT CONNECTED → 0.00 by design")
+    lines += ["", f"## Cross-references (schema 1.2.0; {xref_status})", ""]
+    xref_kinds = sorted({kind for bucket in xref.values()
+                         for kind in (bucket.get("per_kind") or {})})
+    if not xref_kinds:
+        lines.append("N/A — cross-references в датасете отсутствуют")
+    else:
+        lines += ["| kind | F1 high | F1 medium | F1 all |", "|---|---|---|---|"]
+        for kind in xref_kinds:
+            cells = []
+            for bucket in ("high", "medium", "all"):
+                entry = (xref.get(bucket) or {}).get("per_kind", {}).get(kind)
+                if entry and (entry["tp"] + entry["fp"] + entry["fn"]) > 0:
+                    cells.append(f"{entry['f1']:.2f} "
+                                 f"({entry['tp']}/{entry['tp'] + entry['fn']})")
+                else:
+                    cells.append("N/A")
+            lines.append(f"| {kind} | " + " | ".join(cells) + " |")
+
     lines += ["", "## Per text", "",
               "| text_id | seg | markers macro F1 | entities F1 | frag acc | "
               "compl MAE | verdicts |",

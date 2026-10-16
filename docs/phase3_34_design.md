@@ -111,7 +111,9 @@ confidence-splits (high/all; medium при наличии). Инверсия sou
 
 Текущий gold: ~1 (vergil↔homer). Расширение (+3 текста, ~7 атомов):
 `catullus_51` (la), `odyssey_1` (grc, Od. 1.1–5), `livius_odusia_1` (la, fr.1).
-Итог: **~4 связи** (см. §0 framing). Fallback pre-committed: <3 verifiable на sample → defer 3.4 → 3.7.
+Итог: **~4 связи** (см. §0 framing); xref Vergil←Odyssey указывает на **odyssey_1 seg1**
+(сегменты 2–3 odyssey — morphology-only; уточнение 3.4.0). Fallback pre-committed:
+<3 verifiable на sample → defer 3.4 → 3.7.
 
 ## 5. Approach + engine input (Issue 5)
 
@@ -153,6 +155,7 @@ Fallback: <3 verifiable на sample → defer 3.4 → 3.7 (export formats).
 | Gap | Статус | Impact | Trigger / путь |
 |---|---|---|---|
 | **`direct_citation`: 0 gold-примеров** | acknowledged (MEDIUM) — prompt-only | F1_direct = **N/A**; kind не валидируется пайплайном (few-shot понимание LLM не проверено) | новый корпус со схолиастом/комментатором ИЛИ внешний запрос на direct_citation |
+| **`confidence: low` xref: не упражняется (0)** | acknowledged — pilot упражняет high+medium | low-бакет F1 = N/A; валидация low-исключения — только unit-тест | появление low-записи при расширении |
 | `offset` локалей не включён | deferred (additive) | точность локалей = сегмент | потребность passage-level точности |
 | kind-confidence (уверенность в ТИПЕ) | backlog | kinds могут перепутываться без штрафа | при усложнении kinds/росте N |
 | multi-hop chains | backlog/Ф4 | цепочки A→B→C не детектируются | Ф4 |

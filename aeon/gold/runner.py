@@ -41,6 +41,7 @@ class GoldPrediction:
     failed: bool = False
     error: str = ""
     morphology: Optional[List[Dict[str, Any]]] = None  # schema 1.1.0 (morph_v1)
+    cross_refs: Optional[List[Dict[str, Any]]] = None   # schema 1.2.0 (3.4 engine)
 
 
 def _make_llm(mode: str, latency_ms: float):

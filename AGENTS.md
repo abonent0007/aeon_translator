@@ -408,6 +408,11 @@ RU-конспектом → заменён подлинной grc-транскр
   `coverage_gaps` соответствующего документа, не в inline-комментарии.
   Пример: `direct_citation` ×0 в gold (prompt-only, F1 = N/A) —
   задокументирован в `docs/phase3_34_design.md` §10.
+- **Design principle (#10, 3.4.1 2026-10-14):** **validators before write** —
+  для любой схемы данных валидатор запускается ДО записи артефакта
+  (gold: `validate_cross_ref_schema` fail-fast + invariant #9 при load;
+  `.aeon v2`: validator; apparatus: attribution). Схема без enforced-валидатора
+  на записи — suggestion, не контракт.
 - **Design principle (#9, 3.4 countersign 2026-10-14): ACTIVE** (подтверждён
   трижды: `direction`, `matched_lemmas` вне segment, «формула И/ИЛИ»). При
   countersign — **прогонять schema-инварианты на samples ПРОГРАММНО**, не

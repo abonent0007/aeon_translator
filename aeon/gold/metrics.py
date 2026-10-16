@@ -167,6 +167,29 @@ def completeness_mae(pairs: List[Tuple[float, float]]) -> float:
                      for expected, predicted in pairs) / len(pairs), 4)
 
 
+def _xref_key(ref: Dict[str, Any]) -> Tuple[frozenset, str]:
+    """Неориентированный ключ пары: frozenset(loci) + kind."""
+    a = (ref["source"]["text_id"], ref["source"]["segment_id"])
+    b = (ref["target"]["text_id"], ref["target"]["segment_id"])
+    return (frozenset({a, b}), ref["kind"])
+
+
+def cross_ref_prf(expected: List[Dict], predicted: List[Dict]) -> Dict[str, Any]:
+    """F1 по неориентированной паре (source_seg, target_seg, kind), split by kind (3.4.1)."""
+    kinds = sorted({ref["kind"] for ref in expected}
+                   | {ref["kind"] for ref in predicted})
+    per_kind: Dict[str, Dict[str, float]] = {}
+    for kind in kinds:
+        exp = {_xref_key(ref) for ref in expected if ref["kind"] == kind}
+        pred = {_xref_key(ref) for ref in predicted if ref["kind"] == kind}
+        tp = len(exp & pred)
+        per_kind[kind] = _prf(tp, len(pred) - tp, len(exp) - tp)
+    f1_values = [metrics["f1"] for metrics in per_kind.values()
+                 if metrics["tp"] + metrics["fp"] + metrics["fn"] > 0]
+    macro = round(sum(f1_values) / len(f1_values), 4) if f1_values else 1.0
+    return {"per_kind": per_kind, "macro_f1": macro}
+
+
 def verdict_accuracy(triples: List[Tuple[Dict[str, str], Dict[str, str]]]) -> Dict[str, float]:
     """Accuracy per агент (только записи с заполненным expected)."""
     if not triples:
@@ -185,7 +208,9 @@ def evaluate_dataset(dataset: GoldDataset, predictions: Dict[str, List[Any]]) ->
     per_text: Dict[str, Any] = {}
     all_marker_tp: Dict[str, Dict[str, float]] = {}
     aggregate_morph: Dict[str, Tuple[List[Dict], List[Dict]]] = {}
+    aggregate_xref: Dict[str, Tuple[List[Dict], List[Dict]]] = {}
     morph_present = False
+    xref_present = False
     entity_totals = {"tp": 0, "fp": 0, "fn": 0}
     fragment_pairs: List[Tuple[bool, bool]] = []
     completeness_pairs: List[Tuple[float, float]] = []
@@ -201,6 +226,8 @@ def evaluate_dataset(dataset: GoldDataset, predictions: Dict[str, List[Any]]) ->
         text_completeness_pairs: List[Tuple[float, float]] = []
         text_verdict_triples: List[Tuple[Dict, Dict]] = []
         morph_buckets: Dict[str, Tuple[List[Dict], List[Dict]]] = {
+            "high": ([], []), "medium": ([], []), "all": ([], [])}
+        xref_buckets: Dict[str, Tuple[List[Dict], List[Dict]]] = {
             "high": ([], []), "medium": ([], []), "all": ([], [])}
 
         pairs = [(record, prediction)
@@ -221,6 +248,18 @@ def evaluate_dataset(dataset: GoldDataset, predictions: Dict[str, List[Any]]) ->
                 morph_buckets[bucket][1].extend(predicted_forms)
                 morph_buckets["all"][0].extend(expected_forms)
                 morph_buckets["all"][1].extend(predicted_forms)
+            for ref in record.cross_references:
+                if ref["confidence"] == "low":
+                    continue                      # low → excluded (3.4.1)
+                xref_buckets[ref["confidence"]][0].append(ref)
+                xref_buckets["all"][0].append(ref)
+            for ref in (getattr(prediction, "cross_refs", None) or []):
+                if ref.get("confidence") == "low":
+                    continue
+                xref_present = True
+                bucket = ref.get("confidence", "high")
+                xref_buckets[bucket][1].append(ref)
+                xref_buckets["all"][1].append(ref)
             expected_markers.extend(record.expected_markers)
             predicted_markers.extend(prediction.markers)
             expected_entities.extend(record.expected_entities)
@@ -244,11 +283,17 @@ def evaluate_dataset(dataset: GoldDataset, predictions: Dict[str, List[Any]]) ->
             "verdicts": verdict_accuracy(text_verdict_triples),
             "morphology": {bucket: morphology_f1(exp, pred)
                            for bucket, (exp, pred) in morph_buckets.items()},
+            "cross_references": {bucket: cross_ref_prf(exp, pred)
+                                 for bucket, (exp, pred) in xref_buckets.items()},
         }
         for bucket, (exp, pred) in morph_buckets.items():
             agg_bucket = aggregate_morph.setdefault(bucket, ([], []))
             agg_bucket[0].extend(exp)
             agg_bucket[1].extend(pred)
+        for bucket, (exp, pred) in xref_buckets.items():
+            agg_xref = aggregate_xref.setdefault(bucket, ([], []))
+            agg_xref[0].extend(exp)
+            agg_xref[1].extend(pred)
         for kind, counts in marker_metrics["per_kind"].items():
             bucket = all_marker_tp.setdefault(kind, {"tp": 0, "fp": 0, "fn": 0})
             bucket["tp"] += counts["tp"]
@@ -275,5 +320,8 @@ def evaluate_dataset(dataset: GoldDataset, predictions: Dict[str, List[Any]]) ->
         "morphology": {bucket: morphology_f1(exp, pred)
                        for bucket, (exp, pred) in aggregate_morph.items()},
         "morphology_present": morph_present,
+        "cross_references": {bucket: cross_ref_prf(exp, pred)
+                             for bucket, (exp, pred) in aggregate_xref.items()},
+        "xref_present": xref_present,
     }
     return {"per_text": per_text, "aggregate": aggregate}

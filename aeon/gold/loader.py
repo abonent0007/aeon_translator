@@ -25,12 +25,76 @@ MARKER_KINDS = frozenset({"lacuna", "supplement", "editorial", "deletion",
 CONFIDENCE_LEVELS = frozenset({"high", "medium", "low"})
 MORPH_REQUIRED = ("form", "lemma", "pos")
 MORPH_OPTIONAL = ("tense", "mood", "voice", "person", "case", "number", "gender")
+# ── 3.4 cross-references (schema 1.2.0) ──
+CROSS_REF_KINDS = frozenset({"direct_citation", "adaptation", "formulaic_echo"})
+FORMULA_LABELS = frozenset({"proem_invocation"})
 _ATOM_KEYS = ("intent", "domain", "is_fragment", "completeness_score")
 _VERDICT_KEYS = ("detective", "expert", "logician")
 _REQUIRED = ("schema_version", "text_id", "language", "segment_id", "segment_text",
              "marker_offsets_relative_to", "annotator", "annotation_date",
              "expected_atom", "expected_markers", "expected_entities",
              "expected_verdicts")
+
+
+def _validate_cross_refs(record: Dict[str, Any], where: str) -> List[Dict[str, Any]]:
+    """Fail-fast валидация expected_cross_references (schema 1.2.0, 3.4.1)."""
+    refs = record.get("expected_cross_references")
+    if refs is None:
+        return []
+    if not isinstance(refs, list):
+        raise GoldError(f"{where}.expected_cross_references: ожидался список")
+    for index, ref in enumerate(refs):
+        rwhere = f"{where}.expected_cross_references[{index}]"
+        if not isinstance(ref, dict):
+            raise GoldError(f"{rwhere}: запись не объект")
+        _require(ref, ("source", "target", "kind", "confidence"), rwhere)
+        for locus in ("source", "target"):
+            _require(ref[locus], ("text_id", "segment_id"), f"{rwhere}.{locus}")
+        if ref["kind"] not in CROSS_REF_KINDS:
+            raise GoldError(f"{rwhere}: kind '{ref['kind']}' вне {sorted(CROSS_REF_KINDS)}")
+        if ref["confidence"] not in CONFIDENCE_LEVELS:
+            raise GoldError(f"{rwhere}: confidence '{ref['confidence']}' вне "
+                            f"{sorted(CONFIDENCE_LEVELS)}")
+        if ref["kind"] == "formulaic_echo":
+            formula = ref.get("matched_formula")
+            if (not isinstance(formula, dict)
+                    or not str(formula.get("label") or "").strip()
+                    or not str(formula.get("description") or "").strip()):
+                raise GoldError(f"{rwhere}: formulaic_echo требует matched_formula "
+                                f"{{label, description}} (design issue 1)")
+            if formula["label"] not in FORMULA_LABELS:
+                raise GoldError(f"{rwhere}: label '{formula['label']}' вне "
+                                f"formula_labels {sorted(FORMULA_LABELS)} (fail-fast)")
+        for pair_index, pair in enumerate(ref.get("matched_lemma_pairs") or []):
+            _require(pair, ("source_lemma", "target_lemma"),
+                     f"{rwhere}.matched_lemma_pairs[{pair_index}]")
+    return [dict(ref) for ref in refs]
+
+
+def _validate_cross_ref_integrity(dataset: "GoldDataset") -> None:
+    """Invariant #9 (3.4.1): леммы пар ∈ морфологии соответствующих сегментов.
+
+    Сегменты без morphology — пропускаются (skip, документировано).
+    """
+    by_key = {(record.text_id, record.segment_id): record for record in dataset.records}
+    for record in dataset.records:
+        for ref in record.cross_references:
+            src = by_key.get((ref["source"]["text_id"], ref["source"]["segment_id"]))
+            tgt = by_key.get((ref["target"]["text_id"], ref["target"]["segment_id"]))
+            if src is None or tgt is None:
+                raise GoldError(f"{record.text_id} seg{record.segment_id}: xref locus "
+                                f"не найден в датасете ({ref['source']} → {ref['target']})")
+            src_lemmas = {form["lemma"] for form in (src.expected_morphology or [])}
+            tgt_lemmas = {form["lemma"] for form in (tgt.expected_morphology or [])}
+            for pair in (ref.get("matched_lemma_pairs") or []):
+                if src_lemmas and pair["source_lemma"] not in src_lemmas:
+                    raise GoldError(f"invariant #9: {record.text_id}: source_lemma "
+                                    f"'{pair['source_lemma']}' ∉ morphology "
+                                    f"{src.text_id}/seg{src.segment_id}")
+                if tgt_lemmas and pair["target_lemma"] not in tgt_lemmas:
+                    raise GoldError(f"invariant #9: {record.text_id}: target_lemma "
+                                    f"'{pair['target_lemma']}' ∉ morphology "
+                                    f"{tgt.text_id}/seg{tgt.segment_id}")
 
 
 class GoldError(ValueError):
@@ -54,6 +118,7 @@ class GoldRecord:
     # ── schema 1.1.0 (mixed с 1.0.0; optional) ──
     annotation_confidence: str = "high"          # high|medium|low
     expected_morphology: Optional[List[Dict[str, Any]]] = None
+    cross_references: List[Dict[str, Any]] = field(default_factory=list)  # 1.2.0
     excluded: bool = False                       # low -> вне всех метрик
     raw: Dict[str, Any] = field(default_factory=dict)
 
@@ -72,6 +137,13 @@ class GoldDataset:
     def version(self) -> str:
         versions = {record.schema_version for record in self.records}
         return max(versions) if versions else ""
+
+    @property
+    def xrefs(self) -> List[Dict[str, Any]]:
+        """Плоский список cross-references (+ владелец-запись)."""
+        return [dict(ref, owner_text_id=record.text_id,
+                     owner_segment_id=record.segment_id)
+                for record in self.records for ref in record.cross_references]
 
 
 def _require(record: Dict[str, Any], keys, where: str) -> None:
@@ -156,6 +228,8 @@ def _validate_record(record: Dict[str, Any], text_id: str, line_no: int,
                     if value is not None and not isinstance(value, (str, int)):
                         raise GoldError(f"{mwhere}.{key}: тип {type(value).__name__}")
 
+    cross_refs = _validate_cross_refs(record, where)
+
     return GoldRecord(
         text_id=text_id,
         language=str(record["language"]),
@@ -172,6 +246,7 @@ def _validate_record(record: Dict[str, Any], text_id: str, line_no: int,
         annotation_confidence=confidence,
         expected_morphology=([dict(form) for form in morphology]
                              if morphology is not None else None),
+        cross_references=cross_refs,
         excluded=(confidence == "low"),
         raw=record,
     )
@@ -208,6 +283,7 @@ def load_dataset(annotations_dir, *, texts_dir=None, mode: str = "ci") -> GoldDa
 
     dataset = GoldDataset(records, str(path))
     _check_non_overlap(dataset, texts_path)
+    _validate_cross_ref_integrity(dataset)   # invariant #9 (3.4.1)
     return dataset
 
 
