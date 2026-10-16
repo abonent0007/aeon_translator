@@ -10,7 +10,45 @@ pipeline'ом AEON; в `gold_mock`-тестах MockLLM возвращает can
 **draft до подписи куратора** (стоп №1 пройден: схема одобрена с 3 уточнениями,
 внесены в `annotation_schema.json`).
 
-annotations_version: **1.0.0**
+annotations_version: **1.1.0** (expansion 2026-10-14: +6 текстов, +morphology; аддитивно к 1.0.0)
+
+## Schema 1.1.0 — expansion (Phase A/B, 2026-10-14)
+Новые поля (optional, mixed 1.0.0/1.1.0 в одном датасете):
+- **`annotation_confidence`**: `high|medium|low`; `low`-атомы исключаются из
+  метрик (loader, коммит infra); Pindar criterion: ≥50% low → замена на
+  Theocritus (факт: **0 low** — Pindar удержан).
+- **`expected_morphology`**: `{form, lemma, pos, tense, mood, voice, person,
+  case, number, gender}`; не-глаголы: `tense/mood/voice/person = null`;
+  причастия: `mood="participle"` + tense/voice + case/number/gender.
+- **Правила:** lemma — Attic-standard (grc) / Classical-standard (la),
+  form — source-dialect verbatim; элизия — form как в источнике (`δ'`),
+  lemma развёрнут (`δέ`); selection — **полное покрытие** nouns/adjectives/
+  pronouns/verbs/participles (+articles, `pos="article"`), частицы/наречия/
+  предлоги/союзы не размечаются; possessor-генитивы — `role=subject-by-
+  convention` + note.
+- **Transcription-risk flags:** sophocles s5, rgda s2 (medium), sappho fr.16
+  (supplements simplified, без скобок) — верификация куратора.
+- **Метрики morphology (предстоящий infra-коммит):** per-field (case/number/
+  gender/tense/mood/voice/person/pos/lemma), denominator = размеченные формы
+  (subset), атомы без поля — N/A.
+- **Known limitation:** N≈49 атомов / 220 форм — достаточно для baseline,
+  недостаточно для статистических заявлений (Phase-4 trigger: N≥100).
+
+## Покрытие (49 записей / 12 текстов)
+| text_id | язык | сегм. | morphology | примечание |
+|---|---|---|---|---|
+| plato_apologia_17a | grc | 3 | seg1 (retro) | |
+| homer_iliad_1 | grc | 7 | seg1–2 (retro) | |
+| inscription_ig | grc | 6 | seg1–2 (retro) | |
+| papyrus_oxy | grc | 4 | — | |
+| sappho_fr31 | grc | 5 | seg1–2 (retro) | |
+| sappho_fr16 | grc | 4 | все | Textual medium |
+| caesar_bg_1 | la | 3 | — | |
+| cicero_cat_1 | la | 4 | все | oratory |
+| vergil_aen_1 | la | 3 | все | epic |
+| pindar_ol_1 | grc | 3 | все | risk-flagged, 0 low |
+| sophocles_ajax_1 | grc | 5 | все | s5 transcription medium |
+| rgda_1 | la | 2 | все | epigraphy, s2 medium |
 
 ## Состав
 - `annotation_schema.json` — схема записи (JSONL: одна строка = атом/сегмент)

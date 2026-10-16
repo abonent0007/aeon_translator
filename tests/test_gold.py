@@ -68,9 +68,9 @@ def _write_dataset(tmp_path, records, text="ἄειδε θεά σὺν ἄλλο
 
 
 def test_loader_valid_dataset(dataset):
-    assert len(dataset.by_text()) == 6
-    assert len(dataset.records) == 28
-    assert dataset.version() == "1.0.0"
+    assert len(dataset.by_text()) == 12
+    assert len(dataset.records) == 49      # expansion 1.1.0 (было 28)
+    assert dataset.version() == "1.1.0"    # mixed 1.0.0/1.1.0 → max версия
     assert all(r.annotator.startswith("human:") for r in dataset.records)
 
 
@@ -134,7 +134,7 @@ def test_gold_offsets_tool_and_dataset_valid():
     assert rows[0][1] > 0             # offset внутри строки-сегмента
 
     checked = module.check_dataset(ANNOTATIONS)
-    assert len(checked.records) == 28
+    assert len(checked.records) == 49
 
 
 def test_gold_report_dry_run_plan(dataset):
@@ -143,10 +143,10 @@ def test_gold_report_dry_run_plan(dataset):
 
     plan = planned_calls(dataset)
 
-    assert plan["extract_calls"] == 28
-    assert plan["verdict_records"] == 8      # Plato 3 + Sappho 5
+    assert plan["extract_calls"] == 49
+    assert plan["verdict_records"] == 8      # Plato 3 + Sappho 5 (verdict-тексты)
     assert plan["verify_calls"] == 24
-    assert plan["total"] == 52
+    assert plan["total"] == 73
 
 
 def test_cost_block_formats_zero():
