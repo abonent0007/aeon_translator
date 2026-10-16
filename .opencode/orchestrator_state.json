@@ -366,7 +366,32 @@
     "ru_audit": "closed: only 2 files affected (examples/greek/plato_apologia_17a.txt + examples/plato_sample.txt, both RU-only); 4 remaining greek files genuine (grc 87-237); test_grc_pack 2.1 used inline Greek — pack validation unaffected. Fix: genuine grc transcription + git mv to examples/greek/legacy/ + tests/test_examples_corpus.py.",
     "current_priority": "2.7 (real API validation; 3.2 blocked until 2.7 done)",
     "recommended_first": "3.2 morphology (unblocked after 2.7 done)",
-    "closure_note": "2.7 real-API validation complete: entities F1 0.24->0.82, detective 0.00->0.75, expert/logician 1.00; contract-first refactor worked example; remaining deferred items -> backlog (contract v1.2, 0.85 calibration -> Phase 4)."
+    "closure_note": "2.7 real-API validation complete: entities F1 0.24->0.82, detective 0.00->0.75, expert/logician 1.00; contract-first refactor worked example; remaining deferred items -> backlog (contract v1.2, 0.85 calibration -> Phase 4).",
+    "plan_fn": {
+      "order": [
+        "0. gold expansion (+morphology annotations)",
+        "1. 3.2 morphology (LLM-based, scoped)",
+        "2. 3.9 embeddings provider (parallel, scoped, default unchanged)",
+        "3. 3.4/3.6 after 3.2",
+        "4. contract v1.2 DEFERRED (trigger-only)"
+      ],
+      "contract_v1_2": "DEFERRED (curator): no failing case; hygiene creep risk; re-run/revert cost. Triggers: new failing pattern from gold expansion OR new chain consumer OR violations >15%.",
+      "gold_expansion_spec": {
+        "texts_draft": [
+          "grc lyric: Pindar Ol. 1.1-7 (~3 seg) — new register",
+          "grc tragedy: Sophocles Aj. 1-6 (~3 seg) — trimeter",
+          "grc lyric hard-case: Sappho fr. 16.1-4 (+5 seg; for min-vs-avg data)",
+          "la oratory: Cicero Catil. 1.1 (~4 seg) — diversity",
+          "la epic: Vergil Aen. 1.1-7 (~3 seg) — diversity"
+        ],
+        "expected_size": "~18 atoms (N 28 -> ~46)",
+        "morphology_annotations": "NEW optional field expected_morphology [{form, lemma, case, number, gender}] for selected atoms (Homer genitives, Sappho forms) — measurement foundation for 3.2 (schema bump annotations 1.1.0)",
+        "method": "same as 3.3: drafts by assistant, curator countersign, separate JSONL per text"
+      },
+      "step_3_2_scope": "LLM-based morphological prompt first (option b): new contract (morph_v1: form->lemma/case/number/gender, source-language, null при неуверенности), measured on expanded gold; deterministic dictionaries (a) later as enrichment; neural models (c) Phase 4",
+      "step_3_9_scope": "parallel-scoped: pluggable embeddings provider interface + config (AEON_EMBEDDINGS_PROVIDER); default remains MiniLM; Google provider behind flag, no CI network; measure on expanded gold later",
+      "phase4_triggers_add": "confidence: test length-confidence correlation on N>=30 (hypothesis from 2.7.5 cases A)"
+    }
   },
   "completed_at": null,
   "user_preferences": {
