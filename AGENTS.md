@@ -422,6 +422,10 @@ RU-конспектом → заменён подлинной grc-транскр
   минимальный (слабый пример — 1 lemma pair для adaptation — учит слабости);
   заголовок примера явно называет kind + confidence и чем он обусловлен;
   few-shot-тексты вне corpus и вне scoring-пар (тест-инвариант).
+- **Design principle (#13, 3.4.2 countersign 2026-10-15):** **fix the rule, not
+  the example** — если countersign подсветил слабый few-shot, усиливай ПРАВИЛО
+  (guard), а не только заменяй пример: правило действует на всех парах, замена
+  примера — локальна (рождено на Issue A 3.4.2: Rule 4 «SECURE equivalent»).
 - **Design principle (#9, 3.4 countersign 2026-10-14): ACTIVE** (подтверждён
   четырежды: `direction`, `matched_lemmas` вне segment, «формула И/ИЛИ»,
   few-shot-weak/deadlock класс (3.4.2, prompts не моделируются в countersign)). При
