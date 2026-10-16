@@ -13,7 +13,7 @@ from typing import Any, Dict
 
 from ..config import CONFIG
 from .loader import load_dataset
-from .metrics import evaluate_dataset
+from .metrics import MORPH_FIELDS, evaluate_dataset
 from .runner import _make_llm, run_dataset
 
 
@@ -114,6 +114,25 @@ def build_report(dataset, predictions: Dict[str, Any]) -> str:
     lines.append(f"| completeness MAE | {_fmt(aggregate['completeness_mae'])} |")
     for agent, accuracy in sorted(aggregate["verdicts"].items()):
         lines.append(f"| Verdict accuracy ({agent}) | {_fmt(accuracy)} |")
+
+    # ── Morphology (schema 1.1.0; morph_v1) — per-field × confidence-split ──
+    lines += ["", "## Morphology (schema 1.1.0; morph_v1)", ""]
+    morph = aggregate.get("morphology", {})
+    any_total = any((morph.get(bucket, {}).get(field, {}) or {}).get("total")
+                    for bucket in morph for field in MORPH_FIELDS)
+    if not any_total:
+        lines.append("N/A — предсказаний morphology нет (morph_v1 engine не подключён на этом прогоне)")
+    else:
+        lines += ["| field | F1 high | F1 medium | F1 all |",
+                  "|---|---|---|---|"]
+        for field in MORPH_FIELDS:
+            cells = []
+            for bucket in ("high", "medium", "all"):
+                entry = morph.get(bucket, {}).get(field, {}) or {}
+                total = entry.get("total") or 0
+                cells.append(f"{entry.get('f1'):.2f} ({entry.get('tp')}/{total})"
+                             if total and entry.get("f1") is not None else "N/A")
+            lines.append(f"| {field} | " + " | ".join(cells) + " |")
 
     lines += ["", "## Per text", "",
               "| text_id | seg | markers macro F1 | entities F1 | frag acc | "

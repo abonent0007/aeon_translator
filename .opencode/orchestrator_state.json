@@ -421,7 +421,8 @@
       },
       "step_3_2_scope": "LLM-based morphological prompt first (option b): new contract (morph_v1: form->lemma/case/number/gender, source-language, null при неуверенности), measured on expanded gold; deterministic dictionaries (a) later as enrichment; neural models (c) Phase 4",
       "step_3_9_scope": "parallel-scoped: pluggable embeddings provider interface + config (AEON_EMBEDDINGS_PROVIDER); default remains MiniLM; Google provider behind flag, no CI network; measure on expanded gold later",
-      "phase4_triggers_add": "confidence: test length-confidence correlation on N>=30 (hypothesis from 2.7.5 cases A)"
+      "phase4_triggers_add": "confidence: test length-confidence correlation on N>=30 (hypothesis from 2.7.5 cases A)",
+      "infra_1_1_0": "DONE: loader mixed+low-exclusion(+log gold_atom_excluded_low_confidence)+morph validation; metrics: per-field morphology F1, high/medium/all splits, null->out of denominator, missed-form=miss, lemma NFC-exact (grc)/NFC+casefold (la); runner morph_v1 hook (morph_engine param); report morphology section; 8 tests (33 in test_gold, 410 total). Demo: denominators pos/lemma=220 (165 high/55 medium), case=183, mood/tense/voice=45, person=30, gender=169; predictions absent -> 0.00."
     }
   },
   "completed_at": null,

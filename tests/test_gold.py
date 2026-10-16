@@ -11,6 +11,7 @@ from aeon.gold.metrics import (
     entities_prf,
     is_fragment_accuracy,
     markers_prf,
+    morphology_f1,
     verdict_accuracy,
 )
 from aeon.gold.report import build_report
@@ -205,6 +206,129 @@ def test_runner_resilient_on_segment_failure(dataset, monkeypatch):
     assert not plato[0].failed and not plato[2].failed
     assert stats["failures"][0]["segment_id"] == 2
     assert stats["per_text"]["plato_apologia_17a"]["calls"] >= 2
+
+
+# ── schema 1.1.0: morphology infra ──
+
+
+def _form(form, lemma, pos, case=None, number=None, gender=None, tense=None,
+          mood=None, voice=None, person=None):
+    return {"form": form, "lemma": lemma, "pos": pos, "tense": tense,
+            "mood": mood, "voice": voice, "person": person, "case": case,
+            "number": number, "gender": gender}
+
+
+def test_loader_accepts_1_0_0_and_1_1_0(dataset):
+    versions = {r.schema_version for r in dataset.records}
+    assert versions == {"1.0.0", "1.1.0"}
+    homer1 = next(r for r in dataset.records
+                  if r.text_id == "homer_iliad_1" and r.segment_id == 1)
+    assert homer1.expected_morphology and len(homer1.expected_morphology) == 5
+    papyrus = next(r for r in dataset.records if r.text_id == "papyrus_oxy")
+    assert papyrus.expected_morphology is None
+
+
+def test_loader_excludes_low_confidence(tmp_path):
+    records = [_record(annotator="human:test", annotation_confidence="low",
+                       segment_id=1, segment_text="ἄειδε θεά"),
+               _record(annotator="human:test", segment_id=2, segment_text="σὺν ἄλλοισι")]
+    loaded = load_dataset(_write_dataset(tmp_path, records), mode="research")
+    assert loaded.records[0].excluded is True
+    assert loaded.records[1].excluded is False
+
+
+def test_morphology_f1_per_field():
+    expected = [_form("ἄειδε", "ἀείδω", "verb", tense="present",
+                      mood="imperative", voice="active", person=2, number="singular")]
+    predicted = [_form("ἄειδε", "ἀείδω", "verb", tense="present",
+                       mood="indicative", voice="active", person=2, number="singular")]
+    per_field = morphology_f1(expected, predicted, "grc")
+    assert per_field["pos"]["f1"] == 1.0
+    assert per_field["mood"]["f1"] == 0.0            # imperative != indicative
+    assert per_field["tense"]["f1"] == 1.0
+    assert per_field["case"]["total"] == 0           # verb: case=None → вне denominator
+
+
+def test_morphology_f1_denominator_is_subset():
+    expected = [_form("μῆνιν", "μῆνις", "noun", case="accusative",
+                      number="singular", gender="feminine"),
+                _form("ἄειδε", "ἀείδω", "verb", tense="present",
+                      mood="imperative", voice="active", person=2,
+                      number="singular")]
+    predicted = list(expected)                       # все поля верны
+    per_field = morphology_f1(expected, predicted, "grc")
+    assert per_field["case"]["total"] == 1           # только noun
+    assert per_field["pos"]["total"] == 2
+    assert per_field["mood"]["total"] == 1           # только verb
+
+
+def test_morphology_null_fields_excluded_from_denominator():
+    # singular для εἰμί-инфинитива = None → number вне denominator
+    expected = [_form("ἔμμεναι", "εἰμί", "verb", tense="present",
+                      mood="infinitive", voice="active", number=None)]
+    predicted = [_form("ἔμμεναι", "εἰμί", "verb", tense="present",
+                       mood="infinitive", voice="active", number=None)]
+    per_field = morphology_f1(expected, predicted, "grc")
+    assert per_field["number"]["total"] == 0
+    assert per_field["mood"]["total"] == 1
+
+
+def test_lemma_matching_nfc_exact():
+    import unicodedata
+    decomposed = unicodedata.normalize("NFD", "ἀγαθός")
+    expected = [_form(decomposed, decomposed, "adjective",
+                      case="nominative", number="singular", gender="neuter")]
+    predicted = [_form("ἀγαθός", "ἀγαθός", "adjective",
+                       case="nominative", number="singular", gender="neuter")]
+    per_field = morphology_f1(expected, predicted, "grc")
+    assert per_field["lemma"]["f1"] == 1.0           # NFC снимает разложение
+    # регистр для grc НЕ фолдится: Ἀγαθός != ἀγαθός
+    mismatch = [_form("ἀγαθός", "Ἀγαθός", "adjective")]
+    assert morphology_f1(expected, mismatch, "grc")["lemma"]["f1"] == 0.0
+
+
+def test_lemma_matching_latin_casefold():
+    expected = [_form("Catilīna", "Catilīna", "noun", case="vocative",
+                      number="singular", gender="masculine")]
+    predicted = [_form("Catilīna", "catilīna", "noun", case="vocative",
+                       number="singular", gender="masculine")]
+    assert morphology_f1(expected, predicted, "la")["lemma"]["f1"] == 1.0
+
+
+def test_morphology_f1_splits_by_confidence():
+    from aeon.gold.loader import GoldDataset, GoldRecord
+    from aeon.gold.runner import GoldPrediction
+
+    def make_record(seg_id, confidence):
+        return GoldRecord(
+            text_id="tiny", language="grc", segment_id=seg_id,
+            segment_text="x" * seg_id, schema_version="1.1.0",
+            annotator="human:test", annotation_date="2026-10-14",
+            expected_atom={"intent": "s", "domain": "l", "is_fragment": False,
+                           "completeness_score": 1.0},
+            annotation_confidence=confidence,
+            expected_morphology=[_form("μῆνιν", "μῆνις", "noun",
+                                       case="accusative", number="singular",
+                                       gender="feminine")],
+        )
+
+    gold = GoldDataset(records=[make_record(1, "high"),
+                                make_record(2, "medium")])
+    predictions = {"tiny": [
+        GoldPrediction("tiny", 1, morphology=[
+            _form("μῆνιν", "μῆνις", "noun", case="accusative",
+                  number="singular", gender="feminine")]),
+        GoldPrediction("tiny", 2, morphology=[
+            _form("μῆνιν", "μῆνις", "noun", case="vocative",
+                  number="singular", gender="feminine")]),
+    ]}
+
+    evaluation = evaluate_dataset(gold, predictions)
+    morph = evaluation["per_text"]["tiny"]["morphology"]
+
+    assert morph["high"]["case"]["f1"] == 1.0
+    assert morph["medium"]["case"]["f1"] == 0.0
+    assert morph["all"]["case"]["total"] == 2
 
 
 # ── metrics ──

@@ -40,6 +40,7 @@ class GoldPrediction:
     verdicts: Optional[Dict[str, str]] = None
     failed: bool = False
     error: str = ""
+    morphology: Optional[List[Dict[str, Any]]] = None  # schema 1.1.0 (morph_v1)
 
 
 def _make_llm(mode: str, latency_ms: float):
@@ -98,8 +99,9 @@ def attach_raw_recorder(llm: Any, raw_dir) -> Path:
 
 
 def _predict_record(record, llm: Any, packs: Dict[str, Any],
-                    with_verdicts: bool) -> GoldPrediction:
-    """Один сегмент: markers (pack) + extract (LLM) + verdicts (LLM, опц.)."""
+                    with_verdicts: bool,
+                    morph_engine: Any = None) -> GoldPrediction:
+    """Один сегмент: markers (pack) + extract (LLM) + verdicts + morph_v1 (опц.)."""
     from ..extractor import MeaningExtractor
     from ..language import get as get_pack
     from ..verification import VerificationEngine, build_claims
@@ -126,6 +128,11 @@ def _predict_record(record, llm: Any, packs: Dict[str, Any],
         verdicts = {name: payload["verdict"]
                     for name, payload in result["agents"].items()}
 
+    morphology = None
+    if morph_engine is not None and record.expected_morphology is not None:
+        # morph_v1: отдельный pipeline-step (3.2); только на атомах с gold-разметкой
+        morphology = list(morph_engine(record.segment_text, record.language))
+
     return GoldPrediction(
         text_id=record.text_id,
         segment_id=record.segment_id,
@@ -134,19 +141,22 @@ def _predict_record(record, llm: Any, packs: Dict[str, Any],
         is_fragment=bool(pack.is_fragment(segment)),
         completeness=float(atom.completeness_score),
         verdicts=verdicts,
+        morphology=morphology,
     )
 
 
 def run_dataset(dataset: GoldDataset, *, mode: str = "mock",
                 latency_ms: float = 0.0, with_verdicts: bool = True,
                 llm: Any = None, raw_dir: Optional[str] = None,
-                stats: Optional[Dict[str, Any]] = None
+                stats: Optional[Dict[str, Any]] = None,
+                morph_engine: Any = None
                 ) -> Dict[str, List[GoldPrediction]]:
     """Прогон по всем записям датасета → {text_id: [GoldPrediction, ...]}.
 
     raw_dir — сохранять сырые LLM-ответы (аудит real-прогонов);
     stats — заполняется in-place: calls/prompt_tokens/completion_tokens/
-    latency_sec (итого) + per_text + failures (resilient per-segment).
+    latency_sec (итого) + per_text + failures (resilient per-segment);
+    morph_engine — callable(text, language) -> list[dict] (шаг morph_v1, опц.).
     """
     llm = llm if llm is not None else _make_llm(mode, latency_ms)
     if raw_dir:
@@ -162,7 +172,8 @@ def run_dataset(dataset: GoldDataset, *, mode: str = "mock",
         before = _snapshot_usage(llm)
         segment_started = time.perf_counter()
         try:
-            prediction = _predict_record(record, llm, packs, with_verdicts)
+            prediction = _predict_record(record, llm, packs, with_verdicts,
+                                         morph_engine)
         except Exception as exc:  # resilience (2.7.3): не роняем прогон
             log_event(_LOGGER, "gold_text_failed",
                       text_id=record.text_id, segment_id=record.segment_id,

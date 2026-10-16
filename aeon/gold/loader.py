@@ -16,10 +16,15 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from ..logging_config import get_logger, log_event
+
 _SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
 _ANNOTATOR_RE = re.compile(r"^(human:[A-Za-z0-9][A-Za-z0-9_-]*|mock)$")
 MARKER_KINDS = frozenset({"lacuna", "supplement", "editorial", "deletion",
                           "uncertain", "crux"})
+CONFIDENCE_LEVELS = frozenset({"high", "medium", "low"})
+MORPH_REQUIRED = ("form", "lemma", "pos")
+MORPH_OPTIONAL = ("tense", "mood", "voice", "person", "case", "number", "gender")
 _ATOM_KEYS = ("intent", "domain", "is_fragment", "completeness_score")
 _VERDICT_KEYS = ("detective", "expert", "logician")
 _REQUIRED = ("schema_version", "text_id", "language", "segment_id", "segment_text",
@@ -46,6 +51,10 @@ class GoldRecord:
     expected_markers: List[Dict[str, Any]] = field(default_factory=list)
     expected_entities: List[Dict[str, Any]] = field(default_factory=list)
     expected_verdicts: Optional[Dict[str, str]] = None
+    # ── schema 1.1.0 (mixed с 1.0.0; optional) ──
+    annotation_confidence: str = "high"          # high|medium|low
+    expected_morphology: Optional[List[Dict[str, Any]]] = None
+    excluded: bool = False                       # low -> вне всех метрик
     raw: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -125,6 +134,28 @@ def _validate_record(record: Dict[str, Any], text_id: str, line_no: int,
     if verdicts is not None:
         _require(verdicts, _VERDICT_KEYS, f"{where}.expected_verdicts")
 
+    # ── schema 1.1.0: annotation_confidence + expected_morphology ──
+    confidence = str(record.get("annotation_confidence") or "high")
+    if confidence not in CONFIDENCE_LEVELS:
+        raise GoldError(f"{where}: annotation_confidence '{confidence}' вне "
+                        f"{sorted(CONFIDENCE_LEVELS)}")
+    morphology = record.get("expected_morphology")
+    if morphology is not None:
+        if not isinstance(morphology, list):
+            raise GoldError(f"{where}.expected_morphology: ожидался список")
+        for index, form in enumerate(morphology):
+            mwhere = f"{where}.expected_morphology[{index}]"
+            if not isinstance(form, dict):
+                raise GoldError(f"{mwhere}: форма не объект")
+            _require(form, MORPH_REQUIRED, mwhere)
+            if not str(form["form"]).strip() or not str(form["lemma"]).strip() \
+                    or not str(form["pos"]).strip():
+                raise GoldError(f"{mwhere}: form/lemma/pos пусты")
+            for key, value in form.items():
+                if key in MORPH_REQUIRED or key in MORPH_OPTIONAL:
+                    if value is not None and not isinstance(value, (str, int)):
+                        raise GoldError(f"{mwhere}.{key}: тип {type(value).__name__}")
+
     return GoldRecord(
         text_id=text_id,
         language=str(record["language"]),
@@ -138,6 +169,10 @@ def _validate_record(record: Dict[str, Any], text_id: str, line_no: int,
         expected_markers=[dict(marker) for marker in record["expected_markers"]],
         expected_entities=[dict(entity) for entity in record["expected_entities"]],
         expected_verdicts=dict(verdicts) if verdicts is not None else None,
+        annotation_confidence=confidence,
+        expected_morphology=([dict(form) for form in morphology]
+                             if morphology is not None else None),
+        excluded=(confidence == "low"),
         raw=record,
     )
 
@@ -164,7 +199,12 @@ def load_dataset(annotations_dir, *, texts_dir=None, mode: str = "ci") -> GoldDa
                 record = json.loads(line)
             except json.JSONDecodeError as exc:
                 raise GoldError(f"{text_id}.jsonl:{line_no}: JSON-ошибка: {exc}") from exc
-            records.append(_validate_record(record, text_id, line_no, full_text, mode))
+            gold_record = _validate_record(record, text_id, line_no, full_text, mode)
+            if gold_record.excluded:
+                log_event(get_logger("aeon.gold"), "gold_atom_excluded_low_confidence",
+                          text_id=text_id, segment_id=gold_record.segment_id,
+                          reason="annotation_confidence=low")
+            records.append(gold_record)
 
     dataset = GoldDataset(records, str(path))
     _check_non_overlap(dataset, texts_path)

@@ -30,6 +30,71 @@ def _fold(text: Any) -> str:
     return stripped.casefold()
 
 
+# ── schema 1.1.0: морфология ──
+MORPH_FIELDS = ("pos", "lemma", "tense", "mood", "voice", "person",
+                "case", "number", "gender")
+
+
+def _nfc(text: Any) -> str:
+    return unicodedata.normalize("NFC", str(text or "").strip())
+
+
+def _morph_value_matches(field: str, expected: Any, predicted: Any,
+                         language: str) -> bool:
+    """Сравнение значения поля: NFC exact; lemma — +casefold для латыни."""
+    if predicted is None:
+        return False
+    if field == "person":
+        return str(expected) == str(predicted)
+    if field == "lemma" and language == "la":
+        return _nfc(expected).casefold() == _nfc(predicted).casefold()
+    return _nfc(expected) == _nfc(predicted)
+
+
+def morphology_f1(expected_forms: List[Dict], predicted_forms: List[Dict],
+                  language: str = "grc") -> Dict[str, Dict[str, Any]]:
+    """Per-field соответствие форм (schema 1.1.0).
+
+    Правила: матч форм — NFC exact `form`; denominator поля = формы, где
+    ожидаемое значение non-null («не применимо/не восстановимо» → null →
+    исключено); пропущенная ожидаемая форма считается промахом по её
+    non-null полям; лишние предсказанные формы игнорируются.
+    """
+    used = set()
+    pairs: List[tuple] = []
+    for expected in expected_forms:
+        expected_form = _nfc(expected.get("form"))
+        matched = None
+        for index, predicted in enumerate(predicted_forms):
+            if index in used:
+                continue
+            if _nfc(predicted.get("form")) == expected_form:
+                matched = predicted
+                used.add(index)
+                break
+        pairs.append((expected, matched))
+
+    per_field: Dict[str, Dict[str, Any]] = {}
+    for field in MORPH_FIELDS:
+        tp = 0
+        total = 0
+        for expected, predicted in pairs:
+            expected_value = expected.get(field)
+            if expected_value is None:
+                continue                    # null → вне denominator
+            total += 1
+            if predicted is not None and _morph_value_matches(
+                    field, expected_value, predicted.get(field),
+                    expected.get("_lang", language)):
+                tp += 1
+        per_field[field] = {
+            "tp": tp,
+            "total": total,
+            "f1": round(tp / total, 4) if total else None,
+        }
+    return per_field
+
+
 def _prf(tp: int, fp: int, fn: int) -> Dict[str, float]:
     precision = tp / (tp + fp) if (tp + fp) else (1.0 if fn == 0 else 0.0)
     recall = tp / (tp + fn) if (tp + fn) else 1.0
@@ -119,6 +184,7 @@ def evaluate_dataset(dataset: GoldDataset, predictions: Dict[str, List[Any]]) ->
     """Метрики per text + aggregate. predictions: {text_id: [GoldPrediction, ...]}."""
     per_text: Dict[str, Any] = {}
     all_marker_tp: Dict[str, Dict[str, float]] = {}
+    aggregate_morph: Dict[str, Tuple[List[Dict], List[Dict]]] = {}
     entity_totals = {"tp": 0, "fp": 0, "fn": 0}
     fragment_pairs: List[Tuple[bool, bool]] = []
     completeness_pairs: List[Tuple[float, float]] = []
@@ -133,8 +199,25 @@ def evaluate_dataset(dataset: GoldDataset, predictions: Dict[str, List[Any]]) ->
         text_fragment_pairs: List[Tuple[bool, bool]] = []
         text_completeness_pairs: List[Tuple[float, float]] = []
         text_verdict_triples: List[Tuple[Dict, Dict]] = []
+        morph_buckets: Dict[str, Tuple[List[Dict], List[Dict]]] = {
+            "high": ([], []), "medium": ([], []), "all": ([], [])}
 
-        for record, prediction in zip(records, predicted_list):
+        pairs = [(record, prediction)
+                 for record, prediction in zip(records, predicted_list)
+                 if not record.excluded]
+        for record, prediction in pairs:
+            if record.expected_morphology:
+                expected_forms = [dict(form, _lang=record.language)
+                                  for form in record.expected_morphology]
+                predicted_forms = [dict(form, _lang=record.language)
+                                   for form in (getattr(prediction, "morphology", None) or [])]
+                bucket = (record.annotation_confidence
+                          if record.annotation_confidence in ("high", "medium")
+                          else "high")
+                morph_buckets[bucket][0].extend(expected_forms)
+                morph_buckets[bucket][1].extend(predicted_forms)
+                morph_buckets["all"][0].extend(expected_forms)
+                morph_buckets["all"][1].extend(predicted_forms)
             expected_markers.extend(record.expected_markers)
             predicted_markers.extend(prediction.markers)
             expected_entities.extend(record.expected_entities)
@@ -156,7 +239,13 @@ def evaluate_dataset(dataset: GoldDataset, predictions: Dict[str, List[Any]]) ->
             "is_fragment_accuracy": is_fragment_accuracy(text_fragment_pairs),
             "completeness_mae": completeness_mae(text_completeness_pairs),
             "verdicts": verdict_accuracy(text_verdict_triples),
+            "morphology": {bucket: morphology_f1(exp, pred)
+                           for bucket, (exp, pred) in morph_buckets.items()},
         }
+        for bucket, (exp, pred) in morph_buckets.items():
+            agg_bucket = aggregate_morph.setdefault(bucket, ([], []))
+            agg_bucket[0].extend(exp)
+            agg_bucket[1].extend(pred)
         for kind, counts in marker_metrics["per_kind"].items():
             bucket = all_marker_tp.setdefault(kind, {"tp": 0, "fp": 0, "fn": 0})
             bucket["tp"] += counts["tp"]
@@ -180,5 +269,7 @@ def evaluate_dataset(dataset: GoldDataset, predictions: Dict[str, List[Any]]) ->
         "is_fragment_accuracy": is_fragment_accuracy(fragment_pairs),
         "completeness_mae": completeness_mae(completeness_pairs),
         "verdicts": verdict_accuracy(verdict_triples),
+        "morphology": {bucket: morphology_f1(exp, pred)
+                       for bucket, (exp, pred) in aggregate_morph.items()},
     }
     return {"per_text": per_text, "aggregate": aggregate}
