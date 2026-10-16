@@ -12,10 +12,10 @@ statistically meaningful measurement deferred to F4 (target N≥20 пар)».
 
 | Kind | Операционный критерий | Scope |
 |---|---|---|
-| `direct_citation` | named-маркер («ut ait X», название работы) ИЛИ verbatim-run ≥5 знаменательных лемм подряд | ✅ |
-| `adaptation` | scholarly consensus (ссылка на издание/комментарий в notes) + ≥3 **параллельных** знаменательных лемм; включает переводы (Livius Odusia) | ✅ |
-| `formulaic_echo` | общая формула ≥2 знаменательных лемм в жанрово-родственном контексте (proem/invocation) | ✅ |
-| structural_parallel | без лексического якоря | ❌ 3.4.1 |
+| `direct_citation` | named-маркер («ut ait X», название работы) ИЛИ verbatim-run ≥5 знаменательных лемм подряд | ✅ (gold ×0, prompt-only) |
+| `adaptation` | scholarly consensus (ссылка на издание/комментарий в notes) + ≥3 **параллельных** лемм; **включает переводы** (Livius Odusia) — с явной пометкой `annotator_notes: "translation (… ← …)"` | ✅ |
+| `formulaic_echo` | **гибридное evidence**: формульный маркер (proem: invocation-verb + subject-of-song) **И/ИЛИ** ≥1 лемма-пара; в записи обязателен `matched_formula` (строка-описание формулы) ЛИБО непустые `matched_lemmas` | ✅ |
+| structural_parallel | без лексического/формульного якоря | ❌ 3.4.1 |
 | thematic_allusion / lexical_borrowing | субъективно / Ф4 | ❌ |
 
 В пилоте: adaptation ×2 (Catull.51←Sapph.31; Livius←Od.1), formulaic_echo ×2 (Vergil↔Il.1;
@@ -36,9 +36,9 @@ Vergil↔Od.1), **direct_citation ×0** (в корпусе нет named-цита
 ]
 ```
 - `offset` — НЕ включаем (additive позже);
-- **`matched_lemmas`: REQUIRED для `direct_citation` и `formulaic_echo`; OPTIONAL для `adaptation`** (verifiability — consensus/издание в notes); тесты: `test_cross_ref_direct_citation_requires_lemmas`, `test_cross_ref_adaptation_lemmas_optional`;
-- **`confidence` = уверенность в СУЩЕСТВОВАНИИ связи** (не в kind); `low` → исключение из метрик (как 1.1.0); kind — отдельное утверждение (kind-confidence — backlog);
-- `direction` — справочный (метрика неориентированная).
+- **`matched_lemmas`: REQUIRED для `direct_citation`; REQUIRED-ИЛИ-`matched_formula` для `formulaic_echo`** (эхо без лексики валидно через формулу — кейс Vergil↔Il.1); **OPTIONAL для `adaptation`** (видимость — consensus/издание в notes; при cross-language записи пары имеют вид `"лемма_a/лемма_b"`); тесты: `test_cross_ref_direct_citation_requires_lemmas`, `test_cross_ref_adaptation_lemmas_optional`, `test_cross_ref_echo_requires_lemmas_or_formula`;
+- **`confidence` = уверенность в СУЩЕСТВОВАНИИ связи** (не в kind); `low` → исключение из метрик (как 1.1.0);
+- **Direction convention: (a) ХРОНОЛОГИЯ** — `source` = более РАННИЙ текст, `target` = поздний (детерминировано, без интерпретации «кто кого цитирует»; для echo, где цитирующий не определён, это единственно однозначное соглашение). Цитационный смысл фиксируется в `annotator_notes` («X adapts/cites Y»). Метрика неориентированная — direction на F1 не влияет.
 
 ## 3. Метрика
 
@@ -85,3 +85,12 @@ few-shot вне gold.
 
 Out: structural (3.4.1), thematic, lexical (Ф4), multi-hop (Ф4), offset, prefilter (Ф4), kind-confidence (backlog).
 Fallback: <3 verifiable на sample → defer 3.4 → 3.7 (export formats).
+
+## 10. Coverage gaps (explicit — design principle #8)
+
+| Gap | Статус | Impact | Trigger / путь |
+|---|---|---|---|
+| **`direct_citation`: 0 gold-примеров** | acknowledged (MEDIUM) — prompt-only | F1_direct = **N/A**; kind не валидируется пайплайном (few-shot понимание LLM не проверено) | новый корпус со схолиастом/комментатором ИЛИ внешний запрос на direct_citation |
+| `offset` локалей не включён | deferred (additive) | точность локалей = сегмент | потребность passage-level точности |
+| kind-confidence (уверенность в ТИПЕ) | backlog | kinds могут перепутываться без штрафа | при усложнении kinds/росте N |
+| multi-hop chains | backlog/Ф4 | цепочки A→B→C не детектируются | Ф4 |

@@ -403,6 +403,11 @@ RU-конспектом → заменён подлинной grc-транскр
   cross-refs отклонён на основе прогона (мусор через артикли + структурно
   слеп для cross-language), а не «кажется сложным» — сэкономил 2 дня
   неработающего filtered-подхода.
+- **Design principle (#8, 3.4 scoping 2026-10-14):** coverage gaps —
+  **explicit**: prompt-only фичи (без gold-примеров) обязаны быть в разделе
+  `coverage_gaps` соответствующего документа, не в inline-комментарии.
+  Пример: `direct_citation` ×0 в gold (prompt-only, F1 = N/A) —
+  задокументирован в `docs/phase3_34_design.md` §10.
 - **Бюджет-политика LLM (аудит 2026-10-14):** 15 call-sites — все через
   `DeepSeekClient._call(+_call_json)` → единый провайдер (finish_reason-retry —
   safety-net там); default max_tokens = 4000; sites с большими/масштабными

@@ -452,6 +452,26 @@
       "3_6_web": "defer until 3.4 plan",
       "3_7_export": "candidate after 3.4",
       "3_8_calibration": "Phase 4"
+    },
+    "step_3_4": {
+      "status": "plan_rev2_approved; build_3.4.0_green-lit; samples_pending_countersign",
+      "decisions": "direction=chronological(source=earlier); echo=lemmasORmatched_formula(hybrid); translation->adaptation with explicit note; matched_lemmas matrix per-kind; confidence=existence",
+      "findings": [
+        {
+          "id": "direct_citation_gold_gap",
+          "severity": "MEDIUM",
+          "status": "acknowledged",
+          "impact": "F1_direct=N/A; prompt-only kind not pipeline-validated",
+          "trigger": "new corpus with scholiast/commentator OR external request"
+        }
+      ],
+      "coverage_gaps": [
+        "direct_citation x0 (prompt-only)",
+        "offset deferred",
+        "kind-confidence backlog",
+        "multi-hop backlog"
+      ],
+      "fallback": "if sample-countersign <3 verifiable -> defer 3.4 -> 3.7 (pre-committed)"
     }
   },
   "completed_at": null,
