@@ -4,15 +4,14 @@ LaBSE 768D embeddings + verification + .aeon format + anti-hallucination.
 """
 
 import os
+import contextlib
 import sys
 from dotenv import load_dotenv
 load_dotenv()
 
 if sys.platform == 'win32':
-    try:
+    with contextlib.suppress(OSError):
         sys.stdout.reconfigure(encoding='utf-8')
-    except Exception:
-        pass
 
 __version__ = "3.0.0"
 __author__ = "Aeon Collective Intelligence"

@@ -14,7 +14,8 @@ try:
     from sentence_transformers import SentenceTransformer
     _SENTENCE_TRANSFORMERS = True
 except ImportError:
-    pass
+    SentenceTransformer = None
+    _SENTENCE_TRANSFORMERS = False
 
 
 class EmbeddingEngine:

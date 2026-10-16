@@ -15,11 +15,12 @@ def is_retryable(exc: BaseException) -> bool:
     """Классификация исключения: стоит ли повторить вызов."""
     try:
         import openai
+    except ImportError:
+        openai = None
 
-        if isinstance(exc, (openai.APITimeoutError, openai.APIConnectionError)):
-            return True
-    except Exception:
-        pass
+    if openai is not None and isinstance(
+            exc, (openai.APITimeoutError, openai.APIConnectionError)):
+        return True
 
     status = getattr(exc, "status_code", None)
     if status is None:

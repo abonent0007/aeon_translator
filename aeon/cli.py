@@ -3,6 +3,7 @@
 """
 
 import sys
+import contextlib
 import os
 from .translator import AeonTranslator
 
@@ -473,10 +474,8 @@ def print_image_result(result: dict):
         for p in paths:
             print(f"  Файл: {p}")
             # Открыть в просмотрщике
-            try:
+            with contextlib.suppress(OSError):
                 os.startfile(p)
-            except Exception:
-                pass
     elif result.get("images"):
         for url in result["images"][:3]:
             if isinstance(url, str) and len(url) < 500:

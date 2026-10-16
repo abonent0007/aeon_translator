@@ -196,8 +196,8 @@ async def api_transcribe(file: UploadFile = File(None), language: str = "auto"):
             raise HTTPException(500, "Recording failed")
 
     result = t.voice.voice_to_text(audio_path, language=language)
-    try: os.unlink(audio_path)
-    except: pass
+    with contextlib.suppress(OSError):
+        os.unlink(audio_path)
     add_log("stt", {"lang": result.get("language", "?"), "text": result.get("text", "")[:40]})
     return {"text": result.get("text", ""), "language": result.get("language", "unknown")}
 

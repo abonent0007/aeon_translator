@@ -68,10 +68,12 @@ class MorphEngine:
             return [_null_entry(form) for form in forms]
 
         items = [item for item in data["forms"] if isinstance(item, dict)]
-        try:
-            items.sort(key=lambda item: int(item.get("index") or 0))
-        except (TypeError, ValueError):
-            pass
+
+        def _index_of(item: Dict[str, Any]) -> int:
+            value = item.get("index")
+            return value if isinstance(value, int) else 10 ** 6  # нечисловые — в конец
+
+        items.sort(key=_index_of)
 
         violation = len(items) != len(forms) or any(
             str(item.get("form") or "").strip() != forms[i]

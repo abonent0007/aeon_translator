@@ -16,7 +16,8 @@ try:
     import whisper
     _WHISPER_AVAILABLE = True
 except ImportError:
-    pass
+    whisper = None
+    _WHISPER_AVAILABLE = False
 
 # ── Edge TTS (основной, нейросетевой) ──────────────────────
 _EDGE_TTS_AVAILABLE = False
@@ -24,7 +25,8 @@ try:
     import edge_tts
     _EDGE_TTS_AVAILABLE = True
 except ImportError:
-    pass
+    edge_tts = None
+    _EDGE_TTS_AVAILABLE = False
 
 # ── Piper TTS (локальный, оффлайн) ─────────────────────────
 _PIPER_AVAILABLE = False
@@ -32,7 +34,8 @@ try:
     from piper import PiperVoice
     _PIPER_AVAILABLE = True
 except ImportError:
-    pass
+    PiperVoice = None
+    _PIPER_AVAILABLE = False
 
 
 # ═══════════════════════════════════════════════════════════════
