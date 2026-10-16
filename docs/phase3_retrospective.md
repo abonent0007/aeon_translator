@@ -68,6 +68,13 @@
 | 22 | publishable ≠ public: export до UI | 3.7 | candidate (impl: 3.7) |
 | 23 | behavioral invariants → executable guards | 3.7 | ACTIVE (×3) |
 
+**Явный список статусов:** **ACTIVE: #1–#15, #18, #21, #23 (18)**;
+**candidate: #16, #17, #19, #20, #22 (5)**. Все пять candidate имеют
+impl-свидетельство (D2/D3-приоритет, post-filter, explicit-exceptions D5→D7,
+link-level reframing, 3.7-export); промоция — при повторном применении или
+решением куратора. **#2 канонизирован как ACTIVE** — работал на 2.4/3.2
+(ранее в AGENTS был без номера; это нумерация, не новый принцип).
+
 ## 5. Backlog (единая таблица, trigger-gated)
 
 | Item | Trigger | Priority |
@@ -77,16 +84,16 @@
 | 3.6 Web UI/API | export demand (внешние потребители) | MEDIUM |
 | `v2_markers_persistence` (H2, MEDIUM finding) | TEI-marker demand / marker re-audit | MEDIUM |
 | `crossref_source_work_disambiguation` (#3-класс) | Ф4 | MEDIUM |
-| `crossref_chronology_aware_harness` | corpus >30 | LOW |
-| gold bucket-drift revision (il×vergil) | Ф4 | LOW |
-| 3.9 embeddings-provider | deferred | LOW |
-| `call_structured` (dynamic budget/cursor) | Ф4 | LOW |
-| json_repair strategy-loop | named debt | LOW |
-| `deepseek-chat` compatibility audit | at deprecation | LOW |
-| legacy façade (`deepseek.py`) deprecation | after next major | LOW |
-| RIS-format export | demand | LOW |
-| crossref offset loci | passage-level потребность | LOW |
-| kind-confidence | N рост | LOW |
+| `crossref_chronology_aware_harness` | corpus >30 текстов | LOW |
+| gold bucket-drift revision (il×vergil) | Ф4 (gold revision) | LOW |
+| 3.9 embeddings-provider | Ф4 scope-решение (multi-hop/семантический поиск) | LOW |
+| `call_structured` (dynamic budget/cursor) | Ф4 (unbounded-array кейс, напр. linguistics 124 findings) | LOW |
+| json_repair strategy-loop | repair-инцидент класса extractor-fallback (event) | LOW |
+| `deepseek-chat` compatibility audit | deprecation-анонс провайдера (event) | LOW |
+| legacy façade (`deepseek.py`) deprecation | следующий major-релиз (event) | LOW |
+| RIS-format export | внешний запрос формата (demand) | LOW |
+| crossref offset loci | потребитель запросит passage-level точность (demand) | LOW |
+| kind-confidence | crossrefs N≥20 (datapoint-масштаб) | LOW |
 | multi-hop chains | Ф4 | LOW |
 
 ## 6. Known gaps (consolidated)
@@ -102,6 +109,33 @@
   variant-renderer generic до интеграции selector.
 - **Общие:** Pleiades README links (network); Trismegistos (нет датасета);
   role-consistency 10.7%; порог 0.85 не калиброван (N<30).
+
+## 6b. What didn't work / was abandoned
+
+- **D5 (3.4 v1.2):** translation-exception overfired (LLM hallucinated
+  clause-by-clause correspondence для Vergil) → заменён D7 в v1.2.1.
+  Урок: онтологический критерий (version-of-source) устойчивее лексического,
+  когда LLM галлюцинирует evidence.
+- **Cache-эффект:** 2.2% hit-rate (5.4K/244K) vs ожидание ≥30% — низкий
+  prefix-reuse в pair-промпте. Backlog (не оптимизировали).
+- **PowerShell double-execution:** pipeline-опечатка выполнила 105-прогон
+  дважды (−$0.037) → #18 (overwrite-guard) + operator-дисциплина.
+- **Pre-commit буква vs дух (3.4.2):** триггер «livius в echo» сработал на
+  direction-artifact, не на kind-flip → реформирован через #21 (signal-not-artifact).
+- **`meaning_hash` legacy-warning false-positive:** эмпирика Plato (стоп №3) —
+  поле рутинное; триггер сужен до `legacy_v1_original` OR `contract != v1`.
+- **Mock-span TEI:** Plato-mock не демонстрировал inline (RU-spans) — закрыто
+  real-прогоном Sappho в той же сессии (не отложено).
+- **contract v1.1 (Rule 3 content-first, Rule 5 emphasis):** активация
+  отклонена — триггеры не сработали (failing case отсутствует). Не провал —
+  отказ от активации без case (hygiene creep).
+- **Trismegistos:** публичного датасета/API нет (SSL+403, datasets недоступны)
+  → stub `no_public_dataset`; в pipeline не включается. Внешнее ограничение.
+- **Pleiades offline dump:** ссылки README неверифицируемы из dev-сети
+  (TCP ok, нет ответа) — dump отложен; live-skip в тестах. Внешнее ограничение.
+- **Rule 2.1 «σ/ς-унификация, iota adscript»** — исследовано и сознательно
+  отклонено (Unicode-стандарт): не баг, а зафиксированное решение против
+  «поисковой унификации» в Ф3-пайплайне.
 
 ## 7. What we'd do differently (honest)
 
