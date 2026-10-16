@@ -53,7 +53,9 @@ raw: `gold/real_runs/2026-10-14_t3/`; отчёт: `gold/reports/real_2026-10-14_
 
 **История прогонов:** t1 = baseline v3.0-контракта; **t2 = FAILED** (deepseek-flash —
 thinking-модель: reasoning съедал max_tokens=2000 → пустой content у всех 28 вызовов,
-rule-fallback; диагноз probe-verified, фикс — thinking disabled, commit 7a721d0);
+rule-fallback; диагноз probe-verified, фикс — thinking disabled, commit 7a721d0;
+**raw сохранён `gold/real_runs/2026-10-14_t2/`; отчёт-md удалён как misleading —
+provenance: failed run, superseded by t3**);
 t3 = первый валидный v1-прогон.
 
 **Stop-flags t3 (ждут решения куратора):**

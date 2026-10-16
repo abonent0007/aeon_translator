@@ -8,6 +8,7 @@ AEON LLM слой — DeepSeekClient (фасад, обратная совмес�
 """
 
 import os
+import warnings
 from typing import Optional
 
 from ..config import CONFIG, AeonConfig
@@ -140,6 +141,12 @@ class DeepSeekClient:
         Извлекает семантический смысл из текста с помощью LLM.
         Возвращает структуру: {intent, domain, concepts, complexity, urgency, ...}
         """
+        warnings.warn(
+            "DeepSeekClient.extract_meaning — legacy v3.0 фасад; используйте v4-пайплайн "
+            "(aeon.extractor / aeon.generator и т.д.). Удаление — после следующего "
+            "major (см. CHANGELOG.md).",
+            DeprecationWarning, stacklevel=2,
+        )
         prompt = f"""You are a semantic analysis engine. Analyze the following text and extract its deep meaning.
 Respond ONLY with valid JSON, no markdown formatting.
 
@@ -165,6 +172,12 @@ Return JSON with exactly these fields:
         """
         Переводит текст с сохранением смысла, тона и намерения.
         """
+        warnings.warn(
+            "DeepSeekClient.translate_text — legacy v3.0 фасад; используйте v4-пайплайн "
+            "(aeon.extractor / aeon.generator и т.д.). Удаление — после следующего "
+            "major (см. CHANGELOG.md).",
+            DeprecationWarning, stacklevel=2,
+        )
         lang_names = {
             "russian": "Russian", "english": "English", "chinese": "Chinese (Simplified)",
             "auto": "the detected language"
@@ -183,6 +196,12 @@ Return JSON with exactly these fields:
         """
         Генерирует код на основе описания намерения.
         """
+        warnings.warn(
+            "DeepSeekClient.generate_code — legacy v3.0 фасад; используйте v4-пайплайн "
+            "(aeon.extractor / aeon.generator и т.д.). Удаление — после следующего "
+            "major (см. CHANGELOG.md).",
+            DeprecationWarning, stacklevel=2,
+        )
         prompt = f"""Generate clean, well-structured {target_lang} code based on the following description.
 Include helpful docstrings/comments in English.
 Return ONLY the code, no markdown formatting, no explanations.
@@ -208,6 +227,12 @@ Description: {description}"""
         """
         Сравнивает семантическую близость двух текстов.
         """
+        warnings.warn(
+            "DeepSeekClient.semantic_compare — legacy v3.0 фасад; используйте v4-пайплайн "
+            "(aeon.extractor / aeon.generator и т.д.). Удаление — после следующего "
+            "major (см. CHANGELOG.md).",
+            DeprecationWarning, stacklevel=2,
+        )
         prompt = f"""Compare the semantic meaning of these two texts. Return ONLY valid JSON.
 
 Text A: "{text_a}"
@@ -228,6 +253,12 @@ Return JSON with:
         """
         Создаёт промпт для генерации изображения на основе текста/эмоции/идеи.
         """
+        warnings.warn(
+            "DeepSeekClient.describe_for_image — legacy v3.0 фасад; используйте v4-пайплайн "
+            "(aeon.extractor / aeon.generator и т.д.). Удаление — после следующего "
+            "major (см. CHANGELOG.md).",
+            DeprecationWarning, stacklevel=2,
+        )
         prompt = f"""Create a detailed image generation prompt in English based on this text/idea/emotion.
 Style preference: {style}.
 Make it vivid, descriptive, and suitable for high-quality image generation.
