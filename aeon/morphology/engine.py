@@ -50,11 +50,15 @@ class MorphEngine:
                   .replace("{text}", text)
                   .replace("{language}", language)
                   .replace("{forms_numbered}", numbered))
+        # Бюджет вывода: ~250 токенов/форму (JSON с 11 полями), пол 2000, потолок 8000.
+        # Прогон 2026-10-14 (morph_t2): атом на 25 форм обрезал max_tokens=2000 →
+        # parse_error → null-cascade; найдено полным прогоном (engine budget bug).
+        max_tokens = max(2000, min(8000, len(forms) * 250))
         data = self.llm._call_json([
             {"role": "system",
              "content": "You are a morphological analyzer. Return only valid JSON."},
             {"role": "user", "content": prompt},
-        ], temperature=0.0)
+        ], temperature=0.0, max_tokens=max_tokens)
 
         if data.get("parse_error") or not isinstance(data.get("forms"), list):
             log_event(_LOGGER, "morph_parse_error",
