@@ -27,7 +27,8 @@ refuses to process gold annotations (predictions only).
 
 ## Install & run
 
-Requires Python 3.11. From a repo checkout:
+Requires Python 3.11. From a repo checkout (package name `aeon-translator` —
+historical; version `0.3.0` maps to Phase 3):
 
     pip install -e .
     python -m aeon.demo --text examples/greek/plato_apologia_17a.txt --verify=full --language=grc

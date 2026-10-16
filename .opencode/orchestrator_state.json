@@ -65,7 +65,7 @@
   }
  ],
  "current_step": 15,
- "next_step": "3.7 export formats (BibTeX/TEI/Markdown/JSON-LD; scoping stop-point) + Phase 3 consolidation; decision F4-vs-3.6 after",
+ "next_step": "decision: F4 (gold expansion) vs 3.6 (Web UI) vs Pause — pause preliminary (needs concrete consumer)",
  "phase": "complete_with_known_gap",
  "phase2": {
   "status": "complete",
@@ -330,7 +330,7 @@
   ]
  },
  "phase3": {
-  "status": "step_3_4_pilot_final_accepted",
+  "status": "complete",
   "step_3_5_clarifications": "Уточнения куратора закрыты: (1) demo conf=0.71 — canned (DEMO_RESPONSES), illustrative — задокументировано в AGENTS.md; (2) пустой loci — loader отклоняет (test_empty_loci_rejected_by_loader), engine на программном пустом apparatus → selections=[] без LLM (test_engine_empty_loci_returns_empty_selection); (3) неоднозначный stem → ConfigError by design — задокументировано. Tests: 29.",
   "step_3_3_preflight": "gold/ (README/annotation_schema.json/texts/annotations/metrics.md); аннотация вручную (не pipeline — анти-циркулярность); стоп-точка №1: пример Plato 17a seg1 показан до массовой разметки; метрики stdlib (statistics), без pandas/HF; двухуровневые тесты (reports + baseline); маркеры pytest gold_mock/gold_real.",
   "step_3_1": "done (aeon/format writer/reader/validator/versioning; D1 frozen v1 fixture (e8cf5ca); D2 meaning_hash только в legacy; D3 snapshot при создании атома; D4 +4 теста; mock-guard + force_unsafe аудит-лог; --save-aeon/--load-aeon в demo). Facts: format tests = 24 (tests/test_format_v2.py; suite 317), v2 size: plato_full(--layers=all --focus=all) = 17.3KB, plato(focus=historian) = 15.7KB (<50KB, limit 200KB with margin; structured-only confirmed). NameError-fix (chain_result/focus_run) в 50ea764 + регрессионный test_demo_save_aeon_without_optional_steps.",
@@ -453,7 +453,9 @@
    "3_7_export": "candidate after 3.4",
    "3_8_calibration": "Phase 4"
   },
-  "step_3_4": "done / pilot-final (2026-10-16, countersign): engine aeon/crossrefs (pair-based detect, prompt v1.2.1 frozen, structured few-shot x5, post-filters: schema-validate + grounded-pairs + same-author) + gold 1.2.1 (+author_id, 54 records/15 texts, 4 xrefs) + tools/crossrefs_f1 (HEADLINE link-level F1). History: v1.0->v1.1 (D1-D4)->v1.2 (D5)->v1.2.1 (D7 + Example 5) = pilot-final. Metrics: link-F1 all 0.800 (tp4 fp2; recall 4/4 all versions), kind-macro 0.619, .037/run. FP closed: #3 accepted known (wrong-source), #7 retained (no consensus evidence). Backlog: crossref_chronology_aware_harness (trigger corpus>30), crossref_source_work_disambiguation (F4), gold bucket-drift revision (F4). Pre-commit reformulated (D7 last kind-patch; direction-artifact not trigger). Report: docs/phase3_34_report.md. Suite 459."
+  "step_3_4": "done / pilot-final (2026-10-16, countersign): engine aeon/crossrefs (pair-based detect, prompt v1.2.1 frozen, structured few-shot x5, post-filters: schema-validate + grounded-pairs + same-author) + gold 1.2.1 (+author_id, 54 records/15 texts, 4 xrefs) + tools/crossrefs_f1 (HEADLINE link-level F1). History: v1.0->v1.1 (D1-D4)->v1.2 (D5)->v1.2.1 (D7 + Example 5) = pilot-final. Metrics: link-F1 all 0.800 (tp4 fp2; recall 4/4 all versions), kind-macro 0.619, .037/run. FP closed: #3 accepted known (wrong-source), #7 retained (no consensus evidence). Backlog: crossref_chronology_aware_harness (trigger corpus>30), crossref_source_work_disambiguation (F4), gold bucket-drift revision (F4). Pre-commit reformulated (D7 last kind-patch; direction-artifact not trigger). Report: docs/phase3_34_report.md. Suite 459.",
+  "completed_at": "2026-10-16",
+  "consolidation": "C1-C3 (2026-10-16): retrospective docs/phase3_retrospective.md (baselines consolidated, principles #1-#23: 18 ACTIVE / 5 candidate, trigger-gated backlog, section 6b what-didnt-work); public summary docs/aeon_public_summary.md; README pointer + README.v3.md legacy; pyproject.toml (aeon-translator 0.3.0; pip install -e . verified; deps AST-scanned); version coherence __version__=0.3.0 (banner f-string); git tag phase3-complete"
  },
  "completed_at": null,
  "user_preferences": {
@@ -478,7 +480,8 @@
   "3.3 ACCEPTED. Clarifications: mixed-marker [слова ...] decision (A)=supplement documented (B/C rejected: matching); offsets tooling committed (tools/annotate_offsets.py + test); gold/metrics.md mock-baseline = self-consistency not quality (explicit); test_mock_false_allowed_with_key added; demo real-path fixes (llm.calls guard, llm_model in v2 metadata). 2.7 in_progress per curator; sub-steps reported separately (2.7.1 smoke → stop).",
   "commit_2b done: v2 contract metadata trio (chain/anchor/contract-era) + legacy default on read; build_claims (commit 3) will apply video-skip more aggressively for v3.0-legacy chain per curator.",
   "Phase 3 midpoint checkpoint (2026-10-14): all baselines/principles/backlog consolidated; suite 428; next = 3.4 scoping Plan Mode.",
-  "3.4 pilot closed 2026-10-16 (v1.2.1 final, link-F1 0.800); next track 3.7+consolidation (curator 2026-10-16)"
+  "3.4 pilot closed 2026-10-16 (v1.2.1 final, link-F1 0.800); next track 3.7+consolidation (curator 2026-10-16)",
+  "phase3 complete 2026-10-16 (consolidation C1-C3; version 0.3.0; tag phase3-complete)"
  ],
  "backlog": [
   "2.7 Real API verification when key available (Sappho reconstruction, layers/focus quality); budget options (a)/(b); parallelism tuning",

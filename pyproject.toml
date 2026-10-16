@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aeon-translator"
-version = "3.0.0"
+version = "0.3.0"
 description = "Semantic analysis and verification for Ancient Greek and Latin texts (.aeon v2, gold-standard evaluation, deterministic research exports)"
 readme = "README.md"
 requires-python = ">=3.11"
