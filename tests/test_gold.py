@@ -298,7 +298,6 @@ def test_lemma_matching_latin_casefold():
 def test_morphology_f1_splits_by_confidence():
     from aeon.gold.loader import GoldDataset, GoldRecord
     from aeon.gold.runner import GoldPrediction
-
     def make_record(seg_id, confidence):
         return GoldRecord(
             text_id="tiny", language="grc", segment_id=seg_id,
@@ -475,3 +474,22 @@ def test_gold_real_plato_smoke(dataset):
                            annotations_dir=dataset.annotations_dir)
     predictions = run_dataset(subset, llm=llm, with_verdicts=False)
     assert len(predictions["plato_apologia_17a"]) == 3
+
+
+def test_gold_1_1_1_personal_pronouns_have_person(dataset):
+    """Class A (1.1.1): личные местоимения несут person; case-фиксы применены."""
+    personal = {"ἐγώ": 1, "ἡμεῖς": 1, "nōs": 1, "σύ": 2, "ὑμεῖς": 2, "tū": 2}
+    for record in dataset.records:
+        for form in (record.expected_morphology or []):
+            if form.get("pos") == "pronoun" and form.get("lemma") in personal:
+                assert form.get("person") == personal[form["lemma"]], \
+                    (record.text_id, form["form"], form.get("person"))
+    cicero4 = next(r for r in dataset.records
+                   if r.text_id == "cicero_cat_1" and r.segment_id == 4)
+    for form in cicero4.expected_morphology:
+        if form["form"] in ("nocturnum", "praesidium", "ōra", "vultūs"):
+            assert form["case"] == "nominative"
+    homer2 = next(r for r in dataset.records
+                  if r.text_id == "homer_iliad_1" and r.segment_id == 2)
+    eta = next(f for f in homer2.expected_morphology if f["form"] == "ἣ")
+    assert eta["case"] == "nominative"

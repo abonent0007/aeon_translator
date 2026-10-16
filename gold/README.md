@@ -10,7 +10,19 @@ pipeline'ом AEON; в `gold_mock`-тестах MockLLM возвращает can
 **draft до подписи куратора** (стоп №1 пройден: схема одобрена с 3 уточнениями,
 внесены в `annotation_schema.json`).
 
-annotations_version: **1.1.0** (expansion 2026-10-14: +6 текстов, +morphology; аддитивно к 1.0.0)
+annotations_version: **1.1.1** (Class A source-verified fixes 2026-10-14; см. Change log)
+
+## Change log
+### 1.1.1 (2026-10-14) — Class A: source-verified fixes
+Обнаружено morph_v1 baseline (модель лингвистически права, gold — нет);
+патч по source-diff (без подгонки под model — protocol):
+| text | form | было | стало | source-evidence |
+|---|---|---|---|---|
+| cicero | nocturnum, praesidium, ōra, vultūs | acc | **nom** | параллельные подлежащие при mōvērunt (в gold vigiliae/timor/concursus/locus уже nom — внутренняя несогласованность) |
+| homer | ἣ | dat | **nom** | Il. 1.2: субъект ἔθηκε |
+| все личные местоимения | ἐγώ/σύ/nōs/tū/ὑμεῖς… | person null | **1/2** | treebank-стандарт (AGDT/PROIEL): личные местоимения несут person (8 форм) |
+
+### 1.1.0 (2026-10-14) — expansion (Phase A/B)
 
 ## Schema 1.1.0 — expansion (Phase A/B, 2026-10-14)
 Новые поля (optional, mixed 1.0.0/1.1.0 в одном датасете):

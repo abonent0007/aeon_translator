@@ -135,12 +135,37 @@ class OpenAICompatibleProvider:
             ) from exc
 
         latency_ms = round((time.perf_counter() - t0) * 1000, 1)
-        usage = getattr(response, "usage", None)
-        tokens_in = int(getattr(usage, "prompt_tokens", 0) or 0) if usage else 0
-        tokens_out = int(getattr(usage, "completion_tokens", 0) or 0) if usage else 0
-        # Note 4 (куратор): поле может отсутствовать — graceful .get/getattr
-        tokens_cache_hit = (int(getattr(usage, "prompt_cache_hit_tokens", 0) or 0)
-                            if usage else 0)
+
+        def _collect(resp_):
+            usage_ = getattr(resp_, "usage", None)
+            return (
+                int(getattr(usage_, "prompt_tokens", 0) or 0) if usage_ else 0,
+                int(getattr(usage_, "completion_tokens", 0) or 0) if usage_ else 0,
+                int(getattr(usage_, "prompt_cache_hit_tokens", 0) or 0) if usage_ else 0,
+            )
+
+        tokens_in, tokens_out, tokens_cache_hit = _collect(response)
+
+        # Design principle (3.2/t2): finish_reason=length = output truncation —
+        # один retry с удвоенным бюджетом (потолок 8000), usage обоих вызовов учтён.
+        finish_reason = getattr(response.choices[0], "finish_reason", None)
+        if finish_reason == "length" and max_tokens < 8000:
+            retry_budget = min(max_tokens * 2, 8000)
+            log_event(self._logger, "llm_output_truncated", model=self.model,
+                      max_tokens=max_tokens, retry_budget=retry_budget,
+                      trace_id=tid)
+            try:
+                retry_response = self._client.chat.completions.create(
+                    **{**create_kwargs, "max_tokens": retry_budget})
+                retry_in, retry_out, retry_cache = _collect(retry_response)
+                tokens_in += retry_in
+                tokens_out += retry_out
+                tokens_cache_hit += retry_cache
+                response = retry_response
+            except Exception as exc:
+                log_event(self._logger, "llm_truncation_retry_failed",
+                          error=str(exc)[:120], trace_id=tid)
+
         self.calls += 1
         self.prompt_tokens += tokens_in
         self.completion_tokens += tokens_out

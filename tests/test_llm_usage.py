@@ -16,7 +16,8 @@ class _StubCompletions:
         return self._responses.pop(0)
 
 
-def _response(content, prompt_tokens, completion_tokens, usage=True, cache=None):
+def _response(content, prompt_tokens, completion_tokens, usage=True, cache=None,
+              finish=None):
     usage_obj = None
     if usage:
         fields = {"prompt_tokens": prompt_tokens,
@@ -25,7 +26,8 @@ def _response(content, prompt_tokens, completion_tokens, usage=True, cache=None)
             fields["prompt_cache_hit_tokens"] = cache
         usage_obj = SimpleNamespace(**fields)
     return SimpleNamespace(
-        choices=[SimpleNamespace(message=SimpleNamespace(content=content))],
+        choices=[SimpleNamespace(message=SimpleNamespace(content=content),
+                                 finish_reason=finish)],
         usage=usage_obj,
     )
 
@@ -126,3 +128,31 @@ def test_deepseek_client_no_extra_body_for_chat_alias():
     deepseek._call([{"role": "user", "content": "x"}], temperature=0.0)
 
     assert "extra_body" not in completions.last_kwargs
+
+
+def test_provider_retries_on_length():
+    """Design principle (3.2/t2): finish_reason=length → retry x2 budget, usage суммируется."""
+    completions = _StubCompletions([
+        _response('{"partial":', 10, 2000, finish="length"),
+        _response('{"full": true}', 12, 50, finish="stop"),
+    ])
+    provider = OpenAICompatibleProvider(
+        client=SimpleNamespace(chat=SimpleNamespace(completions=completions)))
+
+    result = provider.chat([{"role": "user", "content": "x"}], max_tokens=2000)
+
+    assert result == '{"full": true}'
+    assert completions.last_kwargs["max_tokens"] == 4000
+    assert provider.calls == 1
+    assert provider.prompt_tokens == 22
+    assert provider.completion_tokens == 2050
+
+
+def test_provider_no_retry_on_stop_or_none():
+    completions = _StubCompletions([_response("ok", 1, 1, finish="stop")])
+    provider = OpenAICompatibleProvider(
+        client=SimpleNamespace(chat=SimpleNamespace(completions=completions)))
+
+    assert provider.chat([{"role": "user", "content": "x"}], max_tokens=2000) == "ok"
+    assert completions.last_kwargs["max_tokens"] == 2000
+    assert provider.calls == 1
