@@ -386,7 +386,27 @@
         ],
         "expected_size": "~18 atoms (N 28 -> ~46)",
         "morphology_annotations": "NEW optional field expected_morphology [{form, lemma, case, number, gender}] for selected atoms (Homer genitives, Sappho forms) — measurement foundation for 3.2 (schema bump annotations 1.1.0)",
-        "method": "same as 3.3: drafts by assistant, curator countersign, separate JSONL per text"
+        "method": "same as 3.3: drafts by assistant, curator countersign, separate JSONL per text",
+        "texts_final": [
+          "grc lyric risk-flagged: Pindar Ol. 1.1-7 (~3 seg; annotation_confidence per atom; fallback Theocritus Id. 1.1-5 if mass low)",
+          "grc tragedy: Sophocles Aj. 1-10 (~5 seg)",
+          "grc lyric hard-case: Sappho fr. 16.1-4 (+5 seg)",
+          "la oratory: Cicero Catil. 1.1 (~4 seg)",
+          "la epic: Vergil Aen. 1.1-7 (~3 seg)",
+          "la epigraphy: RGDA 1 (~2 seg; authentic PD inscription register, NOT CIL copy)"
+        ],
+        "size": "~20 atoms (N 28 -> ~48)",
+        "schema_1_1_0_additions": [
+          "annotation_confidence: high|medium|low (optional; low -> excluded from metrics by loader)",
+          "expected_morphology: [{form, lemma, pos, case, number, gender}] (optional; pos proposed by us for verbs)"
+        ],
+        "retroactive_phase_a": "ACCEPTED: +expected_morphology to 7 existing atoms (homer seg1-2, sappho seg1-2, plato seg1, inscription seg1-2); annotations_version -> 1.1.0 (additive only, no field modified)",
+        "n48_limitation": "N~48 sufficient for baseline, NOT for statistical claims; README known-limitation; Phase-4 trigger: expand N>=100",
+        "loader_requirements": [
+          "accept 1.0.0 and 1.1.0 mixed",
+          "low-confidence atoms excluded from metrics",
+          "morphology metric denominator = subset with field (N/A otherwise)"
+        ]
       },
       "step_3_2_scope": "LLM-based morphological prompt first (option b): new contract (morph_v1: form->lemma/case/number/gender, source-language, null при неуверенности), measured on expanded gold; deterministic dictionaries (a) later as enrichment; neural models (c) Phase 4",
       "step_3_9_scope": "parallel-scoped: pluggable embeddings provider interface + config (AEON_EMBEDDINGS_PROVIDER); default remains MiniLM; Google provider behind flag, no CI network; measure on expanded gold later",
