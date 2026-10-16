@@ -4,8 +4,9 @@
 Semantic processor: переводит смысл между формами (текст/код/эмоция/голос/изображение)
 с верификацией, entity linking и анализом древних текстов.
 Статус: **Фаза 0 ✅, Фаза 1 ✅, **Фаза 2 ✅ complete (2.0–2.6 + 2.7 real-API
-validation — см. «Phase 2 closure»)**; Фаза 3 — 3.1 ✅ (`.aeon v2`), 3.5 ✅
-(variant readings), 3.3 ✅ (gold-standard). Рекомендуемый следующий шаг: 3.2.**
+validation — см. «Phase 2 closure»)**; Фаза 3 — 3.1 ✅ (`.aeon v2`), 3.2 ✅
+(morph_v1), 3.3 ✅ (gold-standard), 3.5 ✅ (variant readings); **midpoint
+checkpoint — `docs/phase3_checkpoint.md`; следующий — 3.4 scoping (Plan Mode)**.**
 
 ## Architecture (Фаза 1)
 ```
@@ -393,6 +394,10 @@ RU-конспектом → заменён подлинной grc-транскр
   правиле «finish_reason проверяется»). Guards: `tests/test_llm_guards.py`
   (единый SDK-провайдер — прямой `chat.completions` вне `aeon/llm/` запрещён;
   `except: pass` запрещено; бюджет-дефолт клиента = 4000).
+- **Design principle (#6, maintenance 2026-10-14):** behavioral scans — **AST,
+  не regex/string**: линейный скан `except: pass` дал 0, AST-скан — 12
+  (многострочный формат). Инструмент проверки обязан быть корректнее
+  проверяемого.
 - **Бюджет-политика LLM (аудит 2026-10-14):** 15 call-sites — все через
   `DeepSeekClient._call(+_call_json)` → единый провайдер (finish_reason-retry —
   safety-net там); default max_tokens = 4000; sites с большими/масштабными

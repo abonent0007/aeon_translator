@@ -436,7 +436,23 @@
       "3.9 embeddings provider (deferred per curator until failing case)",
       "contract v1.1 (trigger-gated)",
       "3.4 cross-references / 3.6 web (after)"
-    ]
+    ],
+    "midpoint_checkpoint": "DONE 2026-10-14: docs/phase3_checkpoint.md (done-items+commits; baselines summary; design principles #1-#6; backlog with triggers; remainder decisions). Next: 3.4 scoping in Plan Mode.",
+    "maintenance_cycle": "CLOSED: audit 15 LLM-sites (0 outliers, unified provider); linguistics truncation fix (2ed1081); default budget 4000; 9 except:pass eliminated + AST guard with frozen baseline (cafa314, 05e4e12); legacy facade DeprecationWarnings + CHANGELOG (fb1cb8f).",
+    "backlog_triggers": {
+      "contract_v1_1": "case-based (pronoun/Doric coverage expansion or >=3 forms of a class)",
+      "embeddings_3_9": "failing case / measurement need (deferred)",
+      "json_repair_strategy_loop": "new repair edge-case OR logging-criticality (named debt)",
+      "legacy_facade_removal": "after next major (warnings added now)",
+      "call_structured": "Phase 4 (dynamic budget + has_more chunking)",
+      "threshold_085": "Phase 4 (data collected, defer)"
+    },
+    "remainder": {
+      "3_4_cross_references": "ACTIVE next - Plan Mode scoping required (new gold type)",
+      "3_6_web": "defer until 3.4 plan",
+      "3_7_export": "candidate after 3.4",
+      "3_8_calibration": "Phase 4"
+    }
   },
   "completed_at": null,
   "user_preferences": {
@@ -459,7 +475,8 @@
     "RU-audit (3.3 stop-condition) CLOSED: examples/greek/plato_apologia_17a.txt was a RU summary used as grc input since Phase 1; scope = only 2 Plato files; genuine grc transcription replaced it (own transcription, PD), both RU files moved to examples/greek/legacy/ via git mv; regression tests/test_examples_corpus.py (greek files need >=50 greek codepoints; latin files >=50 latin, <=5 greek); LICENSE.md updated; historical defect noted: pre-3.3 Plato demo/v2-size measurements were on RU text (scientifically meaningless, superseded).",
     "Step 3.3 (Gold-standard) IMPLEMENTED (pending acceptance): gold/ corpus (28 records/6 texts, 13 markers/21 entities) + aeon/gold harness (loader/metrics/runner/report, stdlib only) + pytest markers gold_mock/gold_real + metrics.md baseline. Q-IDs verified live (Achilles Q41746, Athenians Q120096553, Zeus Q34201, Sappho Q17892, Caesar Q1048, Gaul Q38060, Belgae Q337104, Aquitani Q1255605, Gauls Q273854, Achaeans Q3514911, Garonne Q5077, Seine Q1471); unverified -> null. DEEPSEEK_API_KEY detected (.env present) -> defer_2_7=true per policy; 2.7 becomes next priority after 3.3 acceptance.",
     "3.3 ACCEPTED. Clarifications: mixed-marker [слова ...] decision (A)=supplement documented (B/C rejected: matching); offsets tooling committed (tools/annotate_offsets.py + test); gold/metrics.md mock-baseline = self-consistency not quality (explicit); test_mock_false_allowed_with_key added; demo real-path fixes (llm.calls guard, llm_model in v2 metadata). 2.7 in_progress per curator; sub-steps reported separately (2.7.1 smoke → stop).",
-    "commit_2b done: v2 contract metadata trio (chain/anchor/contract-era) + legacy default on read; build_claims (commit 3) will apply video-skip more aggressively for v3.0-legacy chain per curator."
+    "commit_2b done: v2 contract metadata trio (chain/anchor/contract-era) + legacy default on read; build_claims (commit 3) will apply video-skip more aggressively for v3.0-legacy chain per curator.",
+    "Phase 3 midpoint checkpoint (2026-10-14): all baselines/principles/backlog consolidated; suite 428; next = 3.4 scoping Plan Mode."
   ],
   "backlog": [
     "2.7 Real API verification when key available (Sappho reconstruction, layers/focus quality); budget options (a)/(b); parallelism tuning",
