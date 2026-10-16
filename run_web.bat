@@ -1,10 +1,10 @@
 @echo off
 chcp 65001 >nul 2>&1
-title AEON v3.0 — Web Server
+title LOGOS Semantic Analysis — Web Server
 
 echo.
 echo ============================================================
-echo   🌌 AEON v3.0 — Web Server
+echo   🌌 LOGOS Semantic Analysis — Web Server
 echo ============================================================
 echo.
 echo   Starting server...

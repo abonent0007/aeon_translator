@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    AEON v3.0 — Universal Meaning Translator
+    LOGOS Semantic Analysis
     Installation script for Windows (PowerShell 5.1+)
 
 .DESCRIPTION
@@ -22,11 +22,11 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$Host.UI.RawUI.WindowTitle = "AEON v3.0 Installer"
+$Host.UI.RawUI.WindowTitle = "LOGOS Semantic Analysis — Installer"
 
 Write-Host @"
 ============================================================
-        AEON v3.0 — Universal Meaning Translator
+        LOGOS Semantic Analysis
                  INSTALLER
 ============================================================
 "@ -ForegroundColor Cyan
@@ -144,7 +144,7 @@ if (-not (Test-Path ".env")) {
         Write-Host "  EDIT .env to add your API keys!" -ForegroundColor Yellow
     } else {
         @"
-# AEON Universal Translator — API Keys
+# LOGOS Semantic Analysis — API Keys
 # Get your keys:
 #   DeepSeek: https://platform.deepseek.com
 #   Flux:     https://gen-api.ru
@@ -178,7 +178,7 @@ Write-Host @"
        or: .venv\Scripts\python -m aeon.web_server
     3. Open http://localhost:8080
 
-  Without API keys, AEON runs in rule-based mode
+  Without API keys, LOGOS runs in rule-based mode
   (basic functionality, no LLM features).
 
 ============================================================
