@@ -182,6 +182,7 @@ Fallback: <3 verifiable на sample → defer 3.4 → 3.7 (export formats).
 | **`adaptation`×medium: 0** (оба adaptation = high/consensus) | acknowledged | medium-бакет adaptation = N/A | появление medium-adaptation |
 | **Post-filter: suppletive/dialect stems** | may falsely drop pairs (ἀνήρ/ἄνδρα, Ζεύς/Διός) — conservative threshold (needed=3; len≤2 запрещены, refinement-1); метрически нейтрально (пары не в F1-ключе) | пары-анкеры теряются у части ref'ов | tweak по данным re-run; gold добавит suppletive-пары |
 | **Post-filter vs ῥοή/ῥόαι** | collision refinement-1: префикс 'ρο'=2 < 3 → пара дропается (metрически нейтрально) | один анкер у Alc/Hor-класса | решение куратора: vowel-guard-вариант или принять |
+| **Bucket-drift vergil←il** | gold=medium (pre-scale-extension), engine=high (v1.1+: formula+≥2 пар) — **observation, не bug** | высокий бакет даёт FP+FN на одном link'е | ревизия при gold-1.2.1; headline-метрика — «all» |
 | `offset` локалей не включён | deferred (additive) | точность локалей = сегмент | потребность passage-level точности |
 | kind-confidence (уверенность в ТИПЕ) | backlog | kinds могут перепутываться без штрафа | при усложнении kinds/росте N |
 | multi-hop chains | backlog/Ф4 | цепочки A→B→C не детектируются | Ф4 |

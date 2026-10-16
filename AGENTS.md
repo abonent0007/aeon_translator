@@ -441,6 +441,11 @@ RU-конспектом → заменён подлинной grc-транскр
 - **Design principle (#17, 3.4.2 countersign 2026-10-15; candidate):** **LLM
   output requires a ground-truth filter, not only a schema filter** — пары
   проверяются на присутствие в исходных сегментах (impl: engine post-filter).
+- **Design principle (#18, 3.4.2 countersign 2026-10-16):** **infra scripts must
+  be idempotent OR fail-on-unexpected-state** — double-execution cost-incurring
+  операции = silent waste (кейс: pipeline-опечатка выполнила 105-прогон дважды,
+  ~$0.037); guard: отказ перезаписи `--json-out` без `--force` (demo), проверка
+  exit-code, лог start/end.
 - **Design principle (#9, 3.4 countersign 2026-10-14): ACTIVE** (подтверждён
   четырежды: `direction`, `matched_lemmas` вне segment, «формула И/ИЛИ»,
   few-shot-weak/deadlock класс (3.4.2, prompts не моделируются в countersign)). При
@@ -467,7 +472,8 @@ RU-конспектом → заменён подлинной grc-транскр
   (accepted для v1); grammar-heavy chain (accepted, trigger-revisit: новый
   chain-потребитель или gold + grammar-sensitive text); mock-fixtures alignment
   (backlog); anchor_language inference из pack для старых v2 (backlog);
-  порог 0.85 (Фаза 4 calibration).
+  порог 0.85 (Фаза 4 calibration); **xref bucket-drift** (vergil←il: gold
+  medium vs engine high после расширения шкалы — version-drift, не bug).
 - **Backlog Ф3+:** **3.2 morphology — рекомендуемый первый** (разблокирован);
   3.9 embeddings-provider; 3.4 cross-references; 3.6 Web UI/API; contract v1.2
   (Rule 3 content-first; Rule 5 emphasis + post-hoc repair; edge-cases:

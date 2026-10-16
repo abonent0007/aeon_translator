@@ -72,7 +72,17 @@ def main(argv=None) -> int:
     parser.add_argument("--real", action="store_true",
                         help="DeepSeek API (иначе mock)")
     parser.add_argument("--json-out", help="записать результаты в JSON")
+    parser.add_argument("--force", action="store_true",
+                        help="разрешить перезапись --json-out (защита от "
+                             "двойного прогона, design principle #18)")
     args = parser.parse_args(argv)
+
+    if args.json_out:
+        out_path = Path(args.json_out)
+        if out_path.exists() and not args.force:
+            raise SystemExit(
+                f"{out_path} уже существует — используйте --force "
+                f"(защита от двойного прогона, design principle #18)")
 
     llm = _make_llm(args.real)
     engine = CrossReferenceEngine(llm_client=llm)

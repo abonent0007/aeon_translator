@@ -5,6 +5,8 @@ import json
 import unicodedata
 from pathlib import Path
 
+import pytest
+
 from aeon.crossrefs import (CONFIDENCE_LEVELS, CROSS_REF_KINDS, FEW_SHOTS,
                             FORMULA_LABELS, PROMPT_VERSION,
                             CrossReferenceEngine, build_prompt)
@@ -213,3 +215,26 @@ def test_post_filter_echo_survives_pair_drop():
     assert len(out) == 1
     assert out[0]["matched_lemma_pairs"] == []
     assert out[0]["matched_formula"] == PROEM
+
+
+def test_demo_refuses_overwrite_without_force(tmp_path):
+    """Design principle #18: отказ перезаписи --json-out без --force."""
+    from aeon.crossrefs import demo as crossrefs_demo
+
+    src_a = tmp_path / "a.txt"
+    src_a.write_text("μῆνιν ἄειδε θεά", encoding="utf-8")
+    src_b = tmp_path / "b.txt"
+    src_b.write_text("arma virumque cano", encoding="utf-8")
+    out = tmp_path / "predictions.json"
+    out.write_text("[]", encoding="utf-8")
+
+    with pytest.raises(SystemExit):
+        crossrefs_demo.main(["--a", str(src_a), "--b", str(src_b),
+                             "--json-out", str(out)])
+    assert out.read_text(encoding="utf-8") == "[]"      # не тронут
+
+    crossrefs_demo.main(["--a", str(src_a), "--b", str(src_b),
+                         "--json-out", str(out), "--force"])
+    payload = json.loads(out.read_text(encoding="utf-8"))
+    assert payload["prompt_version"] == PROMPT_VERSION
+    assert payload["records"][0]["pair"] == ["a", "b"]
