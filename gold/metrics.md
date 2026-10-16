@@ -110,6 +110,13 @@ homer ἣ nom, личные местоимения person ×8; source-diff) → 
 - Class C (accepted noise, триггер ≥3 форм): ἄειδε tense, οὐλομένην,
   abūtēre mood, ἄεθλον/τω-lines; tense-mood collisions **0**.
 
+**Worked example #2 (F1 vs gold-diff, 3.2):** после патча gold 1.1.1
+(личные местоимения ×person) F1 person упал 0.97→0.90 — и это **правильно**:
+до патча gold и model совпадали в `person: null` (совпадение неправильностей
+→ завышенный F1); после — gold правилен, gap модели (не заполняет person у
+местоимений без few-shot) впервые измерен. F1 — согласованность с gold,
+не качество: смотреть gold-diff вместе с F1-diff.
+
 ## Real-цели — гипотеза
 
 Числа real-колонки — гипотеза (после 2.7 пересматриваются; N=28 — малая

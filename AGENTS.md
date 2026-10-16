@@ -383,6 +383,11 @@ RU-конспектом → заменён подлинной grc-транскр
   source-verified патчи (Class A 1.1.1: morph_v1 нашёл 5 gold-дефектов —
   cicero nom ×4, homer ἣ; патч по source-diff «было/стало/почему»,
   без подгонки под model).
+- **Design principle (3.2, #4):** F1 — метрика согласованности с gold, не
+  «качество»: рост F1 может быть bad (gold упрощён под model), падение —
+  good (gold стал правильнее). Всегда gold-diff рядом с F1-diff; отчёт без
+  gold-diff — не отчёт. Worked example #2: person 0.97→0.90 после 1.1.1 —
+  впервые измерен реальный gap вместо совпадения неправильностей.
 - **Morphology baseline (3.2, morph_v1, gold 1.1.1):** F1 all: pos 0.98 /
   lemma 0.92 / tense 0.96 / mood 0.98 / voice 0.93 / person 0.90 /
   case 0.99 / number 0.99 / gender 0.98 (28 атомов, 224 формы, $0.0214;
