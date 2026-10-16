@@ -65,7 +65,7 @@
   }
  ],
  "current_step": 15,
- "next_step": "decision: F4 (gold expansion) vs 3.6 (Web UI) vs Pause — pause preliminary (needs concrete consumer)",
+ "next_step": "PAUSE (confirmed 2026-10-16) — resume on triggers (retro section 5): publication plan -> F4 (gold expansion, N>=30); external export demand -> 3.6; TEI-marker demand -> v2_markers_persistence; failing case -> contract v1.1",
  "phase": "complete_with_known_gap",
  "phase2": {
   "status": "complete",
@@ -481,7 +481,8 @@
   "commit_2b done: v2 contract metadata trio (chain/anchor/contract-era) + legacy default on read; build_claims (commit 3) will apply video-skip more aggressively for v3.0-legacy chain per curator.",
   "Phase 3 midpoint checkpoint (2026-10-14): all baselines/principles/backlog consolidated; suite 428; next = 3.4 scoping Plan Mode.",
   "3.4 pilot closed 2026-10-16 (v1.2.1 final, link-F1 0.800); next track 3.7+consolidation (curator 2026-10-16)",
-  "phase3 complete 2026-10-16 (consolidation C1-C3; version 0.3.0; tag phase3-complete)"
+  "phase3 complete 2026-10-16 (consolidation C1-C3; version 0.3.0; tag phase3-complete)",
+  "pause confirmed after phase3 consolidation (2026-10-16); project idle until triggers"
  ],
  "backlog": [
   "2.7 Real API verification when key available (Sappho reconstruction, layers/focus quality); budget options (a)/(b); parallelism tuning",
