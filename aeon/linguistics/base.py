@@ -92,9 +92,10 @@ class LinguisticLayer(ABC):
         data = self.llm._call_json([
             {"role": "system", "content": "You are a linguistic analyst. Return only valid JSON."},
             {"role": "user", "content": prompt},
-        ], temperature=0.0)
+        ], temperature=0.0, max_tokens=6000)
         if data.get("parse_error"):
-            return self._abstained(context, f"parse_error: {data.get('parse_error')}")
+            return self._abstained(context, f"parse_error: {data.get('parse_error')}",
+                                   llm_calls=1)
 
         findings = self._parse_findings(data.get("findings") or [])
         try:
@@ -168,8 +169,9 @@ class LinguisticLayer(ABC):
                   trace_id=context.trace_id)
         return result
 
-    def _abstained(self, context: LayerContext, reason: str) -> LayerResult:
+    def _abstained(self, context: LayerContext, reason: str,
+                   llm_calls: int = 0) -> LayerResult:
         return self._emit(context, LayerResult(
-            layer=self.name, confidence=0.0, llm_calls=0,
+            layer=self.name, confidence=0.0, llm_calls=llm_calls,
             handoff={"reason": reason}, trace_id=context.trace_id,
         ))

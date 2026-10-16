@@ -254,3 +254,47 @@ def test_handoff_truncation_logged(mock_llm, monkeypatch):
     assert truncated[0]["original_len"] > 1500
     syntactic_prompt = _prompt_of(mock_llm, "SYNTACTIC")
     assert "λ" * 40 in syntactic_prompt  # данные дошли (усечённо)
+
+
+# ── maintenance probes (2026-10-14): truncation-budget + accounting ──
+
+
+class _CaptureLLM:
+    available = True
+
+    def __init__(self, response):
+        self.response = response
+        self.captured = None
+
+    def _call_json(self, messages, temperature=0.3, max_tokens=2000, **kwargs):
+        self.captured = {"temperature": temperature, "max_tokens": max_tokens}
+        return self.response
+
+
+def _ctx():
+    from aeon.linguistics.base import LayerContext
+    return LayerContext(original_text="μῆνιν ἄειδε θεά", trace_id="t")
+
+
+def test_layer_uses_extended_max_tokens():
+    """Fix (probe 2026-10-14): lexical raw обрезался на max_tokens=2000
+    (60 findings, 10.5K chars) -> слой должен запрашивать 6000."""
+    from aeon.linguistics.lexical import LexicalLayer
+
+    llm = _CaptureLLM({"findings": [], "confidence": 0.5, "handoff": {}})
+    result = LexicalLayer(llm).analyze(_ctx())
+
+    assert llm.captured["max_tokens"] == 6000
+    assert result.confidence == 0.5
+
+
+def test_layer_parse_error_counts_llm_call():
+    """Fix: parse_error — вызов БЫЛ (токены потрачены) -> llm_calls=1, не 0."""
+    from aeon.linguistics.lexical import LexicalLayer
+
+    llm = _CaptureLLM({"parse_error": "unrepairable JSON"})
+    result = LexicalLayer(llm).analyze(_ctx())
+
+    assert result.llm_calls == 1
+    assert result.confidence == 0.0
+    assert "parse_error" in result.handoff["reason"]
