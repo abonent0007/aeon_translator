@@ -70,8 +70,8 @@ def _write_dataset(tmp_path, records, text="ἄειδε θεά σὺν ἄλλο
 
 def test_loader_valid_dataset(dataset):
     assert len(dataset.by_text()) == 15
-    assert len(dataset.records) == 54      # expansion 1.1.0 + 3.4 cross-refs (1.2.0)
-    assert dataset.version() == "1.2.0"    # mixed 1.0.0/1.1.0/1.2.0 → max версия
+    assert len(dataset.records) == 54      # expansion 1.1.0 + 3.4 + author_id 1.2.1
+    assert dataset.version() == "1.2.1"    # homogeneous 1.2.1 (mixed — fixture-тест)
     assert all(r.annotator.startswith("human:") for r in dataset.records)
 
 
@@ -220,7 +220,7 @@ def _form(form, lemma, pos, case=None, number=None, gender=None, tense=None,
 
 def test_loader_accepts_1_0_0_and_1_1_0(dataset):
     versions = {r.schema_version for r in dataset.records}
-    assert versions == {"1.0.0", "1.1.0", "1.2.0"}   # mixed, включая 3.4
+    assert versions == {"1.2.1"}   # 1.2.1 bump (mixed-support — fixture-тест ниже)
     homer1 = next(r for r in dataset.records
                   if r.text_id == "homer_iliad_1" and r.segment_id == 1)
     assert homer1.expected_morphology and len(homer1.expected_morphology) == 5
@@ -509,3 +509,67 @@ def test_all_gold_artifacts_tracked_in_git():
         cwd=REPO, capture_output=True, text=True)
     assert result.stdout.strip() == "", \
         f"untracked gold-артефакты: {result.stdout.strip()}"
+
+
+def test_gold_author_id_schema_1_2_1(dataset):
+    """1.2.1 (3.4.2 D6): author_id backfill; никакого 'anonymous' sentinel."""
+    assert dataset.version() == "1.2.1"
+    authors = {r.text_id: r.author_id for r in dataset.records}
+    assert authors["homer_iliad_1"] == "homer"
+    assert authors["odyssey_1"] == "homer"
+    assert authors["sappho_fr16"] == authors["sappho_fr31"] == "sappho"
+    assert authors["rgda_1"] == "augustus"        # writer, not subject
+    assert authors["inscription_ig"] is None
+    assert authors["papyrus_oxy"] is None
+    assert "anonymous" not in set(authors.values())
+
+
+def _tiny_annotation(segment_id, version, author_id=None):
+    value = {"schema_version": version, "text_id": "tiny", "language": "grc",
+             "segment_id": segment_id,
+             "segment_text": "ἄειδε" if segment_id == 1 else "θεά",
+             "marker_offsets_relative_to": "segment",
+             "annotator": "human:test", "annotation_date": "2026-10-16",
+             "expected_atom": {"intent": "s", "domain": "l",
+                               "is_fragment": False,
+                               "completeness_score": 1.0},
+             "expected_markers": [], "expected_entities": [],
+             "expected_verdicts": None}
+    if author_id is not None:
+        value["author_id"] = author_id
+    return value
+
+
+def _write_tiny(tmp_path, records):
+    import json as json_module
+
+    annotations = tmp_path / "annotations"
+    annotations.mkdir()
+    texts = tmp_path / "texts"
+    texts.mkdir()
+    (texts / "tiny.txt").write_text("ἄειδε\nθεά\n", encoding="utf-8")
+    (annotations / "tiny.jsonl").write_text(
+        "\n".join(json_module.dumps(r, ensure_ascii=False) for r in records)
+        + "\n", encoding="utf-8")
+    return annotations
+
+
+def test_gold_mixed_versions_still_supported(tmp_path):
+    """Loader принимает mixed 1.0.0 + 1.2.1; version() = max."""
+    annotations = _write_tiny(tmp_path, [
+        _tiny_annotation(1, "1.0.0"),
+        _tiny_annotation(2, "1.2.1", "homer"),
+    ])
+    mixed = load_dataset(annotations)
+    assert mixed.version() == "1.2.1"
+    assert [r.author_id for r in mixed.records] == [None, "homer"]
+
+
+def test_gold_author_id_empty_rejected(tmp_path):
+    """Пустая строка author_id (или sentinel-попытка) → fail-fast."""
+    from aeon.gold import GoldError
+
+    annotations = _write_tiny(
+        tmp_path, [_tiny_annotation(1, "1.2.1", "")])
+    with pytest.raises(GoldError, match="author_id"):
+        load_dataset(annotations)

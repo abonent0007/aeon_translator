@@ -131,6 +131,8 @@ class CrossReferenceEngine:
         """→ validated список cross-ref записей (возможно пустой)."""
         a_segments = [str(seg) for seg in (text_a.get("segments") or [])]
         b_segments = [str(seg) for seg in (text_b.get("segments") or [])]
+        author_a = str(text_a.get("author_id") or "").strip()
+        author_b = str(text_b.get("author_id") or "").strip()
         if not a_segments or not b_segments:
             log_event(_LOGGER, "crossref_invalid_input",
                       text_a=str(text_a.get("text_id")),
@@ -172,6 +174,13 @@ class CrossReferenceEngine:
             if not ok:
                 dropped += 1
                 log_event(_LOGGER, "crossref_validation_drop", reason=reason,
+                          trace_id=self.trace_id)
+                continue
+            if author_a and author_b and author_a == author_b:
+                dropped += 1
+                log_event(_LOGGER, "crossref_same_author_drop", author=author_a,
+                          text_a=str(text_a["text_id"]),
+                          text_b=str(text_b["text_id"]),
                           trace_id=self.trace_id)
                 continue
             grounded_ref, ungrounded, ref_dropped = _ground_ref(

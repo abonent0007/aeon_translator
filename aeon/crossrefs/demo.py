@@ -53,10 +53,13 @@ def _usage(llm) -> dict:
     return {"calls": len(getattr(llm, "calls", None) or [])}
 
 
-def _load_pair(path: Path, text_id: str, lang: str) -> dict:
+def _load_pair(path: Path, text_id: str, lang: str, author: str = "") -> dict:
     text = path.read_text(encoding="utf-8").strip()
-    return {"text_id": text_id, "lang": lang or _detect_lang(text),
+    pair = {"text_id": text_id, "lang": lang or _detect_lang(text),
             "segments": [text]}
+    if author:
+        pair["author_id"] = author
+    return pair
 
 
 def main(argv=None) -> int:
@@ -75,6 +78,10 @@ def main(argv=None) -> int:
     parser.add_argument("--force", action="store_true",
                         help="разрешить перезапись --json-out (защита от "
                              "двойного прогона, design principle #18)")
+    parser.add_argument("--author-a", default="", help="author_id TEXT_A (D6)")
+    parser.add_argument("--author-b", default="", help="author_id TEXT_B (D6)")
+    parser.add_argument("--authors", metavar="FILE",
+                        help="JSON {text_id: author_id} для --all-pairs (D6)")
     args = parser.parse_args(argv)
 
     if args.json_out:
@@ -93,10 +100,15 @@ def main(argv=None) -> int:
         files = sorted(directory.glob("*.txt"))
         if len(files) < 2:
             raise SystemExit(f"в {directory} меньше двух *.txt")
+        authors: dict = {}
+        if args.authors:
+            authors = json.loads(Path(args.authors).read_text(encoding="utf-8"))
         records = []
         for path_i, path_j in combinations(files, 2):
-            text_a = _load_pair(path_i, path_i.stem, "")
-            text_b = _load_pair(path_j, path_j.stem, "")
+            text_a = _load_pair(path_i, path_i.stem, "",
+                                authors.get(path_i.stem, ""))
+            text_b = _load_pair(path_j, path_j.stem, "",
+                                authors.get(path_j.stem, ""))
             record = {"pair": [path_i.stem, path_j.stem], "refs": []}
             try:
                 record["refs"] = engine.detect(text_a, text_a["lang"],
@@ -126,8 +138,10 @@ def main(argv=None) -> int:
     if not args.a or not args.b:
         raise SystemExit("нужны --a и --b (или --all-pairs DIR)")
     path_a, path_b = Path(args.a), Path(args.b)
-    text_a = _load_pair(path_a, args.id_a or path_a.stem, args.lang_a)
-    text_b = _load_pair(path_b, args.id_b or path_b.stem, args.lang_b)
+    text_a = _load_pair(path_a, args.id_a or path_a.stem, args.lang_a,
+                        args.author_a)
+    text_b = _load_pair(path_b, args.id_b or path_b.stem, args.lang_b,
+                        args.author_b)
     refs = engine.detect(text_a, text_a["lang"], text_b, text_b["lang"])
     result = {
         "pair": [text_a["text_id"], text_b["text_id"]],

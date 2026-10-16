@@ -446,6 +446,10 @@ RU-конспектом → заменён подлинной grc-транскр
   операции = silent waste (кейс: pipeline-опечатка выполнила 105-прогон дважды,
   ~$0.037); guard: отказ перезаписи `--json-out` без `--force` (demo), проверка
   exit-code, лог start/end.
+- **Design principle (#19, 3.4.2 countersign 2026-10-16; candidate):** **inter-kind
+  rules require explicit exceptions for borderline cases** — implicit tolerance
+  создаёт silent drift (рождено на livius-flip: D2 overfire → явный D5-OVERRIDE;
+  каждое новое kind-правило проверяется на регрессии существующих kind'ов).
 - **Design principle (#9, 3.4 countersign 2026-10-14): ACTIVE** (подтверждён
   четырежды: `direction`, `matched_lemmas` вне segment, «формула И/ИЛИ»,
   few-shot-weak/deadlock класс (3.4.2, prompts не моделируются в countersign)). При

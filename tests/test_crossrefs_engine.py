@@ -48,7 +48,10 @@ def test_prompt_contains_inputs_and_closed_set():
     assert "proem_invocation" in prompt
     assert "specificity beats pair count" in prompt     # v1.1 (D3)
     assert "DIFFERENT authors" in prompt                # v1.1 (D1)
-    assert PROMPT_VERSION == "1.1"
+    assert PROMPT_VERSION == "1.2"
+    assert "SAME RELATIVE ORDER" in prompt              # v1.2 (D5)
+    assert "OVERRIDE the kind to adaptation" in prompt  # v1.2 (D5)
+    assert "SAME author" in prompt                      # v1.2 (D6)
     assert "TEXT_A" in prompt and "TEXT_B" in prompt
     for index in range(1, len(FEW_SHOTS) + 1):
         assert f"--- Example {index} (" in prompt
@@ -238,3 +241,33 @@ def test_demo_refuses_overwrite_without_force(tmp_path):
     payload = json.loads(out.read_text(encoding="utf-8"))
     assert payload["prompt_version"] == PROMPT_VERSION
     assert payload["records"][0]["pair"] == ["a", "b"]
+
+
+def test_same_author_check_drops():
+    """D6 (v1.2): оба author_id заданы и равны → ref дропается."""
+    ref = _ref()
+    engine = _engine({"μῆνιν": {"cross_references": [ref]}})
+    out = engine.detect(
+        {"text_id": "alpha", "segments": ["μῆνιν ἄειδε θεά"],
+         "author_id": "homer"}, "grc",
+        {"text_id": "beta", "segments": ["arma virumque cano"],
+         "author_id": "homer"}, "la")
+    assert out == []
+
+    different = _engine({"μῆνιν": {"cross_references": [ref]}})
+    kept = different.detect(
+        {"text_id": "alpha", "segments": ["μῆνιν ἄειδε θεά"],
+         "author_id": "homer"}, "grc",
+        {"text_id": "beta", "segments": ["arma virumque cano"],
+         "author_id": "vergil"}, "la")
+    assert kept == [ref]
+
+
+def test_same_author_check_skips_none():
+    """D6: author_id отсутствует у обоих → проверка не применяется."""
+    ref = _ref()
+    engine = _engine({"μῆνιν": {"cross_references": [ref]}})
+    out = engine.detect(
+        {"text_id": "alpha", "segments": ["μῆνιν ἄειδε θεά"]}, "grc",
+        {"text_id": "beta", "segments": ["arma virumque cano"]}, "la")
+    assert out == [ref]

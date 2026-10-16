@@ -6,10 +6,10 @@ pipeline'ом AEON; в `gold_mock`-тестах MockLLM возвращает can
 ОТДЕЛЬНОЙ фикстуры (`fixtures/mock_responses.json`), сознательно НЕ совпадающие
 с gold (проверяется тестом `test_runner_mock_not_circular`).
 
-Статус: разметка готова (**54 записи / 15 текстов**; 1.0.0–1.2.0 mixed),
+Статус: разметка готова (**54 записи / 15 текстов**; schema 1.2.1),
 `annotator=human:curator` — **draft до подписи куратора**.
 
-annotations_version: **1.2.0** (3.4 cross-references additive + конвенции; см. Change log)
+annotations_version: **1.2.1** (author_id — 3.4.2 D6; см. Change log)
 
 ## Cross-references (schema 1.2.0) — conventions
 - **Хронология:** `source` = ранний текст, `target` = поздний (поле `direction` отсутствует);
@@ -26,8 +26,19 @@ annotations_version: **1.2.0** (3.4 cross-references additive + конвенци
 - **Indeclinables:** case по синтаксической функции (fās/nihil → nominative, sg, neuter).
 - **Coverage gaps:** `direct_citation` ×0 (prompt-only, F1 = N/A); offset отсутствует
   (сегмент-уровень); kind-confidence — backlog.
+- **`author_id` (1.2.1):** атрибутированный автор текста (writer, not subject);
+  cross-references только между РАЗНЫМИ авторами (D1/D6); absent = неатрибутирован
+  (sentinel «anonymous» запрещён — валидатор стережёт).
 
 ## Change log
+### 1.2.1 (2026-10-16) — author_id (3.4.2, same-author rule D6)
+- **`author_id`** — writer, not subject: homer (iliad+odyssey), sappho (16+31),
+  catullus, livius (= Livius Andronicus, **не** Livy the historian), vergil,
+  caesar, cicero, pindar, plato, sophocles, augustus (rgda_1 — self-narration);
+  inscription_ig/papyrus_oxy — без author_id (None).
+- Rule: cross-reference ≠ same-author (engine: `crossref_same_author_drop`).
+- Все записи bump 1.0.0–1.2.0 → **1.2.1** (mixed-версии поддержаны loader'ом; тест-фикстура).
+
 ### 1.2.0 (2026-10-14) — 3.4 cross-references (additive)
 - **+3 текста** (catullus_51, livius_odusia_1, odyssey_1) → **54 записи / 15 текстов**.
 - **`expected_cross_references`** — 4 связи: Catull.51←Sapph.fr31 (adaptation), Livius←Od.1

@@ -10,6 +10,8 @@
   "properties": {
     "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
                        "description": "версия схемы аннотации (как aeon_version в v2)"},
+    "author_id": {"type": ["string", "null"],
+                  "description": "атрибутированный автор ТЕКСТА (writer, not subject); null/absent = неатрибутирован; sentinel 'anonymous' запрещён (1.2.1)"},
     "text_id": {"type": "string", "pattern": "^[a-z0-9_]+$"},
     "language": {"type": "string", "pattern": "^[a-z]{2,3}$",
                  "description": "ISO-код языкового пака (grc, la)"},

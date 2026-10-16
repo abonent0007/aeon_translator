@@ -119,6 +119,7 @@ class GoldRecord:
     annotation_confidence: str = "high"          # high|medium|low
     expected_morphology: Optional[List[Dict[str, Any]]] = None
     cross_references: List[Dict[str, Any]] = field(default_factory=list)  # 1.2.0
+    author_id: Optional[str] = None              # 1.2.1 (writer, not subject)
     excluded: bool = False                       # low -> вне всех метрик
     raw: Dict[str, Any] = field(default_factory=dict)
 
@@ -230,6 +231,13 @@ def _validate_record(record: Dict[str, Any], text_id: str, line_no: int,
 
     cross_refs = _validate_cross_refs(record, where)
 
+    author_id = record.get("author_id")
+    if author_id is not None:
+        if not isinstance(author_id, str) or not author_id.strip():
+            raise GoldError(f"{where}.author_id: ожидалась непустая строка "
+                            f"или null (sentinel 'anonymous' запрещён — 1.2.1)")
+        author_id = author_id.strip()
+
     return GoldRecord(
         text_id=text_id,
         language=str(record["language"]),
@@ -247,6 +255,7 @@ def _validate_record(record: Dict[str, Any], text_id: str, line_no: int,
         expected_morphology=([dict(form) for form in morphology]
                              if morphology is not None else None),
         cross_references=cross_refs,
+        author_id=author_id,
         excluded=(confidence == "low"),
         raw=record,
     )

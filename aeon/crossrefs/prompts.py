@@ -1,7 +1,8 @@
 """Prompts + few-shot crossrefs engine (шаг 3.4.2).
 
-Frozen prompt v1.1 (rev.3 + countersign-fixes F1/F3, 2026-10-15): proem-приоритет
-(D2), cross-author (D1), canonical-grounding (D4). Few-shot — structured данные
+Frozen prompt v1.2 (2026-10-16): + D5 translation-exception (SAME RELATIVE
+ORDER, explicit OVERRIDE) + D6 same-author. Ранее: proem-приоритет (D2),
+cross-author (D1), canonical-grounding (D4). Few-shot — structured данные
 (FEW_SHOTS): рендерятся в промпт через render_examples(), тест-инвариант
 `test_few_shot_not_in_gold_or_scoring` проверяет вне-corpus/вне-scoring.
 
@@ -15,7 +16,7 @@ from typing import Any, Dict, List
 CROSS_REF_KINDS = frozenset({"direct_citation", "adaptation", "formulaic_echo"})
 CONFIDENCE_LEVELS = frozenset({"high", "medium", "low"})
 FORMULA_LABELS = frozenset({"proem_invocation"})
-PROMPT_VERSION = "1.1"
+PROMPT_VERSION = "1.2"
 
 # Few-shot (rev.3): 2 positive + 1 hard negative + 1 direct_citation.
 # Все тексты ВНЕ gold-корпуса (15) и вне scoring-пар (105) — конвенция
@@ -106,11 +107,11 @@ TEXT_B (later, target) — id: "{text_b_id}", language: {lang_b}:
 {b_segments}
 
 CONTRACT RULES:
-1. A cross-reference is TEXTUAL DEPENDENCE, not similarity: themes may coincide without a link. If no dependence exists — return an empty list. Cross-references hold between works of DIFFERENT authors: shared diction or formulas within one author's own corpus (e.g., two poems by the same poet, or two genres by the same prose author) are NOT cross-references — do not report them.
+1. A cross-reference is TEXTUAL DEPENDENCE, not similarity: themes may coincide without a link. If no dependence exists — return an empty list. Cross-references hold between works of DIFFERENT authors: shared diction or formulas within one author's own corpus (e.g., two poems by the same poet, or two genres by the same prose author) are NOT cross-references — do not report them (this includes two works by the SAME author — e.g., the Iliad and the Odyssey are both "Homer"; do not report such intra-author parallels even if you would call them "intra-epic formulaic echoes").
 2. Kinds:
    - "direct_citation": an explicit named marker in the text (author or work, e.g. "as Aratus said") OR a verbatim run of >= 5 content lemmas.
    - "adaptation": scholarly-recognized reworking or translation ("scholarly recognized" = the dependence is discussed in standard commentaries/editions; judge from your knowledge; uncertain -> omit or confidence "low"); 3+ parallel content lemmas raise confidence (see scale).
-   - "formulaic_echo": a shared formula. "matched_formula" is REQUIRED. The formula label set is CLOSED: ["proem_invocation"] — the opening of a poem invoking a Muse/god to sing or beginning "from a god" (e.g. "ἐκ Διὸς ἀρχώμεσθα"). If a shared formula does NOT fit this label, do NOT return it as formulaic_echo — you may still report adaptation/direct_citation if their criteria hold independently. An opening-formula link has PRIORITY: if the shared element is the proem opening (invocation/singing verb + Muse, or "begin from a god"), return formulaic_echo — do NOT downgrade it to adaptation just because lexical pairs are also present.
+   - "formulaic_echo": a shared formula. "matched_formula" is REQUIRED. The formula label set is CLOSED: ["proem_invocation"] — the opening of a poem invoking a Muse/god to sing or beginning "from a god" (e.g. "ἐκ Διὸς ἀρχώμεσθα"). If a shared formula does NOT fit this label, do NOT return it as formulaic_echo — you may still report adaptation/direct_citation if their criteria hold independently. An opening-formula link has PRIORITY: if the shared element is the proem opening (invocation/singing verb + Muse, or "begin from a god"), return formulaic_echo — do NOT downgrade it to adaptation just because lexical pairs are also present. EXCEPTION to that priority: if the target is a close translation of the source proem (>= 3 source-lemmas whose canonical forms appear in the target in the SAME RELATIVE ORDER — not necessarily adjacent, e.g. virum ~ ἄνδρα, mihi ~ μοι, īnsece ~ ἔννεπε), OVERRIDE the kind to adaptation — a translation is adaptation, not echo.
    If several kinds could describe the same link, choose the ONE with the strongest evidence — specificity beats pair count: a proem-opening link is formulaic_echo even when 3+ pairs exist. Return a single entry per link — never the same link under multiple kinds.
 3. Every returned reference MUST contain:
    "source": {"text_id": "{text_a_id}", "segment_id": N}   (MUST equal TEXT_A)
