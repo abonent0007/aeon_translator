@@ -1,8 +1,9 @@
 """Prompts + few-shot crossrefs engine (шаг 3.4.2).
 
-Frozen prompt v1.2 (2026-10-16): + D5 translation-exception (SAME RELATIVE
-ORDER, explicit OVERRIDE) + D6 same-author. Ранее: proem-приоритет (D2),
-cross-author (D1), canonical-grounding (D4). Few-shot — structured данные
+Frozen prompt v1.2.1 (2026-10-16): D7 онтологический translation-критерий
+(version of source text itself; no-hallucinated-evidence) + Example 5
+(translation vs formula-reuse side-by-side). Ранее: D5/D6, D2, D1, D4.
+Few-shot — structured данные
 (FEW_SHOTS): рендерятся в промпт через render_examples(), тест-инвариант
 `test_few_shot_not_in_gold_or_scoring` проверяет вне-corpus/вне-scoring.
 
@@ -16,7 +17,7 @@ from typing import Any, Dict, List
 CROSS_REF_KINDS = frozenset({"direct_citation", "adaptation", "formulaic_echo"})
 CONFIDENCE_LEVELS = frozenset({"high", "medium", "low"})
 FORMULA_LABELS = frozenset({"proem_invocation"})
-PROMPT_VERSION = "1.2"
+PROMPT_VERSION = "1.2.1"
 
 # Few-shot (rev.3): 2 positive + 1 hard negative + 1 direct_citation.
 # Все тексты ВНЕ gold-корпуса (15) и вне scoring-пар (105) — конвенция
@@ -96,6 +97,56 @@ FEW_SHOTS: List[Dict[str, Any]] = [
             "reasoning": "AP XII.1 (Straton) explicitly names Aratus ('as "
                          "Aratus said'), citing his Phaenomena opening."}]},
     },
+    {
+        "style": "contrast",
+        "header": "translation vs formula-reuse — side-by-side; both OUTSIDE corpus",
+        "cases": [
+            {
+                "name": "Case A — TRANSLATION (target is a version of the source text itself)",
+                "a": {"text_id": "lxx_genesis_1", "lang": "grc", "segments": [
+                    "Ἐν ἀρχῇ ἐποίησεν ὁ Θεὸς τὸν οὐρανὸν καὶ τὴν γῆν."]},
+                "b": {"text_id": "vulgata_genesis_1", "lang": "la", "segments": [
+                    "In prīncipiō creāvit Deus caelum et terram."]},
+                "output": {"cross_references": [{
+                    "source": {"text_id": "lxx_genesis_1", "segment_id": 1},
+                    "target": {"text_id": "vulgata_genesis_1", "segment_id": 1},
+                    "kind": "adaptation",
+                    "matched_lemma_pairs": [
+                        {"source_lemma": "ἀρχή", "target_lemma": "prīncipium"},
+                        {"source_lemma": "ποιέω", "target_lemma": "creō"},
+                        {"source_lemma": "θεός", "target_lemma": "Deus"},
+                        {"source_lemma": "οὐρανός", "target_lemma": "caelum"}],
+                    "matched_formula": None,
+                    "confidence": "high",
+                    "reasoning": "Close word-for-word translation of the same "
+                                 "sentence, clause-by-clause (the target is a "
+                                 "version of the source text itself)."}]},
+            },
+            {
+                "name": "Case B — FORMULA REUSE (new work: same proem formula, different wording)",
+                "a": {"text_id": "aratus_phaen", "lang": "grc", "segments": [
+                    "ἐκ Διὸς ἀρχώμεσθα, τὸν οὐδέποτ' ἄνδρες ἐῶμεν ἄρρητον."]},
+                "b": {"text_id": "theocritus_17", "lang": "grc", "segments": [
+                    "ἐκ Διὸς ἀρχώμεσθα καὶ ἐς Δία λήγετε, Μοῖσαι,"]},
+                "output": {"cross_references": [{
+                    "source": {"text_id": "aratus_phaen", "segment_id": 1},
+                    "target": {"text_id": "theocritus_17", "segment_id": 1},
+                    "kind": "formulaic_echo",
+                    "matched_lemma_pairs": [
+                        {"source_lemma": "Ζεύς", "target_lemma": "Ζεύς"},
+                        {"source_lemma": "ἄρχω", "target_lemma": "ἄρχω"}],
+                    "matched_formula": {"label": "proem_invocation",
+                                        "description": "proem opening formula "
+                                                       "'ἐκ Διὸς ἀρχώμεσθα' "
+                                                       "(begin from Zeus), "
+                                                       "verbatim shared"},
+                    "confidence": "high",
+                    "reasoning": "A NEW work reusing the proem formula with "
+                                 "different wording — not a version of the "
+                                 "source text."}]},
+            },
+        ],
+    },
 ]
 
 _PROMPT = """You compare two ancient-text passages and detect CROSS-REFERENCES between them — textual dependence (citation, adaptation, or formulaic echo). Return ONLY valid JSON.
@@ -111,7 +162,7 @@ CONTRACT RULES:
 2. Kinds:
    - "direct_citation": an explicit named marker in the text (author or work, e.g. "as Aratus said") OR a verbatim run of >= 5 content lemmas.
    - "adaptation": scholarly-recognized reworking or translation ("scholarly recognized" = the dependence is discussed in standard commentaries/editions; judge from your knowledge; uncertain -> omit or confidence "low"); 3+ parallel content lemmas raise confidence (see scale).
-   - "formulaic_echo": a shared formula. "matched_formula" is REQUIRED. The formula label set is CLOSED: ["proem_invocation"] — the opening of a poem invoking a Muse/god to sing or beginning "from a god" (e.g. "ἐκ Διὸς ἀρχώμεσθα"). If a shared formula does NOT fit this label, do NOT return it as formulaic_echo — you may still report adaptation/direct_citation if their criteria hold independently. An opening-formula link has PRIORITY: if the shared element is the proem opening (invocation/singing verb + Muse, or "begin from a god"), return formulaic_echo — do NOT downgrade it to adaptation just because lexical pairs are also present. EXCEPTION to that priority: if the target is a close translation of the source proem (>= 3 source-lemmas whose canonical forms appear in the target in the SAME RELATIVE ORDER — not necessarily adjacent, e.g. virum ~ ἄνδρα, mihi ~ μοι, īnsece ~ ἔννεπε), OVERRIDE the kind to adaptation — a translation is adaptation, not echo.
+   - "formulaic_echo": a shared formula. "matched_formula" is REQUIRED. The formula label set is CLOSED: ["proem_invocation"] — the opening of a poem invoking a Muse/god to sing or beginning "from a god" (e.g. "ἐκ Διὸς ἀρχώμεσθα"). If a shared formula does NOT fit this label, do NOT return it as formulaic_echo — you may still report adaptation/direct_citation if their criteria hold independently. An opening-formula link has PRIORITY: if the shared element is the proem opening (invocation/singing verb + Muse, or "begin from a god"), return formulaic_echo — do NOT downgrade it to adaptation just because lexical pairs are also present. EXCEPTION to that priority: if the target is a TRANSLATION — a version of the source text itself, rendering its words clause-by-clause (>= 3 SECURE source-lemmas in the same relative order, e.g. a Latin rendering of a Greek sentence) — OVERRIDE the kind to adaptation. A NEW work that only reuses the proem FORMULA with different wording (allusion/reworking) is NOT a translation: keep formulaic_echo. Base this decision ONLY on lemmas you can find VERBATIM in the target text — do NOT infer clausal correspondence from formula-shape similarity. (Translation vs formula-reuse — see Example 5.)
    If several kinds could describe the same link, choose the ONE with the strongest evidence — specificity beats pair count: a proem-opening link is formulaic_echo even when 3+ pairs exist. Return a single entry per link — never the same link under multiple kinds.
 3. Every returned reference MUST contain:
    "source": {"text_id": "{text_a_id}", "segment_id": N}   (MUST equal TEXT_A)
@@ -151,6 +202,20 @@ def render_examples() -> str:
     """Рендер few-shot блока из structured FEW_SHOTS (единый источник правды)."""
     blocks: List[str] = []
     for index, shot in enumerate(FEW_SHOTS, 1):
+        if shot.get("style") == "contrast":
+            lines = [f"--- Example {index} ({shot['header']}) ---"]
+            for case in shot["cases"]:
+                a, b = case["a"], case["b"]
+                lines.append(f"{case['name']}:")
+                lines.append(f"TEXT_A ({a['lang']}):")
+                lines += [f"A{i}. {seg}"
+                          for i, seg in enumerate(a["segments"], 1)]
+                lines.append(f"TEXT_B ({b['lang']}):")
+                lines += [f"B{i}. {seg}"
+                          for i, seg in enumerate(b["segments"], 1)]
+                lines.append(json.dumps(case["output"], ensure_ascii=False))
+            blocks.append("\n".join(lines))
+            continue
         a, b = shot["a"], shot["b"]
         lines = [f"--- Example {index} ({shot['header']}) ---",
                  f"TEXT_A ({a['lang']}):"]

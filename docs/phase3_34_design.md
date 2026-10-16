@@ -140,7 +140,7 @@ Alc. 338/Hor. 1.9.
 properties of the link, not of the source text.
 
 **Prompt versioning (refinement 3, countersign 3.4.2):** `PROMPT_VERSION`
-(`aeon/crossrefs/prompts.py`, сейчас `1.1`) пишется в run-артефакты
+(`aeon/crossrefs/prompts.py`, сейчас `1.2.1`) пишется в run-артефакты
 (predictions.json) и — при интеграции в `.aeon v2` — в
 `traces.cross_references = {prompt_version, refs}` (слот существует;
 engine пока не подключён к translate(), так что trace-потребителей ещё нет).
@@ -157,6 +157,12 @@ few-shot вне gold и вне scoring-пар (тест-инвариант `test
 3. Реальна → gold patch 1.2.1 c source-diff («было/стало/почему»; protocol Class A);
 4. Нереальна → реальный FP, остаётся в F1.
 (N=4 pilot: ожидаемые пары уже в gold; FP-процесс — на случай неожиданных находок.)
+
+**Headline metric (countersign 2026-10-16):** **link-level F1 (kind-agnostic)**
+— `tools/crossrefs_f1.py` (bucket-строки «HEADLINE link-level»); kind-level
+macro — diagnostic (N=4: три flip'а echo/adaptation показали нестабильность
+kind-классификации при стабильном link-recall 4/4). **Fallback pre-committed:**
+если v1.2.1 даёт третий flip — **v1.1 final**, kind-drift документируется (§10).
 
 ## 8. Шаги и стоп-точки (обновлено)
 
@@ -183,8 +189,9 @@ Fallback: <3 verifiable на sample → defer 3.4 → 3.7 (export formats).
 | **Post-filter: suppletive/dialect stems** | may falsely drop pairs (ἀνήρ/ἄνδρα, Ζεύς/Διός) — conservative threshold (needed=3; len≤2 запрещены, refinement-1); метрически нейтрально (пары не в F1-ключе) | пары-анкеры теряются у части ref'ов | tweak по данным re-run; gold добавит suppletive-пары |
 | **Post-filter vs ῥοή/ῥόαι** | collision refinement-1: префикс 'ρο'=2 < 3 → пара дропается (metрически нейтрально) | один анкер у Alc/Hor-класса | решение куратора: vowel-guard-вариант или принять |
 | **Bucket-drift vergil←il** | gold=medium (pre-scale-extension), engine=high (v1.1+: formula+≥2 пар) — **observation, не bug** | высокий бакет даёт FP+FN на одном link'е | ревизия при gold-1.2.1; headline-метрика — «all» |
-| **#3 wrong-source attribution** (homer_il→livius: Odusia = перевод Odyssey, не Iliad) | survives v1.2 (не ловится D5/D6) — wrong-source class | 1 genuine echo-FP | v1.3 backlog: source_work disambiguation («target транслирует X → ссылка только на X») |
+| **#3 wrong-source attribution** (homer_il→livius: Odusia = перевод Odyssey, не Iliad) | **accepted as known FP (pilot)** — не ловится промптом (нужно work-knowledge) | 1 link-level FP (precision-ceiling) | v1.3 backlog: source_work disambiguation («target транслирует X → ссылка только на X») |
 | **After v1.2: remaining echo FP** | #3 (wrong Homeric proem attribution) + #7 livius→vergil (possible genuine allusion — §7 candidate) | precision-ceiling pilot'а | v1.3 (#3) / FP-процесс §7 (#7) |
+| **Pair-direction sensitivity (harness)** | `--all-pairs` кормит пары в алфавитном порядке (не хронологическом — нет chronology-метаданных в engine); livius×od: правильное направление (od→livius) raw = adaptation ✓, инверсное = echo — kind-выход direction-чувствителен | kind-diagnostic шум; link-level не затронут (ориентация-фри ключи) | Ф4: chronology-манифест для harness |
 | `offset` локалей не включён | deferred (additive) | точность локалей = сегмент | потребность passage-level точности |
 | kind-confidence (уверенность в ТИПЕ) | backlog | kinds могут перепутываться без штрафа | при усложнении kinds/росте N |
 | multi-hop chains | backlog/Ф4 | цепочки A→B→C не детектируются | Ф4 |

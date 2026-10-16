@@ -48,9 +48,10 @@ def test_prompt_contains_inputs_and_closed_set():
     assert "proem_invocation" in prompt
     assert "specificity beats pair count" in prompt     # v1.1 (D3)
     assert "DIFFERENT authors" in prompt                # v1.1 (D1)
-    assert PROMPT_VERSION == "1.2"
-    assert "SAME RELATIVE ORDER" in prompt              # v1.2 (D5)
-    assert "OVERRIDE the kind to adaptation" in prompt  # v1.2 (D5)
+    assert PROMPT_VERSION == "1.2.1"
+    assert "TRANSLATION — a version of the source text itself" in prompt  # D7
+    assert "do NOT infer clausal correspondence" in prompt                # D7
+    assert "OVERRIDE the kind to adaptation" in prompt                    # D7
     assert "SAME author" in prompt                      # v1.2 (D6)
     assert "TEXT_A" in prompt and "TEXT_B" in prompt
     for index in range(1, len(FEW_SHOTS) + 1):
@@ -121,16 +122,25 @@ def _norm(value: str) -> str:
     return unicodedata.normalize("NFC", value).casefold().strip()
 
 
+def _shot_pairs():
+    for shot in FEW_SHOTS:
+        if shot.get("style") == "contrast":
+            for case in shot["cases"]:
+                yield case["a"], case["b"]
+        else:
+            yield shot["a"], shot["b"]
+
+
 def test_few_shot_not_in_gold_or_scoring():
     corpus_ids = {path.stem for path in TEXTS_DIR.glob("*.txt")}
     gold_blobs = [_norm(path.read_text(encoding="utf-8"))
                   for path in TEXTS_DIR.glob("*.txt")]
-    for shot in FEW_SHOTS:
-        for side in ("a", "b"):
-            text_id = shot[side]["text_id"]
+    for a, b in _shot_pairs():
+        for side in (a, b):
+            text_id = side["text_id"]
             assert text_id not in corpus_ids, \
                 f"few-shot text_id '{text_id}' в corpus — leak!"
-            for segment in shot[side]["segments"]:
+            for segment in side["segments"]:
                 normalized = _norm(segment)
                 if len(normalized) < 40:
                     continue
@@ -168,7 +178,10 @@ def test_render_examples_roundtrip():
     from aeon.crossrefs import render_examples
     rendered = render_examples()
     for shot in FEW_SHOTS:
-        assert json.dumps(shot["output"], ensure_ascii=False) in rendered
+        outputs = ([case["output"] for case in shot["cases"]]
+                   if shot.get("style") == "contrast" else [shot["output"]])
+        for output in outputs:
+            assert json.dumps(output, ensure_ascii=False) in rendered
 
 
 # ── post-filter (countersign refinements 3.4.2) ──

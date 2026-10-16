@@ -62,6 +62,14 @@ def main() -> int:
             f"{kind}: f1={m['f1']:.2f} tp={m['tp']} fp={m['fp']} fn={m['fn']}"
             for kind, m in sorted(result["per_kind"].items()))
         print(f"[{bucket:6}] macro F1 {result['macro_f1']:.4f}  {per_kind}")
+        link_expected = [dict(ref, kind="@link")
+                         for ref in exp_buckets[bucket]]
+        link_predicted = [dict(ref, kind="@link")
+                          for ref in pred_buckets[bucket]]
+        link = cross_ref_prf(link_expected, link_predicted)["per_kind"].get(
+            "@link", {"f1": 1.0, "tp": 0, "fp": 0, "fn": 0})
+        print(f"[{bucket:6}] HEADLINE link-level F1 {link['f1']:.4f}  "
+              f"tp={link['tp']} fp={link['fp']} fn={link['fn']}")
     fps = [ref for ref in pred_buckets["all"]
            if not any(ref["kind"] == exp["kind"]
                       and frozenset({(ref["source"]["text_id"],
