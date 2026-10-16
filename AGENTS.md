@@ -1,4 +1,10 @@
-# AEON v4.0 «Deep Analyst» — Project Guide
+# LOGOS Semantic Analysis — Project Guide
+
+**Название проекта (2026-10-16):** LOGOS Semantic Analysis. Проект развился
+из внутренней линии v4.0 «Deep Analyst» (2024–2026). Технические имена
+сохранены до отдельного решения (breaking-миграция): пакет `aeon`, формат
+`.aeon` (`aeon_version`), CLI `python -m aeon.*`, env-префикс `AEON_*`,
+PyPI-имя `aeon-translator`.
 
 ## Overview
 Semantic processor: переводит смысл между формами (текст/код/эмоция/голос/изображение)

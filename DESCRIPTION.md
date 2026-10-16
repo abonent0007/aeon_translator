@@ -1,7 +1,7 @@
-🌌 AEON v3.0 — Универсальный Транслятор Смысла
+🌌 LOGOS Semantic Analysis — Универсальный Транслятор Смысла
 ================================================
 
-AEON — это семантический процессор нового поколения. Вместо перевода слов
+LOGOS — это семантический процессор нового поколения. Вместо перевода слов
 он переводит СМЫСЛ. Извлекает чистое значение из любой формы (текст, код,
 эмоция, голос) и перевыражает его в любой другой форме.
 
@@ -28,10 +28,10 @@ AEON — это семантический процессор нового по�
 "Смысл един. Различаются только формы."
 
 
-🌌 AEON v3.0 — Universal Meaning Translator
+🌌 LOGOS Semantic Analysis — Universal Meaning Translator
 ================================================
 
-AEON is a next-generation semantic processor. Instead of translating words,
+LOGOS is a next-generation semantic processor. Instead of translating words,
 it translates MEANING. It extracts pure significance from any form (text,
 code, emotion, voice) and re-expresses it in any other form.
 
@@ -58,10 +58,10 @@ REQUIREMENTS: Python 3.8+, ~3 GB disk space
 "Meaning is one. Only the forms differ."
 
 
-🌌 AEON v3.0 — 通用意义翻译器
+🌌 LOGOS Semantic Analysis — 通用意义翻译器
 ================================================
 
-AEON 是下一代语义处理器。它不翻译词语，而是翻译意义。
+LOGOS 是下一代语义处理器。它不翻译词语，而是翻译意义。
 从任何形式（文本、代码、情感、语音）中提取纯粹的含义，
 并以任何其他形式重新表达。
 

@@ -1,13 +1,13 @@
 # data/pleiades/ — Offline-дамп Pleiades (шаг 2.6)
 
-Здесь лежит дамп Pleiades, сконвертированный в **JSONL-формат AEON**
+Здесь лежит дамп Pleiades, сконвертированный в **JSONL-формат LOGOS**
 (данные НЕ коммитятся; этот README — в репо).
 
 ## Как подготовить дамп
 
 1. Скачайте официальный Pleiades bundle (JSON/CSV, https://pleiades.stoa.org/downloads)
    один раз вручную (контроль версии и воспроизводимость).
-2. Сконвертируйте его в JSONL AEON-формата:
+2. Сконвертируйте его в JSONL LOGOS-формата:
    - строка 1 — meta:
      `{"meta": {"source": "pleiades", "dump_version": "<версия>", "dump_date": "<ISO>", "license": "<из LICENSE бандла>", "license_file_sha256": "<SHA256 LICENSE-файла>"}}`
    - далее по одной записи на строку:

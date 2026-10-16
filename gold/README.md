@@ -1,8 +1,8 @@
-# AEON Gold-standard corpus (шаг 3.3)
+# LOGOS Semantic Analysis — Gold-standard corpus (шаг 3.3)
 
 Разметка для научной валидации pipeline: метрики качества на **ручных**
 аннотациях. **Анти-циркулярность (главный принцип):** gold НЕ создаётся
-pipeline'ом AEON; в `gold_mock`-тестах MockLLM возвращает canned-ответы из
+pipeline'ом LOGOS; в `gold_mock`-тестах MockLLM возвращает canned-ответы из
 ОТДЕЛЬНОЙ фикстуры (`fixtures/mock_responses.json`), сознательно НЕ совпадающие
 с gold (проверяется тестом `test_runner_mock_not_circular`).
 
@@ -198,7 +198,7 @@ pytest -q -m gold_real -v   # skip без ключа
 ```
 
 ## Provenance / лицензия (стоп №4)
-- Авторы — public domain; транскрипции — СОБСТВЕННЫЕ AEON (не копии оцифровок
+- Авторы — public domain; транскрипции — СОБСТВЕННЫЕ LOGOS (не копии оцифровок
   Perseus/PHI — конвенция проекта, см. examples/LICENSE.md).
 - Аннотации — CC0.
 

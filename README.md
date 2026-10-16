@@ -1,6 +1,6 @@
-# AEON — semantic analysis and verification for Ancient Greek and Latin texts
+# LOGOS Semantic Analysis for Ancient Greek and Latin texts
 
-AEON extracts structured, verified meaning from Ancient Greek (`grc`) and Latin
+LOGOS extracts structured, verified meaning from Ancient Greek (`grc`) and Latin
 (`la`) passages: entities with canonical identifiers (Wikidata/Pleiades),
 editorial-marker and fragment status, morphology, fragment-reconstruction
 hypotheses, cross-text references, and attested variant-reading selection —
@@ -28,6 +28,16 @@ Formats: TEI-XML, Markdown, JSON-LD, BibTeX (byte-deterministic).
 
     python -m pytest -q                # 476 tests
     python tools/run_coverage.py       # coverage report
+
+## Acknowledgements
+
+The naming of this project and its initial direction were inspired by the
+["Логос 7" YouTube channel](https://www.youtube.com/@%D0%9B%D0%BE%D0%B3%D0%BE%D1%817),
+which explores ancient texts through the lens of modern AI.
+
+This project is an independent implementation — see `docs/phase3_retrospective.md`
+for methodology and design principles #1–#23. No affiliation with or endorsement
+by the channel is implied.
 
 ## License
 

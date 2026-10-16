@@ -1,8 +1,8 @@
-# AEON: semantic analysis and verification for Ancient Greek and Latin texts
+# LOGOS Semantic Analysis: extraction and verification for Ancient Greek and Latin texts
 
 ## What it does
 
-AEON takes a passage of Ancient Greek or Latin and produces a structured,
+LOGOS takes a passage of Ancient Greek or Latin and produces a structured,
 verifiable analysis. It extracts the meaning structure (intent, domain,
 entities), identifies manuscript-level features (lacunae and other editorial
 markers, fragment status), links entities to canonical identifiers (Wikidata
@@ -28,7 +28,7 @@ refuses to process gold annotations (predictions only).
 ## Install & run
 
 Requires Python 3.11. From a repo checkout (package name `aeon-translator` —
-historical; version `0.3.0` maps to Phase 3):
+historical; package version `0.3.0` maps to Phase 3):
 
     pip install -e .
     python -m aeon.demo --text examples/greek/plato_apologia_17a.txt --verify=full --language=grc
