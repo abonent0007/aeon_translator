@@ -6,11 +6,10 @@ pipeline'ом AEON; в `gold_mock`-тестах MockLLM возвращает can
 ОТДЕЛЬНОЙ фикстуры (`fixtures/mock_responses.json`), сознательно НЕ совпадающие
 с gold (проверяется тестом `test_runner_mock_not_circular`).
 
-Статус: разметка готова (28 записей / 6 текстов), `annotator=human:curator` —
-**draft до подписи куратора** (стоп №1 пройден: схема одобрена с 3 уточнениями,
-внесены в `annotation_schema.json`).
+Статус: разметка готова (**54 записи / 15 текстов**; 1.0.0–1.2.0 mixed),
+`annotator=human:curator` — **draft до подписи куратора**.
 
-annotations_version: **1.1.1** (Class A source-verified fixes 2026-10-14; см. Change log)
+annotations_version: **1.2.0** (3.4 cross-references additive + конвенции; см. Change log)
 
 ## Cross-references (schema 1.2.0) — conventions
 - **Хронология:** `source` = ранний текст, `target` = поздний (поле `direction` отсутствует);
@@ -29,6 +28,14 @@ annotations_version: **1.1.1** (Class A source-verified fixes 2026-10-14; см. 
   (сегмент-уровень); kind-confidence — backlog.
 
 ## Change log
+### 1.2.0 (2026-10-14) — 3.4 cross-references (additive)
+- **+3 текста** (catullus_51, livius_odusia_1, odyssey_1) → **54 записи / 15 текстов**.
+- **`expected_cross_references`** — 4 связи: Catull.51←Sapph.fr31 (adaptation), Livius←Od.1
+  (adaptation/translation), Vergil←Il.1 (echo, medium), Vergil←Od.1 (echo, high).
+- Конвенции — см. «Cross-references (schema 1.2.0) — conventions»; value-fix: nihil×6 →
+  nominative/sg/neuter.
+- **Invariant #9 проверён программно на mass:** 11 пар, 0 нарушений (loader-check — 3.4.1).
+
 ### 1.1.1 (2026-10-14) — Class A: source-verified fixes
 Обнаружено morph_v1 baseline (модель лингвистически права, gold — нет);
 патч по source-diff (без подгонки под model — protocol):
@@ -87,9 +94,12 @@ annotations_version: **1.1.1** (Class A source-verified fixes 2026-10-14; см. 
 - **Known limitation:** N≈49 атомов / 220 форм — достаточно для baseline,
   недостаточно для статистических заявлений (Phase-4 trigger: N≥100).
 
-## Покрытие (49 записей / 12 текстов)
+## Покрытие (54 записи / 15 текстов)
 | text_id | язык | сегм. | morphology | примечание |
 |---|---|---|---|---|
+| catullus_51 | la | 1 | все | 3.4: adaptation ← Sapph.fr31 |
+| livius_odusia_1 | la | 1 | все | 3.4: translation ← Od.1 (фрагмент) |
+| odyssey_1 | grc | 3 | все | 3.4: paired с vergil/Il. (echo/anchor) |
 | plato_apologia_17a | grc | 3 | seg1 (retro) | |
 | homer_iliad_1 | grc | 7 | seg1–2 (retro) | |
 | inscription_ig | grc | 6 | seg1–2 (retro) | |

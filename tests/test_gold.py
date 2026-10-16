@@ -69,9 +69,9 @@ def _write_dataset(tmp_path, records, text="ἄειδε θεά σὺν ἄλλο
 
 
 def test_loader_valid_dataset(dataset):
-    assert len(dataset.by_text()) == 12
-    assert len(dataset.records) == 49      # expansion 1.1.0 (было 28)
-    assert dataset.version() == "1.1.0"    # mixed 1.0.0/1.1.0 → max версия
+    assert len(dataset.by_text()) == 15
+    assert len(dataset.records) == 54      # expansion 1.1.0 + 3.4 cross-refs (1.2.0)
+    assert dataset.version() == "1.2.0"    # mixed 1.0.0/1.1.0/1.2.0 → max версия
     assert all(r.annotator.startswith("human:") for r in dataset.records)
 
 
@@ -135,7 +135,7 @@ def test_gold_offsets_tool_and_dataset_valid():
     assert rows[0][1] > 0             # offset внутри строки-сегмента
 
     checked = module.check_dataset(ANNOTATIONS)
-    assert len(checked.records) == 49
+    assert len(checked.records) == 54
 
 
 def test_gold_report_dry_run_plan(dataset):
@@ -144,10 +144,10 @@ def test_gold_report_dry_run_plan(dataset):
 
     plan = planned_calls(dataset)
 
-    assert plan["extract_calls"] == 49
+    assert plan["extract_calls"] == 54
     assert plan["verdict_records"] == 8      # Plato 3 + Sappho 5 (verdict-тексты)
     assert plan["verify_calls"] == 24
-    assert plan["total"] == 73
+    assert plan["total"] == 78
 
 
 def test_cost_block_formats_zero():
@@ -220,12 +220,15 @@ def _form(form, lemma, pos, case=None, number=None, gender=None, tense=None,
 
 def test_loader_accepts_1_0_0_and_1_1_0(dataset):
     versions = {r.schema_version for r in dataset.records}
-    assert versions == {"1.0.0", "1.1.0"}
+    assert versions == {"1.0.0", "1.1.0", "1.2.0"}   # mixed, включая 3.4
     homer1 = next(r for r in dataset.records
                   if r.text_id == "homer_iliad_1" and r.segment_id == 1)
     assert homer1.expected_morphology and len(homer1.expected_morphology) == 5
     papyrus = next(r for r in dataset.records if r.text_id == "papyrus_oxy")
     assert papyrus.expected_morphology is None
+    vergil1 = next(r for r in dataset.records
+                   if r.text_id == "vergil_aen_1" and r.segment_id == 1)
+    assert len(vergil1.raw.get("expected_cross_references") or []) == 2
 
 
 def test_loader_excludes_low_confidence(tmp_path):
