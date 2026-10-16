@@ -65,7 +65,7 @@
   }
  ],
  "current_step": 15,
- "next_step": "2.7",
+ "next_step": "3.7 export formats (BibTeX/TEI/Markdown/JSON-LD; scoping stop-point) + Phase 3 consolidation; decision F4-vs-3.6 after",
  "phase": "complete_with_known_gap",
  "phase2": {
   "status": "complete",
@@ -477,7 +477,8 @@
   "Step 3.3 (Gold-standard) IMPLEMENTED (pending acceptance): gold/ corpus (28 records/6 texts, 13 markers/21 entities) + aeon/gold harness (loader/metrics/runner/report, stdlib only) + pytest markers gold_mock/gold_real + metrics.md baseline. Q-IDs verified live (Achilles Q41746, Athenians Q120096553, Zeus Q34201, Sappho Q17892, Caesar Q1048, Gaul Q38060, Belgae Q337104, Aquitani Q1255605, Gauls Q273854, Achaeans Q3514911, Garonne Q5077, Seine Q1471); unverified -> null. DEEPSEEK_API_KEY detected (.env present) -> defer_2_7=true per policy; 2.7 becomes next priority after 3.3 acceptance.",
   "3.3 ACCEPTED. Clarifications: mixed-marker [слова ...] decision (A)=supplement documented (B/C rejected: matching); offsets tooling committed (tools/annotate_offsets.py + test); gold/metrics.md mock-baseline = self-consistency not quality (explicit); test_mock_false_allowed_with_key added; demo real-path fixes (llm.calls guard, llm_model in v2 metadata). 2.7 in_progress per curator; sub-steps reported separately (2.7.1 smoke → stop).",
   "commit_2b done: v2 contract metadata trio (chain/anchor/contract-era) + legacy default on read; build_claims (commit 3) will apply video-skip more aggressively for v3.0-legacy chain per curator.",
-  "Phase 3 midpoint checkpoint (2026-10-14): all baselines/principles/backlog consolidated; suite 428; next = 3.4 scoping Plan Mode."
+  "Phase 3 midpoint checkpoint (2026-10-14): all baselines/principles/backlog consolidated; suite 428; next = 3.4 scoping Plan Mode.",
+  "3.4 pilot closed 2026-10-16 (v1.2.1 final, link-F1 0.800); next track 3.7+consolidation (curator 2026-10-16)"
  ],
  "backlog": [
   "2.7 Real API verification when key available (Sappho reconstruction, layers/focus quality); budget options (a)/(b); parallelism tuning",

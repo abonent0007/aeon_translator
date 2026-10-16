@@ -461,6 +461,11 @@ RU-конспектом → заменён подлинной grc-транскр
   артефакт harness/metadata (рождено: «livius-echo» = direction-artifact
   алфавитного harness, не kind-flip); trigger-контекст логируется (pair,
   direction, reason).
+- **Design principle (#22, 3.7-start 2026-10-16; candidate):** **publishable ≠
+  public — export formats precede UI** — исследовательский инструмент обязан
+  уметь отдать результат в форматах, которыми пользуется исследователь (TEI,
+  BibTeX), прежде чем оборачиваться в UI для просмотра; standard formats до
+  proprietary; public summary до marketing.
 - **Design principle (#9, 3.4 countersign 2026-10-14): ACTIVE** (подтверждён
   четырежды: `direction`, `matched_lemmas` вне segment, «формула И/ИЛИ»,
   few-shot-weak/deadlock класс (3.4.2, prompts не моделируются в countersign)). При
