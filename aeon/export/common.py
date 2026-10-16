@@ -58,17 +58,26 @@ def provenance(doc: Dict[str, Any]) -> Dict[str, str]:
 
 
 def legacy_warning(doc: Dict[str, Any]) -> Optional[str]:
-    """B: legacy-contract warning — только миграционный путь v1.
+    """B: legacy-contract warning.
 
-    NOTE (эмпирика 3.7/стоп №3): `atom.meaning_hash` — ШТАТНОЕ v2-поле
-    (заполняется всегда: короткий content-hash, legacy-compat) → warning НЕ
-    триггерит; сигнал = `extensions.legacy_v1_original` (миграция v1).
+    Триггеры: (1) миграция v1 — `extensions.legacy_v1_original`;
+    (2) non-v1 extraction contract — native v2 от 2.7.x
+    (`extractor_contract: "v3.0-legacy"`: instructions вместо semantic claims).
+    NOTE (эмпирика Plato, стоп №3): `atom.meaning_hash` — штатное v2-поле
+    (короткий content-hash, заполняется всегда) — warning НЕ триггерит.
     """
     extensions = doc.get("extensions") or {}
+    metadata = doc.get("metadata") or {}
+    contract = str(metadata.get("extractor_contract") or "")
+    reasons = []
     if extensions.get("legacy_v1_original"):
-        return ("Legacy contract warning: migrated from .aeon v1 "
-                "(extensions.legacy_v1_original)")
-    return None
+        reasons.append("migrated from .aeon v1 (extensions.legacy_v1_original)")
+    if contract and contract != "v1":
+        reasons.append(f"extractor_contract={contract!r} — non-v1 extraction "
+                       f"contract (legacy semantic format)")
+    if not reasons:
+        return None
+    return "Legacy contract warning: " + "; ".join(reasons)
 
 
 def label_of(doc: Dict[str, Any], label: str = "") -> str:

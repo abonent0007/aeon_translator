@@ -466,6 +466,12 @@ RU-конспектом → заменён подлинной grc-транскр
   уметь отдать результат в форматах, которыми пользуется исследователь (TEI,
   BibTeX), прежде чем оборачиваться в UI для просмотра; standard formats до
   proprietary; public summary до marketing.
+- **Design principle (#23, 3.7 2026-10-16):** **behavioral invariants require
+  executable guards, not documentation** — правило в AGENTS без падающего
+  теста нарушается (три применения: AST-скан `except: pass`
+  (`test_llm_guards`), AST-guard `now/random/uuid` в export, invariant #9
+  crossrefs; контраст: «правило-в-доке» contract v1.1/embeddings-3.9 —
+  забвение без триггера).
 - **Design principle (#9, 3.4 countersign 2026-10-14): ACTIVE** (подтверждён
   четырежды: `direction`, `matched_lemmas` вне segment, «формула И/ИЛИ»,
   few-shot-weak/deadlock класс (3.4.2, prompts не моделируются в countersign)). При

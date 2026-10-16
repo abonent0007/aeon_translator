@@ -57,7 +57,7 @@ def _entity(name, type_, span, qid=None):
 
 
 def _build_doc(tmp_path, *, content=CONTENT, traces=None, entities=None,
-               meaning_hash="", filename="sample.aeon"):
+               meaning_hash="", metadata=None, filename="sample.aeon"):
     atom = SimpleNamespace(
         thresholds_snapshot=build_thresholds_snapshot(),
         source_text=content, intent="invocation", domain="literature",
@@ -73,6 +73,7 @@ def _build_doc(tmp_path, *, content=CONTENT, traces=None, entities=None,
                   source={"content": content, "form": "text",
                           "language": "grc", "normalized": content},
                   traces=dict(TRACES if traces is None else traces),
+                  metadata=dict(metadata or {}),
                   mock=True, created_at="2026-10-16T00:00:00+00:00")
     path = tmp_path / filename
     path.write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")
@@ -208,6 +209,24 @@ def test_legacy_warning_in_outputs(tmp_path):
     # штатный v2 (meaning_hash присутствует) — БЕЗ warning (эмпирика Plato)
     assert "Legacy contract warning" not in render_markdown(
         load_document(_build_doc(tmp_path, filename="fresh.aeon")))
+
+
+def test_export_warns_on_v30_legacy_contract(tmp_path):
+    """Native v2 с extractor_contract='v3.0-legacy' → warning (без миграции)."""
+    path = _build_doc(tmp_path, metadata={"extractor_contract": "v3.0-legacy"},
+                      filename="v30.aeon")
+    loaded = load_document(path)
+    assert "Legacy contract warning" in render_markdown(loaded)
+    assert "v3.0-legacy" in render_tei(loaded)
+    assert "% Legacy contract warning" in render_bibtex_artifact(loaded)
+
+
+def test_export_no_warning_on_v1_contract(tmp_path):
+    """Native v2 с extractor_contract='v1' → БЕЗ warning."""
+    loaded = load_document(_build_doc(tmp_path, filename="v1.aeon"))
+    assert "Legacy contract warning" not in render_markdown(loaded)
+    assert "Legacy contract warning" not in render_tei(loaded)
+    assert "% Legacy contract warning" not in render_bibtex_artifact(loaded)
 
 
 # ── детерминизм (A) ──
