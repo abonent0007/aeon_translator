@@ -80,8 +80,8 @@ producing `exports/out.aeon_artifact.bib` (your analysis, keyed by its
 `atom_hash`) and `exports/out.editions.bib` (editions cited in a variant
 apparatus), e.g.:
 
-    @misc{aeon:a5812c3204, title = {AEON v2 semantic analysis: plato},
-      author = {{AEON v4.0 (automated generator)}}, year = {2026},
+    @misc{aeon:a5812c3204, title = {LOGOS Semantic Analysis: plato},
+      author = {{LOGOS Semantic Analysis (automated generator)}}, year = {2026},
       note = {content_hash=…; atom_hash=…; created_at=…}, ...}
 
 ## Design principles
