@@ -1,86 +1,87 @@
-# AEON 3.4 — Cross-references: scoping plan (Plan Mode, 2026-10-14)
+# AEON 3.4 — Cross-references: scoping plan (Plan Mode, 2026-10-14; rev.2)
 
-Статус: **DRAFT на апрув**. Build не начинается до апрува taxonomy и шага 3.4.0.
+Статус: **rev.2 на апрув** (учтены issues 1–6 countersign). Build не начинается до апрува.
 
-## 1. Taxonomy (scope)
+## 0. Framing (Issue 1): PILOT
 
-| Kind | Операционное определение | В scope |
+3.4 — **pilot**: engine end-to-end + preliminary F1. Ожидаемые ~4 связи → granularity 0.25;
+**никаких quality-claims** из n=4. Формулировка отчёта 3.4.3: «F1 = X на n=4 — preliminary,
+statistically meaningful measurement deferred to F4 (target N≥20 пар)».
+
+## 1. Taxonomy (Issue 2: 3 kind'а, разделены)
+
+| Kind | Операционный критерий | Scope |
 |---|---|---|
-| `direct_citation` | (a) явный named-цитатный маркер («как сказал X», название работы) ИЛИ (b) near-verbatim совпадение ≥3 знаменательных лемм; сюда же **adaptation** при scholarly consensus (Catull. 51 ← Sappho 31; Livius Odusia ← Od. 1) | ✅ |
-| `formulaic_echo` | общая формула ≥2 знаменательных лемм в жанрово-родственном контексте (epic invocation, proem-формулы) | ✅ |
-| structural_parallel | тематическая параллель без лексического якоря | ❌ (3.4.1 backlog) |
-| thematic_allusion | субъективная аллюзия | ❌ |
-| lexical_borrowing | грецизмы в латыни | ❌ (Ф4: morphology) |
+| `direct_citation` | named-маркер («ut ait X», название работы) ИЛИ verbatim-run ≥5 знаменательных лемм подряд | ✅ |
+| `adaptation` | scholarly consensus (ссылка на издание/комментарий в notes) + ≥3 **параллельных** знаменательных лемм; включает переводы (Livius Odusia) | ✅ |
+| `formulaic_echo` | общая формула ≥2 знаменательных лемм в жанрово-родственном контексте (proem/invocation) | ✅ |
+| structural_parallel | без лексического якоря | ❌ 3.4.1 |
+| thematic_allusion / lexical_borrowing | субъективно / Ф4 | ❌ |
 
-Правила аннотации: только **verifiable** (lemma-anchored) связи; спорные — `confidence: medium`, `low`-записи исключаются из метрик.
+В пилоте: adaptation ×2 (Catull.51←Sapph.31; Livius←Od.1), formulaic_echo ×2 (Vergil↔Il.1;
+Vergil↔Od.1), **direct_citation ×0** (в корпусе нет named-цитат — kind поддержан промптом
+(few-shot вне gold), не упражняется в gold; задокументированная limitation).
 
-## 2. Gold format — annotations 1.2.0 (additive)
+## 2. Gold format — annotations 1.2.0 (additive; Issue 3, 6)
 
 ```json
 "expected_cross_references": [
-  {"direction": "citing", 
-   "source": {"text_id": "vergil_aen_1", "segment_id": 1},
-   "target": {"text_id": "homer_iliad_1", "segment_id": 1},
-   "kind": "formulaic_echo",
-   "matched_lemmas": ["canō", "ἀείδω", "vir/ἀνήρ", "arma/μῆνις"],
+  {"direction": "citing",
+   "source": {"text_id": "catullus_51", "segment_id": 1},
+   "target": {"text_id": "sappho_fr31", "segment_id": 1},
+   "kind": "adaptation",
+   "matched_lemmas": ["vidētur/φαίνεται", "deō/θέοισιν", "par/ἴσος"],
    "confidence": "high",
-   "annotator_notes": "proem-invocation; arma virumque ← μῆνιν ... Ἀχιλῆος"}
+   "annotator_notes": "Catull. 51 — адаптация Sapph. 31 (consensus; ср. комментарии к Catull.), ≥3 параллельных леммы"}
 ]
 ```
-Решения: **offset — НЕ включаем** в v1 (границы сегмента достаточны; offset — additive позже);
-`matched_lemmas` — **обязательны** (ядро verifiability; для adaptation допустимо название работы строкой в notes при леммах ≥3);
-`confidence` — уверенность АННОТАТОРА в факте связи (high/medium; low → исключение из метрик); `direction` — справочный (метрика неориентированная); `segment_id` — обязателен; cross-ref может указывать на сегмент вне данного текста.
+- `offset` — НЕ включаем (additive позже);
+- **`matched_lemmas`: REQUIRED для `direct_citation` и `formulaic_echo`; OPTIONAL для `adaptation`** (verifiability — consensus/издание в notes); тесты: `test_cross_ref_direct_citation_requires_lemmas`, `test_cross_ref_adaptation_lemmas_optional`;
+- **`confidence` = уверенность в СУЩЕСТВОВАНИИ связи** (не в kind); `low` → исключение из метрик (как 1.1.0); kind — отдельное утверждение (kind-confidence — backlog);
+- `direction` — справочный (метрика неориентированная).
 
 ## 3. Метрика
 
-**F1 по неориентированной паре (source_segment, target_segment, kind)** — как рекомендовано; symmetric
-(FP и FN равнозначны); split by kind (`direct_citation`, `formulaic_echo`). Дополнительно: recall
-per kind + precision per kind (формулируется в отчёте, дериватив от tp/fp/fn). Инверсия source↔target
-матчится (неориентированная пара); `confidence: low` записи в denominator не входят.
+F1 по **неориентированной паре (source_seg, target_seg, kind)**, split by kind, symmetric +
+confidence-splits (high/all; medium при наличии). Инверсия source↔target матчится. `low` excluded.
 
-## 4. Detectable set — честная оценка
+## 4. Detectable set
 
-**Текущий gold (49 атомов, 12 текстов): ~1–2 связи** (vergil_aen_1 ↔ homer_iliad_1, formulaic_echo;
-возможно pindar ↔ homer — но это lexical, out of scope). **Для baseline недостаточно.**
+Текущий gold: ~1 (vergil↔homer). Расширение (+3 текста, ~7 атомов):
+`catullus_51` (la), `odyssey_1` (grc, Od. 1.1–5), `livius_odusia_1` (la, fr.1).
+Итог: **~4 связи** (см. §0 framing). Fallback pre-committed: <3 verifiable на sample → defer 3.4 → 3.7.
 
-**Расширение (+3 текста, ~7 атомов):**
-| text_id | пара | kind | памятник |
-|---|---|---|---|
-| `catullus_51` (la, ~3 атома) | ↔ sappho_fr31 | direct_citation (adaptation, consensus) | Catull. 51 = латинская адаптация Sapph. 31 |
-| `odyssey_1` (grc, ~3 атома, Il. Od. 1.1–5) | ↔ vergil_aen_1 | formulaic_echo (proem-invocation) | «ἄνδρα μοι ἔννεπε» ← «arma virumque canō» |
-| `livius_odusia_1` (la, 1 атом) | ↔ odyssey_1 | direct_citation (translation) | Livius Andronicus Odusia fr.1: «Virum mihi, Camena, insece versutum» |
+## 5. Approach + engine input (Issue 5)
 
-Ожидаемые detectable cross-refs после расширения: **~4** (vergil↔homer, catullus↔sappho, odyssey↔vergil,
-livius↔odyssey). N=4 — **baseline-минимум** (известное ограничение, Ф4: ≥20 при расширении корпуса).
-
-## 5. Approach — brute-force v1 (неорёшенный выбор документирован)
-
-Пробный лемма-фильтр **отклонён**: даёт мусор через артикли И не работает для cross-language пар
-(главные пары — la↔grc). C(15,2)=105 текстовых пар × 1 LLM-вызов (оба текста в промпте, ответ — список
-связей с локалями) ≈ **$0.05** (cache-hit префиксов снижает). Бюджет-cap $0.10. Фильтр-оптимизация —
-Ф4 (триггер: корпус >30 текстов). Cost-cap по стоп-условию: >$0.10 → стоп.
+**Brute-force v1**: все текстовые пары C(15,2)=105 (лемма-префильтр отклонён **эмпирически**:
+мусор через артикли + структурно слеп для cross-language); cap $0.10; optimization — Ф4 (корпус>30).
+**Engine input = pair-based** (a): `detect(text_a_segments, lang_a, text_b_segments, lang_b) →
+list[cross_ref]` для этой пары; 1 вызов на пару; тест `test_crossref_engine_pair_format`.
+Output: локусы (text_id/segment_id) + kind + matched_lemmas + confidence + evidence.
 
 ## 6. Circularity / anti-leak
 
-Annotation — human (curator countersign); detection engine `aeon/crossrefs/` **не импортирует и не читает
-`gold/`** (anti-leak тест: AST/import-скан + отсутствие чтения gold-путей в engine); prompt не содержит
-gold-примеров из нашего корпуса (few-shot — вне gold, как во всех контрактах).
+Annotation human; engine `aeon/crossrefs/` не импортирует/не читает `gold/` (AST-скан);
+few-shot вне gold.
 
-## 7. Шаги, критерии, стоп-точки
+## 7. FP-процесс (Issue 4) — часть шага 3.4.3
 
-| # | Шаг | Критерии | Стоп-точка |
-|---|---|---|---|
-| 3.4.0 | **Gold 1.2.0**: schema-additions + +3 текста (7 атомов) + разметка связей (4) + countersign samples | schema additive; loader принимает 1.0.0/1.1.0/1.1.1/1.2.0; ≥3 verifiable связи | **СТОП: sample-аннотации (catullus_51↔sappho31, livius↔odyssey1) до массовой** |
-| 3.4.1 | **Infra**: loader (поле+валидация+excluded low), metrics (cross-ref F1 pair×kind), тесты (≥6) | F1=0.00 с denominators при отсутствии предсказаний (как morph) | — |
-| 3.4.2 | **Engine `aeon/crossrefs/`** (contract-цикл): prompt v1 (kinds, loci, lemma-anchors, null-semantics), prefilter=None (brute 105), run в gold-runner | prompt countersigned до кода; completeness-verify по парам; anti-leak тест | **СТОП: prompt v1 до кодирования** |
-| 3.4.3 | **Measure (real)**: полный прогон детекции, report F1 pair×kind + cost/latency | ≤$0.10; failures=0; F1 отчёт с gold-diff | **СТОП: отчёт измерений** до любых правок |
+1. Engine-прогон → FPs собраны **отдельным списком**;
+2. Annotator проверяет **по источнику** (не по output): реальна ли связь?
+3. Реальна → gold patch 1.2.1 c source-diff («было/стало/почему»; protocol Class A);
+4. Нереальна → реальный FP, остаётся в F1.
+(N=4 pilot: ожидаемые пары уже в gold; FP-процесс — на случай неожиданных находок.)
 
-## 8. Out-of-scope (backlog)
+## 8. Шаги и стоп-точки (обновлено)
 
-structural_parallel (3.4.1), thematic_allusion, lexical_borrowing (Ф4), multi-hop chains (Ф4),
-фильтр-оптимизация (Ф4, триггер корпус>30), offset-точность локалей (additive позже).
+| # | Шаг | Стоп-точка |
+|---|---|---|
+| 3.4.0 | Gold 1.2.0: schema-additions (+3 текста, ~7 атомов, ~4 связи), тесты схемы | **sample 2 cross-ref (Catull.51↔Sapph31, Livius↔Od1) до массовой** |
+| 3.4.1 | Infra: loader mixed 1.0.0/1.1.x/1.2.0 + low-exclusion; metrics pair-F1×kind×confidence-splits; ≥6 тестов | — |
+| 3.4.2 | Engine `aeon/crossrefs/` (pair-based, contract v1: 3 kinds, loci, lemma-anchors, null-semantics) | **prompt v1 до кода** |
+| 3.4.3 | Measure real (105 пар, ≤$0.10) + FP-процесс §7 + preliminary-отчёт | **отчёт до правок** |
 
-## 9. Fallback
+## 9. Out-of-scope / fallback
 
-Если при countersign sample окажется <3 verifiable связей — **defer 3.4 → 3.7 (export formats)**
-(per кураторскую рекомендацию; не привязываться к номеру).
+Out: structural (3.4.1), thematic, lexical (Ф4), multi-hop (Ф4), offset, prefilter (Ф4), kind-confidence (backlog).
+Fallback: <3 verifiable на sample → defer 3.4 → 3.7 (export formats).
