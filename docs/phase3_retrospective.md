@@ -67,13 +67,15 @@
 | 21 | verify trigger — signal, не artifact | 3.4.2 | ACTIVE |
 | 22 | publishable ≠ public: export до UI | 3.7 | candidate (impl: 3.7) |
 | 23 | behavioral invariants → executable guards | 3.7 | ACTIVE (×3) |
+| 24 | infra changes → behavioral baseline before/after (unit-тестов недостаточно) | maintenance-аудит 2026-10-16 | **candidate** (1 pass; promotion при 2-м применении) |
 
 **Явный список статусов:** **ACTIVE: #1–#15, #18, #21, #23 (18)**;
-**candidate: #16, #17, #19, #20, #22 (5)**. Все пять candidate имеют
-impl-свидетельство (D2/D3-приоритет, post-filter, explicit-exceptions D5→D7,
-link-level reframing, 3.7-export); промоция — при повторном применении или
-решением куратора. **#2 канонизирован как ACTIVE** — работал на 2.4/3.2
-(ранее в AGENTS был без номера; это нумерация, не новый принцип).
+**candidate: #16, #17, #19, #20, #22, #24 (6)**. Все candidate имеют
+impl/свидетельство (D2/D3-приоритет, post-filter, explicit-exceptions D5→D7,
+link-level reframing, 3.7-export, maintenance-baseline); промоция — при
+повторном применении или решением куратора. **#2 канонизирован как ACTIVE** —
+работал на 2.4/3.2 (ранее в AGENTS был без номера; это нумерация, не новый
+принцип).
 
 ## 5. Backlog (единая таблица, trigger-gated)
 
@@ -95,6 +97,8 @@ link-level reframing, 3.7-export); промоция — при повторно�
 | crossref offset loci | потребитель запросит passage-level точность (demand) | LOW |
 | kind-confidence | crossrefs N≥20 (datapoint-масштаб) | LOW |
 | multi-hop chains | Ф4 | LOW |
+| pyflakes/mypy (внешние линтеры) | CI-аудит (решение о dev-зависимостях) | LOW |
+| unused-imports cleanup (21 пре-существующее вхождение) | следующий maintenance-триггер | LOW |
 
 ## 6. Known gaps (consolidated)
 

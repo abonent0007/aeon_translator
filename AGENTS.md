@@ -547,6 +547,16 @@ RU-конспектом → заменён подлинной grc-транскр
 - Реестр паков: `python -c "from aeon.language import registry; print(registry.list_available())"`
   → `['grc', 'la']`
 
+## Static analysis (maintenance-аудит 2026-10-16)
+- **Обязательный gate правок:** `python -m pytest -q` (дефолтный прогон; 480).
+- **Behavior-guards (AST):** `python -m pytest tests/test_llm_guards.py -q`.
+- **Stdlib-сканер статики (отчёт, не gate):** `python tools/static_scan.py [PATH …]` —
+  unused imports (учитывает `__init__`-реэкспорты и `# noqa`-facades; FP на
+  строковых аннотациях возможны), `except → pass`, `requests.*` без timeout,
+  URL-инвентарь (host → первое вхождение).
+- **Внешние линтеры (pyflakes/mypy) — backlog:** введение меняет dev-зависимости
+  (отдельное решение; см. retro §5; trigger: CI-аудит).
+
 ## Key Decisions
 - **Config access (канонический):** `CONFIG.verification.detective` — иерархический;
   плоский `CONFIG.detective` — convenience-алиас (новый код — только иерархический).

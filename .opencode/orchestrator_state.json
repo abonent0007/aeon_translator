@@ -482,7 +482,8 @@
   "Phase 3 midpoint checkpoint (2026-10-14): all baselines/principles/backlog consolidated; suite 428; next = 3.4 scoping Plan Mode.",
   "3.4 pilot closed 2026-10-16 (v1.2.1 final, link-F1 0.800); next track 3.7+consolidation (curator 2026-10-16)",
   "phase3 complete 2026-10-16 (consolidation C1-C3; version 0.3.0; tag phase3-complete)",
-  "pause confirmed after phase3 consolidation (2026-10-16); project idle until triggers"
+  "pause confirmed after phase3 consolidation (2026-10-16); project idle until triggers",
+  "maintenance audit 2026-10-16 (external instruction, not retro-trigger): HARD-001..004 endpoints env-overridable (WD/Pleiades/Flux) + behavioral baseline tooling (6/6 matched) + 4 env tests (suite 480) + static_scan stdlib-linter + AGENTS static-analysis section + retro #24 candidate; 22 predefined unused-imports -> backlog"
  ],
  "backlog": [
   "2.7 Real API verification when key available (Sappho reconstruction, layers/focus quality); budget options (a)/(b); parallelism tuning",
