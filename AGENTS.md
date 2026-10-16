@@ -374,10 +374,19 @@ RU-конспектом → заменён подлинной grc-транскр
   enum'ах промпта — минимум один few-shot пример; LLM не экстраполирует
   правило на новый класс без примера (3 накопленных случая: adj/adjective,
   participle, imperative). Голая категория в enum'е = слот для догадки.
-- **Morphology baseline (3.2, morph_v1):** F1 all: pos 0.98 / lemma 0.92 /
-  tense 0.96 / mood 0.98 / voice 0.93 / person 0.97 / case 0.95 /
-  number 0.99 / gender 0.99 (28 атомов, 224 формы, $0.0214; raw
-  `gold/real_runs/2026-10-14_morph_t3/`; детали — `gold/metrics.md`).
+- **Design principle (3.2, #1):** `finish_reason` проверяется во ВСЕХ
+  LLM-вызовах (провайдер): `length` → событие `llm_output_truncated` +
+  один retry ×2 бюджет; `max_tokens` масштабируется по input
+  (morph: `max(2000, min(8000, форм×250))`); три случая truncation
+  (2.7.3-flash-thinking, morph_t2) → инфраструктурная защита (5e4125d).
+- **Design principle (3.2, #3):** gold — не догма; эволюция только через
+  source-verified патчи (Class A 1.1.1: morph_v1 нашёл 5 gold-дефектов —
+  cicero nom ×4, homer ἣ; патч по source-diff «было/стало/почему»,
+  без подгонки под model).
+- **Morphology baseline (3.2, morph_v1, gold 1.1.1):** F1 all: pos 0.98 /
+  lemma 0.92 / tense 0.96 / mood 0.98 / voice 0.93 / person 0.90 /
+  case 0.99 / number 0.99 / gender 0.98 (28 атомов, 224 формы, $0.0214;
+  raw `gold/real_runs/2026-10-14_morph_t4/`; детали — `gold/metrics.md`).
 - **Known gaps:** Pleiades README links (network); Trismegistos datasets (нет
   публичного API); `deepseek-chat` — deprecated alias-fallback; zero-gold F1
   артефакт (papyrus/sappho: 1+1 borderline FP); role-consistency 10.7%

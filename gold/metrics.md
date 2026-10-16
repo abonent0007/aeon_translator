@@ -77,41 +77,38 @@ detective ↑) → измерение на ТЕХ ЖЕ gold (t1 vs t3): Entities
 detective 0.00→0.75, expert/logician 0.88→1.00, MAE flat→0.09, cost −46%.
 Гипотеза подтверждена — методологический, не «прогресс разработки».
 
-## Morphology baseline (3.2, morph_v1, 2026-10-14, morph_t3)
+## Morphology baseline (3.2, morph_v1) — FINAL (morph_t4, gold 1.1.1)
 
-Первый baseline морфологии (28 morph-атомов; 224 формы; raw:
-`gold/real_runs/2026-10-14_morph_t3/`; $0.0214 / 78.7 s / 28 вызовов).
-**Сравнение с t3 не применимо** (у t3 морфологии не было) — это точка отсчёта.
+28 morph-атомов; 224 формы; raw: `gold/real_runs/2026-10-14_morph_t4/`;
+**$0.0214 / 73.1 s / 28 вызовов**. Сравнение с t3 не применимо (морфологии не
+было) — это точка отсчёта Ф3.
 
 | field  | F1 high (n) | F1 medium (n) | F1 all (n) |
 |---|---|---|---|
-| pos    | 0.98 (165) | 0.98 (54) | **0.98** (219/224) |
+| pos    | 0.98 (166) | 0.98 (54) | **0.98** (220/224) |
 | lemma  | 0.94 (159) | 0.85 (47) | **0.92** (206/224) |
 | tense  | 0.94 (31)  | 1.00 (12) | **0.96** (43/45) |
 | mood   | 0.97 (32)  | 1.00 (12) | **0.98** (44/45) |
 | voice  | 0.94 (31)  | 0.92 (11) | **0.93** (42/45) |
-| person | 0.95 (21)  | 1.00 (8)  | **0.97** (29/30) |
-| case   | 0.93 (129) | 1.00 (44) | **0.95** (173/183) |
+| person | 0.87 (26)  | 1.00 (9)  | **0.90** (35/39) |
+| case   | 0.99 (138) | 1.00 (44) | **0.99** (182/183) |
 | number | 0.99 (160) | 0.98 (52) | **0.99** (212/214) |
-| gender | 0.99 (127) | 0.98 (40) | **0.99** (167/169) |
+| gender | 0.98 (126) | 0.98 (40) | **0.98** (166/169) |
 
-История: **morph_t2 — engine-bug**: атом Cicero s4 (25 форм) обрезал
-`max_tokens=2000` (raw обрыв на `"person":`) → parse_error → null-cascade;
-диагноз по raw (1/28 bad); фикс — бюджет по числу форм (commit a04e57d).
+**История:** morph_t2 — engine-bug (Cicero s4 обрезан max_tokens=2000 → null-cascade;
+фикс `a04e57d`) → morph_t3 (provisional) → **gold 1.1.1** (Class A: cicero nom ×4,
+homer ἣ nom, личные местоимения person ×8; source-diff) → **morph_t4 (FINAL)**.
+Патчи сработали: case 0.95→**0.99** (cicero/homer case 1.00); pos +1 tp.
+**person 0.97→0.90** — патч честно обнажил: модель не заполняет person у
+местоимений (nōs→null и др., 4 miss) — Rule-9-gap-класс (нет few-shot с
+местоимением×person); кандидат v1.1 (триггер: расширение pronoun-покрытия).
 
-**Открытые классы ошибок (для решения):**
-- **Class A — gold-дефекты, найденные моделью (source-diff needed):** Cicero
-  `nocturnum/praesidium/ōra/vultūs` (наши acc vs модель nom — внутренняя
-  несогласованность gold: vigiliae/timor уже nom); Homer `ἣ` (наши dat vs
-  модель nom — субъект ἔθηκε); Plato `ὑμεῖς` person (наши null vs модель 2 —
-  конвенция «местоимения несут person?»).
-- **Class B — конвенции промпта (кандидаты v1.1):** derivational lemma
-  (superlative→positive: ἄριστον→ἀγαθός), middle-verb lemmas (αἴθομαι,
-  φαίνομαι vs активные), Doric→Attic mapping (ἀέλιος→ἥλιος, ἁμέρα→ἡμέρα,
-  φαεννός→φαεινός).
-- **Class C — остаточные ошибки модели:** ἄειδε tense (impr. present vs
-  imperfect), οὐλομένην (present vs aorist ptc), abūtēre (mood), ἄεθλα
-  (ἆεθλον — typo-like). tense-mood collisions: **0**.
+**Классы ошибок (статус):**
+- Class A (gold-дефекты): **закрыт** (1.1.1; protocol: source-diff без подгонки).
+- Class B (конвенции, v1.1 backlog): derivational lemma (ἄριστον→ἀγαθός,
+  αἴθομαι/φαίνομαι), Doric→Attic mapping (ἀέλιος, ἁμέρα, φαεννός, νάων).
+- Class C (accepted noise, триггер ≥3 форм): ἄειδε tense, οὐλομένην,
+  abūtēre mood, ἄεθλον/τω-lines; tense-mood collisions **0**.
 
 ## Real-цели — гипотеза
 
