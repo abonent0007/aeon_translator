@@ -156,6 +156,8 @@ Fallback: <3 verifiable на sample → defer 3.4 → 3.7 (export formats).
 |---|---|---|---|
 | **`direct_citation`: 0 gold-примеров** | acknowledged (MEDIUM) — prompt-only | F1_direct = **N/A**; kind не валидируется пайплайном (few-shot понимание LLM не проверено) | новый корпус со схолиастом/комментатором ИЛИ внешний запрос на direct_citation |
 | **`confidence: low` xref: не упражняется (0)** | acknowledged — pilot упражняет high+medium | low-бакет F1 = N/A; валидация low-исключения — только unit-тест | появление low-записи при расширении |
+| **`formulaic_echo`×medium: n=1** (Vergil←Il.1) | acknowledged — pilot-framing | F1 granularity 1.0 — statistically meaningless | рост N (Ф4) |
+| **`adaptation`×medium: 0** (оба adaptation = high/consensus) | acknowledged | medium-бакет adaptation = N/A | появление medium-adaptation |
 | `offset` локалей не включён | deferred (additive) | точность локалей = сегмент | потребность passage-level точности |
 | kind-confidence (уверенность в ТИПЕ) | backlog | kinds могут перепутываться без штрафа | при усложнении kinds/росте N |
 | multi-hop chains | backlog/Ф4 | цепочки A→B→C не детектируются | Ф4 |

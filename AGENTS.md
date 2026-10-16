@@ -413,6 +413,10 @@ RU-конспектом → заменён подлинной grc-транскр
   (gold: `validate_cross_ref_schema` fail-fast + invariant #9 при load;
   `.aeon v2`: validator; apparatus: attribution). Схема без enforced-валидатора
   на записи — suggestion, не контракт.
+- **Design principle (#11, 3.4.1 2026-10-14):** **absence of engine ≠ 0.00**:
+  отчёт показывает denominators + явное «NOT CONNECTED → 0.00 by design»
+  (morph, xref), чтобы «engine poor» не путалось с «engine missing»; kinds
+  без gold-примеров выводятся явной строкой «N/A — no samples in gold».
 - **Design principle (#9, 3.4 countersign 2026-10-14): ACTIVE** (подтверждён
   трижды: `direction`, `matched_lemmas` вне segment, «формула И/ИЛИ»). При
   countersign — **прогонять schema-инварианты на samples ПРОГРАММНО**, не

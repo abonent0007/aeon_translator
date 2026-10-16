@@ -12,7 +12,7 @@ import argparse
 from typing import Any, Dict
 
 from ..config import CONFIG
-from .loader import load_dataset
+from .loader import CROSS_REF_KINDS, load_dataset
 from .metrics import MORPH_FIELDS, evaluate_dataset
 from .runner import _make_llm, run_dataset
 
@@ -142,12 +142,18 @@ def build_report(dataset, predictions: Dict[str, Any]) -> str:
                    else "engine: NOT CONNECTED → 0.00 by design")
     lines += ["", f"## Cross-references (schema 1.2.0; {xref_status})", ""]
     xref_kinds = sorted({kind for bucket in xref.values()
-                         for kind in (bucket.get("per_kind") or {})})
-    if not xref_kinds:
+                         for kind in (bucket.get("per_kind") or {})}
+                        | set(CROSS_REF_KINDS))
+    if not any((xref.get(bucket) or {}).get("per_kind") for bucket in xref):
         lines.append("N/A — cross-references в датасете отсутствуют")
     else:
         lines += ["| kind | F1 high | F1 medium | F1 all |", "|---|---|---|---|"]
         for kind in xref_kinds:
+            has_data = any(kind in ((xref.get(bucket) or {}).get("per_kind") or {})
+                           for bucket in ("high", "medium", "all"))
+            if not has_data:
+                lines.append(f"| {kind} | N/A — no samples in gold | | |")
+                continue
             cells = []
             for bucket in ("high", "medium", "all"):
                 entry = (xref.get(bucket) or {}).get("per_kind", {}).get(kind)
