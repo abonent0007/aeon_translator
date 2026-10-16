@@ -123,10 +123,20 @@ confidence-splits (high/all; medium при наличии). Инверсия sou
 list[cross_ref]` для этой пары; 1 вызов на пару; тест `test_crossref_engine_pair_format`.
 Output: локусы (text_id/segment_id) + kind + matched_lemmas + confidence + evidence.
 
+**Few-shot (prompt v1 rev.2, 2026-10-15; все вне corpus-15 и scoring-пар):**
+P1 `Alc. fr. 338 ← Hor. Carm. 1.9` — adaptation medium (secure pairs ῥοή/flūmen,
+οἶνος/merum; сцена «буря → согреться»); P2 `Arat. Phaen. 1 ← Theoc. Id. 17.1` —
+formulaic_echo high (verbatim «ἐκ Διὸς ἀρχώμεσθα», label proem_invocation);
+N1 `Liv. 1.1 ↔ Tac. Ann. 1.1` — hard negative (тот же жанр/материал раннего
+Рима, зависимости нет). Верификация: el.wikisource (Alc/Arat/Theoc), The Latin
+Library (Hor/Liv/Tac). Dionysius Hal. как negative снят — греческий текст не
+верифицируем доступными средствами (2026-10-15). Отклонён Alc. 332/Hor. 1.37:
+под дисциплиной пар — 1 secure pair против 2 у Alc. 338/Hor. 1.9.
+
 ## 6. Circularity / anti-leak
 
 Annotation human; engine `aeon/crossrefs/` не импортирует/не читает `gold/` (AST-скан);
-few-shot вне gold.
+few-shot вне gold и вне scoring-пар (тест-инвариант `test_few_shot_not_in_gold_or_scoring`).
 
 ## 7. FP-процесс (Issue 4) — часть шага 3.4.3
 

@@ -417,11 +417,17 @@ RU-конспектом → заменён подлинной grc-транскр
   отчёт показывает denominators + явное «NOT CONNECTED → 0.00 by design»
   (morph, xref), чтобы «engine poor» не путалось с «engine missing»; kinds
   без gold-примеров выводятся явной строкой «N/A — no samples in gold».
+- **Design principle (#12, 3.4.2 countersign 2026-10-15):** **few-shot teaches
+  by demonstration, not by rule**: пример обязан показывать ТИПИЧНЫЙ кейс, не
+  минимальный (слабый пример — 1 lemma pair для adaptation — учит слабости);
+  заголовок примера явно называет kind + confidence и чем он обусловлен;
+  few-shot-тексты вне corpus и вне scoring-пар (тест-инвариант).
 - **Design principle (#9, 3.4 countersign 2026-10-14): ACTIVE** (подтверждён
-  трижды: `direction`, `matched_lemmas` вне segment, «формула И/ИЛИ»). При
+  четырежды: `direction`, `matched_lemmas` вне segment, «формула И/ИЛИ»,
+  few-shot-weak/deadlock класс (3.4.2, prompts не моделируются в countersign)). При
   countersign — **прогонять schema-инварианты на samples ПРОГРАММНО**, не
   полагаться на глаз; инварианты → loader-валидация (`validate_cross_ref_schema`)
-  + тесты. Корень трёх находок — итеративное расширение схемы (каждое новое
+  + тесты. Корень находок — итеративное расширение схемы (каждое новое
   поле без precedent) — норма для pilot; фикс — машино-проверка при записи.
 - **Бюджет-политика LLM (аудит 2026-10-14):** 15 call-sites — все через
   `DeepSeekClient._call(+_call_json)` → единый провайдер (finish_reason-retry —
