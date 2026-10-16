@@ -494,7 +494,8 @@
   "contract v1.1 (extraction): drop entities with name=null; pronoun person few-shot; Doric/derivational lemma examples (all trigger-gated)",
   "3.4: crossref_chronology_aware_harness (chronology manifest for pair ordering; trigger corpus>30)",
   "3.4: crossref_source_work_disambiguation (F4; #3 FP class homer_il->livius)",
-  "3.4: gold bucket-drift revision (il-vergil gold medium vs engine high; F4)"
+  "3.4: gold bucket-drift revision (il-vergil gold medium vs engine high; F4)",
+  "v2_markers_persistence (MEDIUM finding; additive atom.markers; after 3.7)"
  ],
  "config_wiring": {
   "canonical_access": "CONFIG.verification.<agent> is canonical; flat CONFIG.<agent> is a convenience alias",
@@ -540,6 +541,7 @@
   "threshold 0.85 calibration min-vs-avg (deferred to Phase 4)",
   "lone-positive aggregator overclaim (FIXED 2.7.2/commit 3b3b731)",
   "3.4 direction-artifact: harness alphabetical pair order (kind-diagnostic noise only; not headline)",
-  "3.4 remaining link-FP: #3 homer_il->livius (accepted, N=1, F4)"
+  "3.4 remaining link-FP: #3 homer_il->livius (accepted, N=1, F4)",
+  "finding_v2_markers_not_persisted: severity MEDIUM — markers computed (detect_markers/detect_lacunae) and influence is_fragment, but NOT stored in .aeon v2 (writer/reader/translator 0 hits; live-probe); export cannot produce TEI <gap/>; fix = additive v2 atom.markers (separate commit AFTER 3.7); trigger: TEI-export demand or marker re-audit"
  ]
 }
