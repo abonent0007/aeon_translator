@@ -59,6 +59,21 @@ Vergil↔Od.1), **direct_citation ×0** (в корпусе нет named-цита
   (`fās` (субъект) = nominative; `nihil`×6 (субъекты при mōvērunt) = nominative),
   `number=singular`, `gender=neuter`; поверхностная форма неизменна. Фикс существующих
   `nihil`-записей (case null → nominative) — входит в 1.2.0 change-log.
+- **`matched_lemma_pairs` — только канонические POS-совместимые пары** (обе леммы из
+  morphology соответствующих сегментов, invariant #9). Поверхностные/функциональные
+  параллели (наречия, cross-POS, семантически-неточные пары) → **в `annotator_notes`**
+  («further parallels … documented in scholarship»). Пример: `ἐνάντιος/adversus` (adverb,
+  не аннотируется) и `ὑπακούω/audiō` (неточная эквивалентность) — в notes.
+- **`matched_formula` формат (determined):** dict
+  `{"label": "<открытый-малый-набор>", "description": "<свободное описание>"}`.
+  Стартовые label: `proem_invocation` (иные — по мере появления). String отклонён
+  (немáшино-проверяем); validator: label и description — непустые строки
+  (тест `test_cross_ref_matched_formula_format`).
+- **Confidence для echo:** формула-без-лексем или 1 лемма-пара → **medium**
+  (existence вероятна, но evidence слабее lemma-anchored); ≥2 пары + формула → high.
+- **Non-annotated listing (рекомендация):** для сегментов, где >2 токенов исключены
+  по selection rule, `annotator_notes` содержит явный список
+  («Non-annotated (per selection rule): sī (conj), adversus (adv), identidem (adv), et (conj)»).
 - `offset` — НЕ включаем (additive позже);
 - **Recency/структура:** см. §2 rev.3 (direction удалён; `matched_lemma_pairs` структура;
   канонические леммы; инвариант #9); тесты: `test_cross_ref_direct_citation_requires_lemmas`,
