@@ -22,23 +22,48 @@ statistically meaningful measurement deferred to F4 (target N≥20 пар)».
 Vergil↔Od.1), **direct_citation ×0** (в корпусе нет named-цитат — kind поддержан промптом
 (few-shot вне gold), не упражняется в gold; задокументированная limitation).
 
-## 2. Gold format — annotations 1.2.0 (additive; Issue 3, 6)
+## 2. Gold format — annotations 1.2.0 (additive; rev.3 — fixes countersign)
 
 ```json
 "expected_cross_references": [
-  {"direction": "citing",
-   "source": {"text_id": "catullus_51", "segment_id": 1},
-   "target": {"text_id": "sappho_fr31", "segment_id": 1},
+  {"source": {"text_id": "sappho_fr31", "segment_id": 1},
+   "target": {"text_id": "catullus_51", "segment_id": 1},
    "kind": "adaptation",
-   "matched_lemmas": ["vidētur/φαίνεται", "deō/θέοισιν", "par/ἴσος"],
+   "matched_lemma_pairs": [
+     {"source_lemma": "ἐκεῖνος", "target_lemma": "ille"},
+     {"source_lemma": "ἴσος", "target_lemma": "pār"},
+     {"source_lemma": "θεός", "target_lemma": "deus"},
+     {"source_lemma": "φαίνομαι", "target_lemma": "videō"}],
+   "matched_formula": null,
    "confidence": "high",
-   "annotator_notes": "Catull. 51 — адаптация Sapph. 31 (consensus; ср. комментарии к Catull.), ≥3 параллельных леммы"}
+   "annotator_notes": "Adaptation of Sapph. 31 (consensus; cf. commentaries). Chronology: source=Sappho."}
 ]
 ```
+- **`direction` — УДАЛЕНО** (blocking #2): семантика «citing» была двусмысленной. Конвенция
+  фиксирована: **`source` = хронологически более ранний текст; `target` = поздний**
+  (schema README). Цитационный смысл — только в `annotator_notes` («X adapts/cites Y»).
+  Метрика неориентированная — порядок на F1 не влияет.
+- **`matched_lemma_pairs` — структура** (blocking/Issue 3): dict-пары
+  `{source_lemma, target_lemma}` вместо строки «X/Y»; леммы — **канонические**
+  (как в gold `expected_morphology`, не поверхностные формы).
+- **Инвариант (loader, шаг 3.4.1; design principle #9):** ∀пары:
+  `source_lemma ∈ lemmas(source.segment)` И `target_lemma ∈ lemmas(target.segment)`
+  (сегменты с morphology; при отсутствии — skip, документировано); тесты
+  `test_cross_ref_pairs_within_segments`, `test_cross_ref_lemma_pairs_well_formed`.
+- **Recency-требования:** `direct_citation` — ≥5 пар ПОДРЯД (verbatim-run) или named-маркер;
+  `formulaic_echo` — ≥1 пара ИЛИ `matched_formula ≠ null`; `adaptation` — pairs optional
+  (consensus/издание в notes).
+- **`confidence` = уверенность в СУЩЕСТВОВАНИИ связи** (не в kind); `low` → excluded.
+- **`offset` — НЕ включаем** (additive позже).
+- **Indeclinables convention (Issue 5):** несклоняемые — `case` по **синтаксической функции**
+  (`fās` (субъект) = nominative; `nihil`×6 (субъекты при mōvērunt) = nominative),
+  `number=singular`, `gender=neuter`; поверхностная форма неизменна. Фикс существующих
+  `nihil`-записей (case null → nominative) — входит в 1.2.0 change-log.
 - `offset` — НЕ включаем (additive позже);
-- **`matched_lemmas`: REQUIRED для `direct_citation`; REQUIRED-ИЛИ-`matched_formula` для `formulaic_echo`** (эхо без лексики валидно через формулу — кейс Vergil↔Il.1); **OPTIONAL для `adaptation`** (видимость — consensus/издание в notes; при cross-language записи пары имеют вид `"лемма_a/лемма_b"`); тесты: `test_cross_ref_direct_citation_requires_lemmas`, `test_cross_ref_adaptation_lemmas_optional`, `test_cross_ref_echo_requires_lemmas_or_formula`;
-- **`confidence` = уверенность в СУЩЕСТВОВАНИИ связи** (не в kind); `low` → исключение из метрик (как 1.1.0);
-- **Direction convention: (a) ХРОНОЛОГИЯ** — `source` = более РАННИЙ текст, `target` = поздний (детерминировано, без интерпретации «кто кого цитирует»; для echo, где цитирующий не определён, это единственно однозначное соглашение). Цитационный смысл фиксируется в `annotator_notes` («X adapts/cites Y»). Метрика неориентированная — direction на F1 не влияет.
+- **Recency/структура:** см. §2 rev.3 (direction удалён; `matched_lemma_pairs` структура;
+  канонические леммы; инвариант #9); тесты: `test_cross_ref_direct_citation_requires_lemmas`,
+  `test_cross_ref_adaptation_lemmas_optional`, `test_cross_ref_echo_requires_lemmas_or_formula`,
+  `test_cross_ref_pairs_within_segments`;
 
 ## 3. Метрика
 
