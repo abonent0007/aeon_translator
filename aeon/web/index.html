@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AEON v3.0</title>
+<title>LOGOS Semantic Analysis</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#0a0a14;--panel:#12121f;--border:#1e1e35;--purple:#a855f7;--purple-glow:#7c3aed;--purple-dim:#4c1d95;--accent:#c084fc;--text:#e2e8f0;--text-dim:#94a3b8;--green:#4ade80;--red:#f87171;--yellow:#fbbf24;--blue:#60a5fa;--radius:10px;--font:'Segoe UI',system-ui,sans-serif}
@@ -18,7 +18,7 @@ canvas#neurons{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;poin
 .lang-bar button.active{background:var(--purple-dim);color:#fff;border-color:var(--purple);font-weight:600}
 
 .header{text-align:center;padding:20px 0 15px}
-.header h1{font-size:2.2rem;font-weight:200;letter-spacing:6px;background:linear-gradient(135deg,var(--purple),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header h1{font-size:1.9rem;font-weight:200;letter-spacing:3px;background:linear-gradient(135deg,var(--purple),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .header .sub{color:var(--text-dim);font-size:.85rem;letter-spacing:2px}
 .header .status{display:flex;justify-content:center;gap:16px;margin-top:12px;flex-wrap:wrap}
 .header .status span{font-size:.75rem;padding:3px 10px;border-radius:20px;background:var(--panel);border:1px solid var(--border)}
@@ -26,7 +26,7 @@ canvas#neurons{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;poin
 .header .status .off{color:var(--text-dim)}
 
 .tabs{display:flex;gap:2px;flex-wrap:wrap}
-.tabs button{flex:1;min-width:55px;padding:10px 5px;background:var(--panel);border:1px solid var(--border);border-bottom:none;color:var(--text-dim);font-size:.78rem;cursor:pointer;transition:all .2s;border-radius:var(--radius) var(--radius) 0 0;letter-spacing:.3px;white-space:nowrap}
+.tabs button{display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:1;min-width:55px;padding:10px 5px;background:var(--panel);border:1px solid var(--border);border-bottom:none;color:var(--text-dim);font-size:.78rem;cursor:pointer;transition:all .2s;border-radius:var(--radius) var(--radius) 0 0;letter-spacing:.3px;white-space:nowrap}
 .tabs button:hover{color:var(--text);background:#1a1a2e}
 .tabs button.active{background:var(--bg);color:var(--purple);border-color:var(--purple-dim);border-bottom:2px solid var(--purple);font-weight:600}
 .panels{background:var(--panel);border:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius);padding:24px;min-height:300px}
@@ -40,7 +40,7 @@ canvas#neurons{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;poin
 .input-row textarea{width:100%;min-height:80px;resize:vertical}
 .row-split{display:flex;gap:10px}
 .row-split>*{flex:1}
-.btn{background:linear-gradient(135deg,var(--purple-dim),var(--purple-glow));color:#fff;border:none;padding:10px 22px;border-radius:8px;font-size:.9rem;cursor:pointer;transition:all .25s;letter-spacing:.5px}
+.btn{display:inline-flex;align-items:center;gap:7px;background:linear-gradient(135deg,var(--purple-dim),var(--purple-glow));color:#fff;border:none;padding:10px 22px;border-radius:8px;font-size:.9rem;cursor:pointer;transition:all .25s;letter-spacing:.5px}
 .btn:hover{box-shadow:0 0 20px rgba(124,58,237,.4);transform:translateY(-1px)}
 .btn:active{transform:scale(.97)}
 .btn-sm{padding:6px 14px;font-size:.8rem}
@@ -59,7 +59,7 @@ canvas#neurons{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;poin
 .bridge-label{font-size:.75rem;color:var(--text-dim);text-align:center}
 .img-preview{max-width:100%;border-radius:8px;border:1px solid var(--border);margin-top:8px}
 .voice-box{border:1px solid var(--border);border-radius:8px;padding:16px}
-.voice-box h4{color:var(--accent);margin-bottom:10px;font-weight:600}
+.voice-box h4{color:var(--accent);margin-bottom:10px;font-weight:600;display:flex;align-items:center;gap:7px}
 .voice-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
 .record-status{font-size:.85rem;color:var(--text-dim)}
 .audio-player{width:100%;margin-top:10px}
@@ -78,6 +78,9 @@ canvas#neurons{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;poin
 .log-clear{color:var(--red);cursor:pointer;font-size:.75rem}
 .spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:spin .6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+.ico{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;flex:0 0 auto}
+.ico svg{width:100%;height:100%;display:block}
+.log-toggle .ico{width:18px;height:18px}
 @media(max-width:700px){.tabs button{font-size:.65rem;padding:8px 2px}.log-panel{width:95vw;right:2.5vw}.header h1{font-size:1.5rem}}
 </style>
 </head>
@@ -86,12 +89,12 @@ canvas#neurons{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;poin
 
 <div class="app">
   <div class="lang-bar">
-    <button data-lang="ru">🇷🇺 RU</button>
-    <button data-lang="en">🇬🇧 EN</button>
-    <button data-lang="zh">🇨🇳 中文</button>
+    <button data-lang="ru">RU</button>
+    <button data-lang="en">EN</button>
+    <button data-lang="zh">中文</button>
   </div>
   <div class="header">
-    <h1>AEON v3.0</h1>
+    <h1>LOGOS Semantic Analysis</h1>
     <div class="sub" data-i18n="subtitle"></div>
     <div class="status" id="status"></div>
   </div>
@@ -100,9 +103,9 @@ canvas#neurons{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;poin
   <div class="panels"><!-- injected by JS --></div>
 </div>
 
-<button class="log-toggle" id="log-toggle">L</button>
+<button class="log-toggle" id="log-toggle" aria-label="logs"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span></button>
 <div class="log-panel" id="log-panel">
-  <div class="log-header"><span data-i18n="log_title"></span><span class="log-clear" id="log-clear" data-i18n="log_clear"></span></div>
+  <div class="log-header"><span style="display:flex;align-items:center;gap:7px"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span><span data-i18n="log_title"></span></span><span class="log-clear" id="log-clear" data-i18n="log_clear"></span></div>
   <div class="log-list" id="log-list"></div>
 </div>
 
@@ -139,8 +142,8 @@ canvas#neurons{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;poin
 // ═══════════════ I18N ═══════════════
 var I18N = {
   ru: {
-    subtitle: "УНИВЕРСАЛЬНЫЙ ТРАНСЛЯТОР СМЫСЛА",
-    tabs: ["🌐 Перевод","💻 Код","🔗 Мост","🔍 Анализ","🎤 Голос","🖼 Картинка","📊 Поиск","🛡 Вериф.","📐 Схема","◇ Аксиомы"],
+    subtitle: "СЕМАНТИЧЕСКИЙ АНАЛИЗ",
+    tabs: ["Перевод","Код","Мост","Анализ","Голос","Картинка","Поиск","Вериф.","Схема","Аксиомы"],
     tr_placeholder: "Введите текст для перевода...",
     code_placeholder: "Опишите, какой код нужен...",
     br_placeholder_a: "Текст А...",
@@ -149,7 +152,7 @@ var I18N = {
     btn_code: "Создать",
     btn_bridge: "Соединить разумы",
     btn_explain: "Анализировать",
-    btn_save: "💾 .aeon",
+    btn_save: ".aeon",
     btn_record: "Запись",
     btn_stop: "Стоп",
     btn_speak: "Озвучить",
@@ -157,8 +160,8 @@ var I18N = {
     btn_search: "Искать",
     btn_verify: "Проверить",
     btn_viz: "Визуализация",
-    stt_title: "🎤 Речь → Текст",
-    tts_title: "🔊 Текст → Речь",
+    stt_title: "Речь → Текст",
+    tts_title: "Текст → Речь",
     tts_placeholder: "Текст для озвучивания...",
     img_placeholder: "Опишите изображение...",
     sr_placeholder: "Поисковый запрос...",
@@ -180,7 +183,7 @@ var I18N = {
     tts_na: "TTS недоступен",
     flux_na: "Flux API ключ не настроен",
     server_offline: "Сервер оффлайн",
-    log_title: "📋 Журнал операций",
+    log_title: "Журнал операций",
     log_clear: "очистить",
     similarity: "сходство",
     connected: "СВЯЗАНЫ",
@@ -195,8 +198,8 @@ var I18N = {
     ex_placeholder: "Введите текст для анализа..."
   },
   en: {
-    subtitle: "UNIVERSAL MEANING TRANSLATOR",
-    tabs: ["🌐 Translate","💻 Code","🔗 Bridge","🔍 Explain","🎤 Voice","🖼 Image","📊 Search","🛡 Verify","📐 Viz","◇ Axioms"],
+    subtitle: "SEMANTIC ANALYSIS",
+    tabs: ["Translate","Code","Bridge","Explain","Voice","Image","Search","Verify","Viz","Axioms"],
     tr_placeholder: "Enter text to translate...",
     code_placeholder: "Describe what code to generate...",
     br_placeholder_a: "Text A...",
@@ -205,7 +208,7 @@ var I18N = {
     btn_code: "Generate",
     btn_bridge: "Bridge Minds",
     btn_explain: "Analyze",
-    btn_save: "💾 .aeon",
+    btn_save: ".aeon",
     btn_record: "Record",
     btn_stop: "Stop",
     btn_speak: "Speak",
@@ -213,8 +216,8 @@ var I18N = {
     btn_search: "Search",
     btn_verify: "Verify",
     btn_viz: "Visualize",
-    stt_title: "🎤 Speech → Text",
-    tts_title: "🔊 Text → Speech",
+    stt_title: "Speech → Text",
+    tts_title: "Text → Speech",
     tts_placeholder: "Text to speak...",
     img_placeholder: "Describe image to generate...",
     sr_placeholder: "Search query...",
@@ -236,7 +239,7 @@ var I18N = {
     tts_na: "TTS not available",
     flux_na: "Flux API key not configured",
     server_offline: "Server offline",
-    log_title: "📋 Operation logs",
+    log_title: "Operation logs",
     log_clear: "clear",
     similarity: "similarity",
     connected: "CONNECTED",
@@ -251,8 +254,8 @@ var I18N = {
     ex_placeholder: "Enter text to analyze..."
   },
   zh: {
-    subtitle: "通用意义翻译器",
-    tabs: ["🌐 翻译","💻 代码","🔗 桥梁","🔍 分析","🎤 语音","🖼 图像","📊 搜索","🛡 验证","📐 可视化","◇ 公理"],
+    subtitle: "语义分析",
+    tabs: ["翻译","代码","桥梁","分析","语音","图像","搜索","验证","可视化","公理"],
     tr_placeholder: "输入要翻译的文本...",
     code_placeholder: "描述要生成的代码...",
     br_placeholder_a: "文本 A...",
@@ -261,7 +264,7 @@ var I18N = {
     btn_code: "生成",
     btn_bridge: "连接思维",
     btn_explain: "分析",
-    btn_save: "💾 .aeon",
+    btn_save: ".aeon",
     btn_record: "录音",
     btn_stop: "停止",
     btn_speak: "朗读",
@@ -269,8 +272,8 @@ var I18N = {
     btn_search: "搜索",
     btn_verify: "验证",
     btn_viz: "可视化",
-    stt_title: "🎤 语音 → 文本",
-    tts_title: "🔊 文本 → 语音",
+    stt_title: "语音 → 文本",
+    tts_title: "文本 → 语音",
     tts_placeholder: "要朗读的文本...",
     img_placeholder: "描述要生成的图像...",
     sr_placeholder: "搜索查询...",
@@ -292,7 +295,7 @@ var I18N = {
     tts_na: "TTS 不可用",
     flux_na: "Flux API 密钥未配置",
     server_offline: "服务器离线",
-    log_title: "📋 操作日志",
+    log_title: "操作日志",
     log_clear: "清除",
     similarity: "相似度",
     connected: "已连接",
@@ -307,6 +310,25 @@ var I18N = {
     ex_placeholder: "输入要分析的文本..."
   }
 };
+
+// ═══════════════ ICONS (inline SVG — no emoji as icons) ═══════════════
+var SVG_OPEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">';
+var ICONS = {
+  globe: SVG_OPEN+'<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.7 3.4 2.7 14.6 0 18"/><path d="M12 3c-2.7 3.4-2.7 14.6 0 18"/></svg>',
+  code: SVG_OPEN+'<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
+  link: SVG_OPEN+'<path d="M10 13a5 5 0 007.5.5l3-3a5 5 0 00-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 00-7.5-.5l-3 3a5 5 0 007 7l1.7-1.7"/></svg>',
+  search: SVG_OPEN+'<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.6" y2="16.6"/></svg>',
+  mic: SVG_OPEN+'<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v1a7 7 0 0014 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/></svg>',
+  image: SVG_OPEN+'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>',
+  chart: SVG_OPEN+'<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+  shield: SVG_OPEN+'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+  nodes: SVG_OPEN+'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/></svg>',
+  diamond: SVG_OPEN+'<path d="M12 3l9 9-9 9-9-9z"/></svg>',
+  save: SVG_OPEN+'<path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>',
+  list: SVG_OPEN+'<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>',
+  volume: SVG_OPEN+'<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 010 7"/><path d="M18.4 5.6a9 9 0 010 12.8"/></svg>'
+};
+var TAB_ICON = {translate:'globe', code:'code', bridge:'link', explain:'search', voice:'mic', image:'image', search:'chart', verify:'shield', viz:'nodes', axioms:'diamond'};
 
 var LANG = 'en';
 function detectLang() {
@@ -342,7 +364,7 @@ function applyI18n() {
   var tabs = T('tabs');
   for (var i = 0; i < tabKeys.length; i++) {
     var cls = (i === 0) ? ' class="active"' : '';
-    tabsHtml += '<button' + cls + ' data-tab="' + tabKeys[i] + '">' + tabs[i] + '</button>';
+    tabsHtml += '<button' + cls + ' data-tab="' + tabKeys[i] + '"><span class="ico">' + (ICONS[TAB_ICON[tabKeys[i]]] || '') + '</span><span>' + tabs[i] + '</span></button>';
   }
   document.getElementById('tabs').innerHTML = tabsHtml;
   bindTabs();
@@ -372,14 +394,14 @@ function buildPanels() {
 
   // EXPLAIN
   h += '<div class="panel" id="panel-explain">';
-  h += '<div class="input-row"><input id="ex-text" placeholder="'+T('ex_placeholder')+'"><button class="btn" id="btn-explain">'+T('btn_explain')+'</button><button class="btn btn-outline btn-sm" id="btn-save">'+T('btn_save')+'</button></div>';
+  h += '<div class="input-row"><input id="ex-text" placeholder="'+T('ex_placeholder')+'"><button class="btn" id="btn-explain">'+T('btn_explain')+'</button><button class="btn btn-outline btn-sm" id="btn-save"><span class="ico">'+ICONS.save+'</span>'+T('btn_save')+'</button></div>';
   h += '<div class="output" id="ex-out"></div></div>';
 
   // VOICE
   h += '<div class="panel" id="panel-voice">';
   h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">';
-  h += '<div class="voice-box"><h4>'+T('stt_title')+'</h4><div class="voice-controls"><button class="btn" id="btn-record">'+T('btn_record')+'</button><select id="vc-lang" style="background:#0a0a18;border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:.8rem"><option value="auto">Auto</option><option value="russian">RU</option><option value="english">EN</option><option value="chinese">ZH</option></select><span class="record-status" id="rec-status"></span></div><div class="output" id="stt-out" style="min-height:40px;margin-top:8px"></div></div>';
-  h += '<div class="voice-box"><h4>'+T('tts_title')+'</h4><div class="input-row"><input id="tts-text" placeholder="'+T('tts_placeholder')+'"><select id="tts-lang" style="background:#0a0a18;border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:.8rem"><option value="russian">RU</option><option value="english" selected>EN</option><option value="chinese">ZH</option></select></div><button class="btn" id="btn-speak">'+T('btn_speak')+'</button><audio class="audio-player" id="tts-audio" controls style="margin-top:10px;display:none"></audio></div>';
+  h += '<div class="voice-box"><h4><span class="ico">'+ICONS.mic+'</span>'+T('stt_title')+'</h4><div class="voice-controls"><button class="btn" id="btn-record">'+T('btn_record')+'</button><select id="vc-lang" style="background:#0a0a18;border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:.8rem"><option value="auto">Auto</option><option value="russian">RU</option><option value="english">EN</option><option value="chinese">ZH</option></select><span class="record-status" id="rec-status"></span></div><div class="output" id="stt-out" style="min-height:40px;margin-top:8px"></div></div>';
+  h += '<div class="voice-box"><h4><span class="ico">'+ICONS.volume+'</span>'+T('tts_title')+'</h4><div class="input-row"><input id="tts-text" placeholder="'+T('tts_placeholder')+'"><select id="tts-lang" style="background:#0a0a18;border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:.8rem"><option value="russian">RU</option><option value="english" selected>EN</option><option value="chinese">ZH</option></select></div><button class="btn" id="btn-speak">'+T('btn_speak')+'</button><audio class="audio-player" id="tts-audio" controls style="margin-top:10px;display:none"></audio></div>';
   h += '</div></div>';
 
   // IMAGE

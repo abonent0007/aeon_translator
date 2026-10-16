@@ -1,5 +1,5 @@
 """
-AEON v3.0 Web Interface — FastAPI backend + SPA frontend.
+LOGOS Semantic Analysis — Web Interface (FastAPI backend + SPA frontend).
 Запуск: python -m aeon.web_server
 """
 
@@ -18,7 +18,7 @@ import tempfile
 
 from aeon.translator import AeonTranslator
 
-app = FastAPI(title="AEON v3.0 API", version="3.0.0")
+app = FastAPI(title="LOGOS Semantic Analysis API", version="0.3.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 translator: Optional[AeonTranslator] = None
@@ -271,7 +271,7 @@ def run(host: str = "0.0.0.0", port: int = 8080):
     display_host = "localhost" if host in ("0.0.0.0", "::") else host
     print(f"""
 ╔{'═'*w}╗
-║{'🌌 AEON v3.0 Web Interface'.center(w)}║
+║{'🌌 LOGOS Semantic Analysis — Web Interface'.center(w)}║
 ║{f'http://{display_host}:{port}'.center(w)}║
 ╚{'═'*w}╝
 """)
