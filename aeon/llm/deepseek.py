@@ -81,10 +81,16 @@ class DeepSeekClient:
         self,
         messages: list,
         temperature: float = 0.7,
-        max_tokens: int = 2000,
+        max_tokens: int = 4000,
         trace_id: Optional[str] = None,
     ) -> str:
-        """Базовый вызов LLM. "" если клиент недоступен."""
+        """Базовый вызов LLM. "" если клиент недоступен.
+
+        Бюджет-аудит 2026-10-14: default 4000 (было 2000) — site-класс
+        «забыли масштабировать» (linguistics: raw обрезан на 60 findings).
+        Provider-retry ×2 (до 8000) — safety-net; sites с большими/масштабными
+        выводами передают max_tokens явно (morphology: форм×250, linguistics: 6000).
+        """
         if not self.available:
             return ""
         extra_body = None
@@ -104,7 +110,7 @@ class DeepSeekClient:
         self,
         messages: list,
         temperature: float = 0.3,
-        max_tokens: int = 2000,
+        max_tokens: int = 4000,
         trace_id: Optional[str] = None,
     ) -> dict:
         """Вызов LLM с ожиданием JSON-ответа (с починкой через json_repair)."""

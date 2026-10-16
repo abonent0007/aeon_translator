@@ -388,6 +388,20 @@ RU-конспектом → заменён подлинной grc-транскр
   good (gold стал правильнее). Всегда gold-diff рядом с F1-diff; отчёт без
   gold-diff — не отчёт. Worked example #2: person 0.97→0.90 после 1.1.1 —
   впервые измерен реальный gap вместо совпадения неправильностей.
+- **Design principle (#5, maintenance 2026-10-14):** behavioral rule в AGENTS
+  обязана иметь CI/unit-guard, иначе нарушается (было 4 truncation-бага при
+  правиле «finish_reason проверяется»). Guards: `tests/test_llm_guards.py`
+  (единый SDK-провайдер — прямой `chat.completions` вне `aeon/llm/` запрещён;
+  `except: pass` запрещено; бюджет-дефолт клиента = 4000).
+- **Бюджет-политика LLM (аудит 2026-10-14):** 15 call-sites — все через
+  `DeepSeekClient._call(+_call_json)` → единый провайдер (finish_reason-retry —
+  safety-net там); default max_tokens = 4000; sites с большими/масштабными
+  выводами задают явно (morph: форм×250; linguistics: 6000). Legacy v3.0-фасад
+  `deepseek.py` (extract_meaning/translate_text/generate_code/semantic_compare/
+  describe_for_image) — uncovered (76%), кандидат на deprecation-аудит.
+  Proposal Ф4 (Google-AI-консультация): `call_structured(prompt, schema,
+  budget_hint)` c dynamic budget (ctx − prompt − buffer) + has_more/next_cursor
+  chunking для unbounded arrays (кейс: linguistics 124 findings).
 - **Morphology baseline (3.2, morph_v1, gold 1.1.1):** F1 all: pos 0.98 /
   lemma 0.92 / tense 0.96 / mood 0.98 / voice 0.93 / person 0.90 /
   case 0.99 / number 0.99 / gender 0.98 (28 атомов, 224 формы, $0.0214;
