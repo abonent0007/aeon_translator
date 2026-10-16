@@ -331,7 +331,10 @@ pandas/HF; runner; report CLI).
 draft до подписи); gold_mock использует canned-фикстуру, сознательно не равную
 gold (тест `test_runner_mock_not_circular`). Q-ID только верифицированные
 (live Wikidata API): Achilles=Q41746, Athenians=Q120096553, Zeus=Q34201 и др.;
-неверифицированные → null.
+неверифицированные → null. **Принцип: Q-ID never from memory** — даже
+candidate-списки верифицируются (2026-10-14: 5/5 кандидатов оказались
+неверны; Troy=Q22647, Juno=Q125046, Olympia=Q38888, Ajax=Q172725,
+Palatium=Q200642 найдены через search).
 
 **Mock-базлайн (факт):** markers macro F1 1.00 (lacuna 1.00 / supplement 1.00),
 is_fragment acc 1.00; entities F1 0.06, completeness MAE 0.40, detective 0.00 —

@@ -406,7 +406,8 @@
         "loader_requirements": [
           "accept 1.0.0 and 1.1.0 mixed",
           "low-confidence atoms excluded from metrics",
-          "morphology metric denominator = subset with field (N/A otherwise)"
+          "morphology metric denominator = subset with field (N/A otherwise)",
+          "morphology metrics split by confidence: high/medium/all + test_morphology_f1_splits_by_confidence"
         ],
         "morph_rules": {
           "lemma_policy": "(b) Attic-standard grc / Classical-standard la; form = source-dialect verbatim (treebank convention)",
@@ -414,7 +415,9 @@
           "selection": "(a) full coverage: all nouns/adjectives/pronouns/verbs/participles annotated; particles/adverbs/prepositions/conjunctions NOT annotated",
           "possessor_convention": "genitive-of-possession entities: role=subject-by-convention + note in annotator_notes (homer Achilles)",
           "pindar_criterion": "formal: >=50% atoms annotation_confidence=low -> replace with Theocritus Id. 1.1-5"
-        }
+        },
+        "qid_backfill": "DONE 2026-10-14: Troy Q22647, Olympia Q38888, Juno Q125046, Ajax Q172725 (via Aias), Palatium Q200642; curator candidates all 5 wrong -> never-from-memory principle in AGENTS",
+        "sappho_clarification": "resolved: lines 1-4 print w/o supplements in standard editions; markers=[] correct; note fixed"
       },
       "step_3_2_scope": "LLM-based morphological prompt first (option b): new contract (morph_v1: form->lemma/case/number/gender, source-language, null при неуверенности), measured on expanded gold; deterministic dictionaries (a) later as enrichment; neural models (c) Phase 4",
       "step_3_9_scope": "parallel-scoped: pluggable embeddings provider interface + config (AEON_EMBEDDINGS_PROVIDER); default remains MiniLM; Google provider behind flag, no CI network; measure on expanded gold later",

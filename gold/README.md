@@ -26,8 +26,20 @@ annotations_version: **1.1.0** (expansion 2026-10-14: +6 текстов, +morpho
   pronouns/verbs/participles (+articles, `pos="article"`), частицы/наречия/
   предлоги/союзы не размечаются; possessor-генитивы — `role=subject-by-
   convention` + note.
-- **Transcription-risk flags:** sophocles s5, rgda s2 (medium), sappho fr.16
-  (supplements simplified, без скобок) — верификация куратора.
+- **Transcription-risk flags:** sophocles s5, rgda s2 (medium); sappho fr.16
+  s3/s4 (line-break fragment `ὄτ-`/`τω`, medium); pindar ×3 (Doric, medium).
+  **Sappho fr.16 уточнено:** строки 1–4 печатаются БЕЗ supplements в стандартных
+  изданиях — `markers=[]` корректно (не упрощение); note исправлен.
+- **QID backfill (2026-10-14):** Troy **Q22647**, Olympia **Q38888**,
+  Juno **Q125046**, Ajax **Q172725** (найден через «Aias»), Palatium
+  **Q200642**. Принцип: Q-ID never from memory — candidate-списки тоже
+  верифицируются (5/5 предложенных кандидатов оказались неверны).
+- **Forms per atom:** min=2, max=21, median=5.5, IQR=[5.0, 10.75]
+  (max=21 — Cicero s4, полное покрытие длинного периода; раздутия нет).
+- **Morphology metrics (infra):** per-field (case/number/gender/tense/mood/
+  voice/person/pos/lemma); **split by confidence**: `morphology_f1_high` /
+  `_medium` / `_all` (тест `test_morphology_f1_splits_by_confidence`);
+  denominator = размеченные формы (subset).
 - **Метрики morphology (предстоящий infra-коммит):** per-field (case/number/
   gender/tense/mood/voice/person/pos/lemma), denominator = размеченные формы
   (subset), атомы без поля — N/A.
