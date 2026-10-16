@@ -65,7 +65,7 @@
   }
  ],
  "current_step": 15,
- "next_step": "PAUSE (confirmed 2026-10-16) — resume on triggers (retro section 5): publication plan -> F4 (gold expansion, N>=30); external export demand -> 3.6; TEI-marker demand -> v2_markers_persistence; failing case -> contract v1.1",
+ "next_step": "PAUSE (проект переименован в LOGOS Semantic Analysis 2026-10-16; резиум-триггеры — retro §5)",
  "phase": "complete_with_known_gap",
  "phase2": {
   "status": "complete",
@@ -483,7 +483,8 @@
   "3.4 pilot closed 2026-10-16 (v1.2.1 final, link-F1 0.800); next track 3.7+consolidation (curator 2026-10-16)",
   "phase3 complete 2026-10-16 (consolidation C1-C3; version 0.3.0; tag phase3-complete)",
   "pause confirmed after phase3 consolidation (2026-10-16); project idle until triggers",
-  "maintenance audit 2026-10-16 (external instruction, not retro-trigger): HARD-001..004 endpoints env-overridable (WD/Pleiades/Flux) + behavioral baseline tooling (6/6 matched) + 4 env tests (suite 480) + static_scan stdlib-linter + AGENTS static-analysis section + retro #24 candidate; 22 predefined unused-imports -> backlog"
+  "maintenance audit 2026-10-16 (external instruction, not retro-trigger): HARD-001..004 endpoints env-overridable (WD/Pleiades/Flux) + behavioral baseline tooling (6/6 matched) + 4 env tests (suite 480) + static_scan stdlib-linter + AGENTS static-analysis section + retro #24 candidate; 22 predefined unused-imports -> backlog",
+  "rename 2026-10-16: AEON -> LOGOS Semantic Analysis (docs/code/bats/dashboard/web_server/skill; tech names aeon/.aeon/AEON_* untouched; run_aeon.bat now non-interactive CLI for agents; agent skill skills/logos-semantic-analysis installed globally; dashboard SVG icons, no emoji)"
  ],
  "backlog": [
   "2.7 Real API verification when key available (Sappho reconstruction, layers/focus quality); budget options (a)/(b); parallelism tuning",
@@ -500,7 +501,10 @@
   "3.4: crossref_chronology_aware_harness (chronology manifest for pair ordering; trigger corpus>30)",
   "3.4: crossref_source_work_disambiguation (F4; #3 FP class homer_il->livius)",
   "3.4: gold bucket-drift revision (il-vergil gold medium vs engine high; F4)",
-  "v2_markers_persistence (MEDIUM finding; additive atom.markers; after 3.7)"
+  "v2_markers_persistence (MEDIUM finding; additive atom.markers; after 3.7)",
+  "generator_field_rename (writer.py generator=aeon-4.0 -> schema v3 decision; machine-field, keep)",
+  "full_rename_aeon_to_logos (package/CLI/.aeon/env; trigger: PyPI-релиз под LOGOS)",
+  "logos7_permission_request (attribution added; explicit OK from channel before PyPI release)"
  ],
  "config_wiring": {
   "canonical_access": "CONFIG.verification.<agent> is canonical; flat CONFIG.<agent> is a convenience alias",
@@ -548,5 +552,6 @@
   "3.4 direction-artifact: harness alphabetical pair order (kind-diagnostic noise only; not headline)",
   "3.4 remaining link-FP: #3 homer_il->livius (accepted, N=1, F4)",
   "finding_v2_markers_not_persisted: severity MEDIUM — markers computed (detect_markers/detect_lacunae) and influence is_fragment, but NOT stored in .aeon v2 (writer/reader/translator 0 hits; live-probe); export cannot produce TEI <gap/>; fix = additive v2 atom.markers (separate commit AFTER 3.7); trigger: TEI-export demand or marker re-audit"
- ]
+ ],
+ "project_name": "LOGOS Semantic Analysis"
 }
