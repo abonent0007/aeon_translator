@@ -397,8 +397,9 @@
         ],
         "size": "~20 atoms (N 28 -> ~48)",
         "schema_1_1_0_additions": [
-          "annotation_confidence: high|medium|low (optional; low -> excluded from metrics by loader)",
-          "expected_morphology: [{form, lemma, pos, case, number, gender}] (optional; pos proposed by us for verbs)"
+          "annotation_confidence: high|medium|low (optional; low >=50% per text -> text replaced; else low atoms excluded from metrics)",
+          "expected_morphology completed (verb-aware): [{form, lemma, pos, tense, mood, voice, person, case, number, gender}]",
+          "non-verbs: tense/mood/voice/person = null; participles: mood=participle + tense/voice + case/gender/number, person=null"
         ],
         "retroactive_phase_a": "ACCEPTED: +expected_morphology to 7 existing atoms (homer seg1-2, sappho seg1-2, plato seg1, inscription seg1-2); annotations_version -> 1.1.0 (additive only, no field modified)",
         "n48_limitation": "N~48 sufficient for baseline, NOT for statistical claims; README known-limitation; Phase-4 trigger: expand N>=100",
@@ -406,7 +407,14 @@
           "accept 1.0.0 and 1.1.0 mixed",
           "low-confidence atoms excluded from metrics",
           "morphology metric denominator = subset with field (N/A otherwise)"
-        ]
+        ],
+        "morph_rules": {
+          "lemma_policy": "(b) Attic-standard grc / Classical-standard la; form = source-dialect verbatim (treebank convention)",
+          "elision": "form as in source (δ', κατ'); lemma expanded (δέ, κατά); segment-initial elision keeps apostrophe in form",
+          "selection": "(a) full coverage: all nouns/adjectives/pronouns/verbs/participles annotated; particles/adverbs/prepositions/conjunctions NOT annotated",
+          "possessor_convention": "genitive-of-possession entities: role=subject-by-convention + note in annotator_notes (homer Achilles)",
+          "pindar_criterion": "formal: >=50% atoms annotation_confidence=low -> replace with Theocritus Id. 1.1-5"
+        }
       },
       "step_3_2_scope": "LLM-based morphological prompt first (option b): new contract (morph_v1: form->lemma/case/number/gender, source-language, null при неуверенности), measured on expanded gold; deterministic dictionaries (a) later as enrichment; neural models (c) Phase 4",
       "step_3_9_scope": "parallel-scoped: pluggable embeddings provider interface + config (AEON_EMBEDDINGS_PROVIDER); default remains MiniLM; Google provider behind flag, no CI network; measure on expanded gold later",
