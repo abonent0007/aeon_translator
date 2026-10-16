@@ -1,5 +1,5 @@
 """
-Консольный интерфейс Aeon v2.0
+Консольный интерфейс LOGOS Semantic Analysis
 """
 
 import sys
@@ -33,7 +33,7 @@ def print_banner():
     banner = f"""
 {C['title']}╔══════════════════════════════════════════════════════╗
 ║                                                       ║
-║     🌌  A E O N  v 3 . 0  —  ТРАНСЛЯТОР СМЫСЛА      ║
+║     🌌  L O G O S  —  SEMANTIC ANALYSIS      ║
 ║                                                       ║
 ║  LaBSE 768D + верификация + .aeon формат              ║
 ║                                                       ║
@@ -89,7 +89,7 @@ def print_help():
 {C['info']}explain{C['reset']} (x)   — полная интерпретация смысла
     {C['dim']}x текст                          — цепочка рассуждений + сущности{C['reset']}
 {C['info']}stats{C['reset']}           — статус модулей и статистика
-{C['info']}axioms{C['reset']}          — аксиомы Aeon
+{C['info']}axioms{C['reset']}          — аксиомы LOGOS
 {C['info']}help{C['reset']} (h)        — эта справка
 {C['info']}exit{C['reset']} (q)        — выход
 
@@ -101,7 +101,7 @@ def print_help():
 
 def show_axioms():
     from .core import FUNDAMENTAL_AXIOMS
-    print(f"\n{C['title']}◇ АКСИОМЫ AEON{C['reset']}\n")
+    print(f"\n{C['title']}◇ АКСИОМЫ LOGOS{C['reset']}\n")
     for key, axiom in FUNDAMENTAL_AXIOMS.items():
         print(f"{C['bold']}{axiom}{C['reset']}")
 
@@ -155,7 +155,7 @@ def run_cli():
 
             # === EXIT ===
             if cmd in ['exit', 'quit', 'q']:
-                print(f"\n{C['success']}🌌 Aeon завершает работу. Смысл сохранён.{C['reset']}")
+                print(f"\n{C['success']}🌌 LOGOS завершает работу. Смысл сохранён.{C['reset']}")
                 print(f"{C['dim']}Переводов выполнено: {translator.translation_count}{C['reset']}")
                 break
 
@@ -489,7 +489,7 @@ def print_image_result(result: dict):
 def run_demo(translator: AeonTranslator):
     """Полная демонстрация возможностей."""
     print(f"\n{C['title']}{'='*60}")
-    print("🎬 ДЕМОНСТРАЦИЯ AEON v2.0")
+    print("🎬 ДЕМОНСТРАЦИЯ LOGOS")
     print(f"{'='*60}{C['reset']}")
 
     # Демо 1: Русский → Английский

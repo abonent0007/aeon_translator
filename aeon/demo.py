@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Демонстрация Aeon v2.0 — Универсального Транслятора Смысла
+Демонстрация LOGOS Semantic Analysis
 LLM-powered: DeepSeek + Whisper + Flux 2 + TTS
 """
 
@@ -28,9 +28,9 @@ def print_separator(title=""):
 
 
 def demo_basic_concepts():
-    print_separator("ЧАСТЬ 1: БАЗОВЫЕ КОНЦЕПТЫ AEON")
+    print_separator("ЧАСТЬ 1: БАЗОВЫЕ КОНЦЕПТЫ LOGOS")
 
-    print("\n◇ АКСИОМЫ AEON:")
+    print("\n◇ АКСИОМЫ LOGOS:")
     for key, axiom in FUNDAMENTAL_AXIOMS.items():
         print(f"  {axiom}")
 
@@ -187,7 +187,7 @@ def demo_multimodal(translator: AeonTranslator):
 
 def demo_v3_enhanced(translator: AeonTranslator):
     """Демонстрация v3: верификация, интерпретация, .aeon формат."""
-    print_separator("ЧАСТЬ 5: AEON v3 — ИНТЕРПРЕТАЦИЯ И ВЕРИФИКАЦИЯ")
+    print_separator("ЧАСТЬ 5: ИНТЕРПРЕТАЦИЯ И ВЕРИФИКАЦИЯ")
 
     # Тест 1: Полная интерпретация
     print("\n📌 ТЕСТ 1: Интерпретация смысла (сущности + роли + цепочка)")
@@ -367,7 +367,7 @@ def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
         for marker in markers[:5]:
             print(f"    • {marker.kind}: {marker.text!r} @ {marker.start}")
 
-    print_separator(f"AEON 1.4 DEMO — verify={verify_mode} — {path.name}")
+    print_separator(f"LOGOS DEMO — verify={verify_mode} — {path.name}")
     print(f"Текст ({len(text)} симв.): {text[:110]}...")
 
     llm = None
@@ -620,7 +620,7 @@ def run_verify_demo(text_path: str, verify_mode: str, latency_ms: float,
 
 def main():
     parser = argparse.ArgumentParser(
-        description="AEON demo: интерактив или Verification 2.0 (--text)"
+        description="LOGOS demo: интерактив или Verification 2.0 (--text)"
     )
     parser.add_argument("--text", type=str, default=None, help="файл с текстом для анализа")
     parser.add_argument("--verify", choices=["off", "basic", "full"], default="off",
@@ -658,7 +658,7 @@ def main():
             doc = load_v1_and_migrate(args.load_aeon)
         pipeline = doc["metadata"]["pipeline"]
         loaded_traces = [key for key, value in doc["traces"].items() if value is not None]
-        print(f"\n📂 AEON v{doc['aeon_version']} | mock={doc['metadata']['mock']} | "
+        print(f"\n📂 .aeon v{doc['aeon_version']} | mock={doc['metadata']['mock']} | "
               f"steps={pipeline['steps_executed']}")
         print(f"   atom: {doc['atom']['intent']}/{doc['atom']['domain']} | "
               f"traces: {loaded_traces}")
@@ -677,7 +677,7 @@ def main():
     print("""
 ╔══════════════════════════════════════════════════════╗
 ║                                                       ║
-║     🌌  A E O N  v 3 . 0  —  ТРАНСЛЯТОР СМЫСЛА     ║
+║     🌌  L O G O S  —  SEMANTIC ANALYSIS     ║
 ║                                                       ║
 ║  LaBSE 768D + верификация + .aeon формат              ║
 ║                                                       ║
@@ -685,11 +685,11 @@ def main():
     """)
 
     print("Что вы хотите увидеть?")
-    print("  1. Базовые концепты Aeon (мысль, поток, концепт)")
+    print("  1. Базовые концепты LOGOS (мысль, поток, концепт)")
     print("  2. Универсальный транслятор (LLM-перевод + код)")
     print("  3. Мост между разумами (LaBSE + LLM-сравнение)")
     print("  4. Мультимодальные возможности (изображения + голос)")
-    print("  5. v3: Интерпретация + верификация + .aeon")
+    print("  5. Интерпретация + верификация + .aeon")
     print("  6. ВСЁ СРАЗУ!")
     print("  0. Выход")
 
@@ -720,7 +720,7 @@ def main():
                 demo_v3_enhanced(translator)
                 print_separator("ЗАКЛЮЧЕНИЕ")
                 print("""
-    🌌 AEON v3.0 — семантический процессор нового поколения.
+    🌌 LOGOS Semantic Analysis — семантический процессор нового поколения.
 
     Усиленные стороны:
     • Явная семантическая структура (сущности, роли, отношения)

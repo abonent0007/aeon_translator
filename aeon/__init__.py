@@ -1,5 +1,5 @@
 """
-AEON — Универсальный Транслятор Смысла v3.0
+LOGOS Semantic Analysis — семантический процессор древних текстов
 LaBSE 768D embeddings + verification + .aeon format + anti-hallucination.
 """
 
@@ -14,7 +14,7 @@ if sys.platform == 'win32':
         sys.stdout.reconfigure(encoding='utf-8')
 
 __version__ = "0.3.0"
-__author__ = "Aeon Collective Intelligence"
+__author__ = "LOGOS Semantic Analysis (research)"
 
 from .core import Axiom, Thought, Flow, Concept
 from .semantic_atom import SemanticAtom, Entity, Relation
@@ -39,7 +39,7 @@ def _banner():
         status = _llm_status
         print(f"""
 ╔══════════════════════════════════════════════════════╗
-        {line(f"🌌 AEON v{__version__} ЗАГРУЖЕН".center(W))}
+        {line(f"🌌 LOGOS v{__version__} ЗАГРУЖЕН".center(W))}
 {line("")}
 {line('"Смысл един. Различаются только формы."'.center(W))}
 {line("")}
@@ -55,7 +55,7 @@ def _banner():
 """)
     except UnicodeEncodeError:
         print("=" * 56)
-        print(f"  AEON v{__version__} LOADED")
+        print(f"  LOGOS v{__version__} LOADED")
         print("  LaBSE 768D + verification + .aeon format")
         print("=" * 56)
 

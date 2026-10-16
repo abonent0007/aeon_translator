@@ -35,7 +35,7 @@ def _edition_entries(doc: Dict[str, Any]) -> List[Dict[str, Any]]:
 def render_bibtex_artifact(doc: Dict[str, Any], label: str = "") -> str:
     prov = provenance(doc)
     year = prov["created_at"][:4] if prov["created_at"] else "n.d."
-    lines = ["% AEON export — citable artifact (deterministic; stdlib)",
+    lines = ["% LOGOS export — citable artifact (deterministic; stdlib)",
              f"% source .aeon v2; generator={prov['generator']}; "
              f"aeon_version={prov['aeon_version']}"]
     warning = legacy_warning(doc)
@@ -43,8 +43,8 @@ def render_bibtex_artifact(doc: Dict[str, Any], label: str = "") -> str:
         lines.append(f"% {warning}")
     lines += [
         f"@misc{{{_key('aeon', prov['atom_hash'] or label_of(doc, label))},",
-        f"  title = {{AEON v2 semantic analysis: {_escape(label_of(doc, label))}}},",
-        "  author = {{AEON v4.0 (automated generator)}},",
+        f"  title = {{LOGOS Semantic Analysis: {_escape(label_of(doc, label))}}},",
+        "  author = {{LOGOS Semantic Analysis (automated generator)}},",
         f"  year = {{{_escape(year)}}},",
         "  howpublished = {.aeon v2 document},",
         f"  note = {{content_hash={prov['content_hash']}; "
@@ -59,9 +59,9 @@ def render_bibtex_artifact(doc: Dict[str, Any], label: str = "") -> str:
 def render_bibtex_editions(doc: Dict[str, Any]) -> str:
     entries = _edition_entries(doc)
     if not entries:
-        return "% AEON export — editions: none found in this document " \
+        return "% LOGOS export — editions: none found in this document " \
                "(no variant apparatus)\n"
-    lines = ["% AEON export — editions cited in the variant apparatus "
+    lines = ["% LOGOS export — editions cited in the variant apparatus "
              "(deterministic; stdlib)"]
     for entry in entries:
         edition = str(entry.get("edition") or "")
@@ -76,7 +76,7 @@ def render_bibtex_editions(doc: Dict[str, Any]) -> str:
             f"  editor = {{{_escape(edition)}}},",
             f"  title = {{{_escape(work or 'Source edition')}}},",
             f"  year = {{{_escape(year if year is not None else 'n.d.')}}},",
-            "  note = {cited in AEON variant apparatus},",
+            "  note = {cited in LOGOS variant apparatus},",
             "}",
             "",
         ]
