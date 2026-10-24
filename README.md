@@ -9,6 +9,23 @@ with explicit abstention when confidence is low.
 - **Public summary:** `docs/aeon_public_summary.md`
 - **Phase 3 retrospective (what was built, principles, honest gaps):** `docs/phase3_retrospective.md`
 
+## Project history
+
+- **`main` branch — legacy v3.0 archive.** The project started as
+  *AEON v3.0 — Universal Meaning Translator* (author: **Abonent0007**) — an
+  all-forms meaning translator (text, code, voice, images). That line is
+  preserved untouched on
+  [`main`](https://github.com/abonent0007/aeon_translator/tree/main).
+- **`update` branch — current line (this branch).** Developed as the internal
+  *v4.0 "Deep Analyst"* research line (2024–2026): contract-first pipeline,
+  verification with explicit abstention, gold-standard evaluation, morphology,
+  cross-reference analysis, deterministic research exports (TEI / Markdown /
+  JSON-LD / BibTeX). Presented here as **LOGOS Semantic Analysis**.
+- **Naming & inspiration:** inspired by the
+  ["Логос 7" YouTube channel](https://www.youtube.com/@%D0%9B%D0%BE%D0%B3%D0%BE%D1%817)
+  (see Acknowledgements below). Independent implementation, no affiliation.
+- **Author / maintainer:** Abonent0007 · **License:** MIT.
+
 ## Quick start (Python 3.11)
 
     pip install -e .
